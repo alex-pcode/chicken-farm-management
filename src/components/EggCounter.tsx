@@ -1,11 +1,9 @@
 "use client";
-import { useState, useEffect, useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area } from 'recharts';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSpinner } from './LoadingSpinner';
 import { exportToCSV } from '../utils/exportUtils';
 import { useKeyboardShortcut } from '../utils/useKeyboardShortcut';
-import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import testData from './test.json';
 import type { EggEntry, TestData } from './testData';
 
@@ -15,8 +13,7 @@ interface ValidationError {
 }
 
 const saveToJson = async (updatedEntries: EggEntry[]) => {
-  try {
-    const response = await fetch('http://localhost:3001/api/saveEggEntries', {
+  try {    const response = await fetch(`${import.meta.env.VITE_API_URL}/saveEggEntries`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -112,22 +109,7 @@ export const EggCounter = () => {
     setSuccess(true);
     setTimeout(() => setSuccess(false), 3000);
   };
-
-  const chartData = useMemo(() => {
-    const last30Days = [...Array(30)].map((_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      return date.toISOString().split('T')[0];
-    }).reverse();
-
-    return last30Days.map(date => {
-      const entry = eggEntries.find(e => e.date === date);
-      return {
-        date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        count: entry?.count || 0
-      };
-    });
-  }, [eggEntries]);
+  // Removed unused chartData calculation
 
   const calculateSummary = () => {
     const total = eggEntries.reduce((sum, entry) => sum + entry.count, 0);
