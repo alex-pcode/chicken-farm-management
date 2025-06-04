@@ -1,6 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import fs from 'fs';
-import path from 'path';
+import { kv } from '@vercel/kv';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -15,30 +14,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
-
   try {
     const flockData = req.body;
-    const dataFilePath = path.join(process.cwd(), 'src/components/test.json');
+    console.log('Received flock data:', flockData);
     
-    // Read current data
-    let currentData = {};
-    try {
-      const fileContent = fs.readFileSync(dataFilePath, 'utf8');
-      currentData = JSON.parse(fileContent);
-    } catch (error) {
-      // File doesn't exist or is empty, start with empty object
-      currentData = {};
-    }
+    // Save to Vercel KV (Redis)
+    await kv.set('flockProfile', flockData);
+    await kv.set('flockProfile:lastUpdated', new Date().toISOString());
     
-    // Update flock profile data
-    currentData.flockProfile = flockData;
+    console.log('Flock profile saved to KV database');
     
-    // Write back to file
-    fs.writeFileSync(dataFilePath, JSON.stringify(currentData, null, 2));
-    
-    res.status(200).json({ message: 'Flock profile saved successfully', data: currentData });
+    res.status(200).json({ 
+      message: 'Flock profile saved successfully', 
+      data: { flockProfile: flockData },
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
     console.error('Error saving flock profile:', error);
-    res.status(500).json({ message: 'Error saving flock profile', error: error.message });
+    res.status(500).json({ 
+      message: 'Error saving flock profile', 
+      error: error.message,
+      stack: error.stack 
+    });
   }
 }

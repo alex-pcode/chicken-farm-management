@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSpinner } from './LoadingSpinner';
 import { exportToCSV } from '../utils/exportUtils';
 import { useKeyboardShortcut } from '../utils/useKeyboardShortcut';
-import { apiCall } from '../utils/apiUtils';
+import { apiCall, fetchData } from '../utils/apiUtils';
 import testData from './test.json';
 import type { EggEntry, TestData } from './testData';
 
@@ -31,12 +31,19 @@ export const EggCounter = () => {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const entriesPerPage = 10;
-
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      try {
-        // Always use testData as the source of truth and update localStorage
+      try {        // Try to fetch data from database first
+        const dbData = await fetchData();
+        const entries: EggEntry[] = dbData.eggEntries || [];
+        setEggEntries(entries.sort((a: EggEntry, b: EggEntry) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        ));
+        localStorage.setItem('eggEntries', JSON.stringify(entries));
+      } catch (error) {
+        console.error('Failed to load from database, using local data:', error);
+        // Fallback to testData if database fails
         const entries = (testData as TestData).eggEntries;
         setEggEntries(entries.sort((a, b) => 
           new Date(b.date).getTime() - new Date(a.date).getTime()

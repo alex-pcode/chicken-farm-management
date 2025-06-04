@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import testData from './test.json';
 import type { FeedEntry, TestData } from './testData';
-import { apiCall } from '../utils/apiUtils';
+import { apiCall, fetchData } from '../utils/apiUtils';
 
 const FEED_TYPES = [
   'Starter',
@@ -31,13 +31,29 @@ export const FeedTracker = () => {
   const [unit, setUnit] = useState<'kg' | 'lbs'>('kg');
   const [openedDate, setOpenedDate] = useState(new Date().toISOString().split('T')[0]);
   const [batchNumber, setBatchNumber] = useState('');
-  const [pricePerUnit, setPricePerUnit] = useState('');
-  useEffect(() => {
-    // Load from testData as source of truth
-    const inventory = (testData as TestData).feedInventory;
-    setFeedInventory(inventory);
-    // Sync to localStorage
-    localStorage.setItem('feedInventory', JSON.stringify(inventory));
+  const [pricePerUnit, setPricePerUnit] = useState('');  useEffect(() => {
+    // Load from database first, fallback to testData
+    const loadFeedInventory = async () => {
+      try {
+        const dbData = await fetchData();
+        const inventory = dbData.feedInventory;
+        
+        if (inventory && Array.isArray(inventory) && inventory.length > 0) {
+          setFeedInventory(inventory);
+          localStorage.setItem('feedInventory', JSON.stringify(inventory));
+          return;
+        }
+      } catch (error) {
+        console.log('Failed to load feed inventory from database, using local data:', error);
+      }
+      
+      // Fallback to local testData
+      const inventory = (testData as TestData).feedInventory;
+      setFeedInventory(inventory);
+      localStorage.setItem('feedInventory', JSON.stringify(inventory));
+    };
+    
+    loadFeedInventory();
   }, []);
 
   const calculateDuration = (openedDate: string, depletedDate?: string) => {

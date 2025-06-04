@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import testDataImport from './test.json';
 import type { FlockProfile, FlockEvent, TestData } from './testData';
-import { apiCall } from '../utils/apiUtils';
+import { apiCall, fetchData } from '../utils/apiUtils';
 
 const testData = testDataImport as TestData;
 
@@ -48,27 +48,54 @@ export const Profile = () => {
     description: '',
     affectedBirds: undefined,
     notes: ''
-  });
-  useEffect(() => {
-    // Load from testData as source of truth
-    const profileData = testData.flockProfile;
-    if (profileData) {
-      // Ensure all required fields exist with defaults
-      const updatedProfile = {
-        hens: profileData.hens || 0,
-        roosters: profileData.roosters || 0,
-        chicks: profileData.chicks || 0,
-        brooding: profileData.brooding || 0,
-        lastUpdated: profileData.lastUpdated || new Date().toISOString(),
-        breedTypes: profileData.breedTypes || [],
-        events: profileData.events || [],
-        flockStartDate: profileData.flockStartDate || new Date().toISOString(),
-        notes: profileData.notes || ""
-      };
-      setProfile(updatedProfile);
-      // Sync to localStorage
-      localStorage.setItem('flockProfile', JSON.stringify(updatedProfile));
-    }
+  });  useEffect(() => {
+    // Load from database first, fallback to testData
+    const loadProfile = async () => {
+      try {
+        const dbData = await fetchData();
+        const profileData = dbData.flockProfile;
+        
+        if (profileData && Object.keys(profileData).length > 0) {
+          // Use database data
+          const updatedProfile = {
+            hens: profileData.hens || 0,
+            roosters: profileData.roosters || 0,
+            chicks: profileData.chicks || 0,
+            brooding: profileData.brooding || 0,
+            lastUpdated: profileData.lastUpdated || new Date().toISOString(),
+            breedTypes: profileData.breedTypes || [],
+            events: profileData.events || [],
+            flockStartDate: profileData.flockStartDate || new Date().toISOString(),
+            notes: profileData.notes || ""
+          };
+          setProfile(updatedProfile);
+          localStorage.setItem('flockProfile', JSON.stringify(updatedProfile));
+          return;
+        }
+      } catch (error) {
+        console.log('Failed to load from database, using local data:', error);
+      }
+      
+      // Fallback to local testData
+      const profileData = testData.flockProfile;
+      if (profileData) {
+        const updatedProfile = {
+          hens: profileData.hens || 0,
+          roosters: profileData.roosters || 0,
+          chicks: profileData.chicks || 0,
+          brooding: profileData.brooding || 0,
+          lastUpdated: profileData.lastUpdated || new Date().toISOString(),
+          breedTypes: profileData.breedTypes || [],
+          events: profileData.events || [],
+          flockStartDate: profileData.flockStartDate || new Date().toISOString(),
+          notes: profileData.notes || ""
+        };
+        setProfile(updatedProfile);
+        localStorage.setItem('flockProfile', JSON.stringify(updatedProfile));
+      }
+    };
+    
+    loadProfile();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

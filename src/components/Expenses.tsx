@@ -7,7 +7,7 @@ import { exportToCSV } from '../utils/exportUtils';
 import { useKeyboardShortcut } from '../utils/useKeyboardShortcut';
 import testData from './test.json';
 import type { Expense, TestData } from './testData';
-import { apiCall } from '../utils/apiUtils';
+import { apiCall, fetchData } from '../utils/apiUtils';
 
 interface ValidationError {
   field: string;
@@ -47,10 +47,28 @@ export const Expenses = () => {
       setIsLoading(true);
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
-        const expenseData = (testData as TestData).chickenExpenses;
-        setExpenses(expenseData);
-        // Sync to localStorage
-        localStorage.setItem('chickenExpenses', JSON.stringify(expenseData));
+        
+        // Try to load from database first
+        try {
+          const dbData = await fetchData();
+          const expenseData = dbData.expenses;
+          
+          if (expenseData && Array.isArray(expenseData) && expenseData.length > 0) {
+            setExpenses(expenseData);
+            localStorage.setItem('chickenExpenses', JSON.stringify(expenseData));
+          } else {
+            // Fallback to local testData
+            const expenseData = (testData as TestData).chickenExpenses;
+            setExpenses(expenseData);
+            localStorage.setItem('chickenExpenses', JSON.stringify(expenseData));
+          }
+        } catch (error) {
+          console.log('Failed to load expenses from database, using local data:', error);
+          // Fallback to local testData
+          const expenseData = (testData as TestData).chickenExpenses;
+          setExpenses(expenseData);
+          localStorage.setItem('chickenExpenses', JSON.stringify(expenseData));
+        }
       } finally {
         setIsLoading(false);
       }

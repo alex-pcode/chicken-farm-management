@@ -32,3 +32,27 @@ export const apiCall = async (endpoint: string, data: any) => {
     throw error;
   }
 };
+
+// Helper function for fetching data from the database
+export const fetchData = async () => {
+  const url = getApiUrl('/getData');
+  
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    throw error;
+  }
+};
