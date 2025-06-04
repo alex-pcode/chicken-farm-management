@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import testDataImport from './test.json';
 import type { FlockProfile, FlockEvent, TestData } from './testData';
+import { apiCall } from '../utils/apiUtils';
 
 const testData = testDataImport as TestData;
 
@@ -15,16 +16,7 @@ const EVENT_TYPES = {
 
 const saveToJson = async (profile: FlockProfile) => {
   try {
-    const response = await fetch('http://localhost:3001/api/saveFlockProfile', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(profile),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to save profile');
-    }
+    await apiCall('/saveFlockProfile', profile);
     return true;
   } catch (error) {
     console.error('Error saving to test.json:', error);

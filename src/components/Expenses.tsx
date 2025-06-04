@@ -7,6 +7,7 @@ import { exportToCSV } from '../utils/exportUtils';
 import { useKeyboardShortcut } from '../utils/useKeyboardShortcut';
 import testData from './test.json';
 import type { Expense, TestData } from './testData';
+import { apiCall } from '../utils/apiUtils';
 
 interface ValidationError {
   field: string;
@@ -24,16 +25,7 @@ const CATEGORIES = [
 
 const saveToJson = async (expenses: Expense[]) => {
   try {
-    const response = await fetch('http://localhost:3001/api/saveExpenses', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(expenses),
-    });
-    if (!response.ok) {
-      console.error('Failed to save to test.json');
-    }
+    await apiCall('/saveExpenses', expenses);
   } catch (error) {
     console.error('Error saving to test.json:', error);
   }

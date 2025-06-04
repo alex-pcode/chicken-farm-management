@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSpinner } from './LoadingSpinner';
 import { exportToCSV } from '../utils/exportUtils';
 import { useKeyboardShortcut } from '../utils/useKeyboardShortcut';
+import { apiCall } from '../utils/apiUtils';
 import testData from './test.json';
 import type { EggEntry, TestData } from './testData';
 
@@ -13,16 +14,8 @@ interface ValidationError {
 }
 
 const saveToJson = async (updatedEntries: EggEntry[]) => {
-  try {    const response = await fetch(`${import.meta.env.VITE_API_URL}/saveEggEntries`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updatedEntries),
-    });
-    if (!response.ok) {
-      console.error('Failed to save to test.json');
-    }
+  try {
+    await apiCall('/saveEggEntries', updatedEntries);
   } catch (error) {
     console.error('Error saving to test.json:', error);
   }

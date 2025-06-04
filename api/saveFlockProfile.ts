@@ -17,7 +17,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const entries = req.body;
+    const flockData = req.body;
     const dataFilePath = path.join(process.cwd(), 'src/components/test.json');
     
     // Read current data
@@ -30,15 +30,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       currentData = {};
     }
     
-    // Update egg entries data
-    currentData.eggEntries = entries;
+    // Update flock profile data
+    currentData.flockProfile = flockData;
     
     // Write back to file
     fs.writeFileSync(dataFilePath, JSON.stringify(currentData, null, 2));
     
-    res.status(200).json({ message: 'Egg entries saved successfully', data: currentData });
+    res.status(200).json({ message: 'Flock profile saved successfully', data: currentData });
   } catch (error) {
-    console.error('Error saving egg entries:', error);
-    res.status(500).json({ message: 'Error saving egg entries', error: error.message });
+    console.error('Error saving flock profile:', error);
+    res.status(500).json({ message: 'Error saving flock profile', error: error.message });
   }
 }

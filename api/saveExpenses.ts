@@ -17,7 +17,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const entries = req.body;
+    const expenseData = req.body;
     const dataFilePath = path.join(process.cwd(), 'src/components/test.json');
     
     // Read current data
@@ -30,15 +30,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       currentData = {};
     }
     
-    // Update egg entries data
-    currentData.eggEntries = entries;
+    // Update expenses data
+    currentData.expenses = expenseData;
     
     // Write back to file
     fs.writeFileSync(dataFilePath, JSON.stringify(currentData, null, 2));
     
-    res.status(200).json({ message: 'Egg entries saved successfully', data: currentData });
+    res.status(200).json({ message: 'Expenses saved successfully', data: currentData });
   } catch (error) {
-    console.error('Error saving egg entries:', error);
-    res.status(500).json({ message: 'Error saving egg entries', error: error.message });
+    console.error('Error saving expenses:', error);
+    res.status(500).json({ message: 'Error saving expenses', error: error.message });
   }
 }

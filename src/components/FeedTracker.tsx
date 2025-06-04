@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import testData from './test.json';
 import type { FeedEntry, TestData } from './testData';
+import { apiCall } from '../utils/apiUtils';
 
 const FEED_TYPES = [
   'Starter',
@@ -13,16 +14,7 @@ const FEED_TYPES = [
 
 const saveToJson = async (inventory: FeedEntry[]) => {
   try {
-    const response = await fetch('http://localhost:3001/api/saveFeedInventory', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(inventory),
-    });
-    if (!response.ok) {
-      console.error('Failed to save to test.json');
-    }
+    await apiCall('/saveFeedInventory', inventory);
   } catch (error) {
     console.error('Error saving to test.json:', error);
   }
@@ -56,8 +48,7 @@ export const FeedTracker = () => {
     const diffTime = Math.abs(end.getTime() - start.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newFeed: FeedEntry = {
       id: Date.now().toString(),
@@ -84,17 +75,15 @@ export const FeedTracker = () => {
       category: 'Feed',
       description: `${brand} ${type} (${quantity} ${unit})`,
       amount: parseFloat(quantity) * parseFloat(pricePerUnit)
-    };
-    const updatedExpenses = [...expenses, newExpense];
+    };    const updatedExpenses = [...expenses, newExpense];
     localStorage.setItem('chickenExpenses', JSON.stringify(updatedExpenses));
     (testData as TestData).chickenExpenses = updatedExpenses;
-    fetch('http://localhost:3001/api/saveExpenses', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updatedExpenses),
-    });
+    
+    try {
+      await apiCall('/saveExpenses', updatedExpenses);
+    } catch (error) {
+      console.error('Error saving expenses:', error);
+    }
 
     // Dispatch custom event to notify other components
     window.dispatchEvent(new CustomEvent('dataUpdated', { 
