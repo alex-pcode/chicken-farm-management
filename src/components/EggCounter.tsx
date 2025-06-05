@@ -5,7 +5,7 @@ import { LoadingSpinner } from './LoadingSpinner';
 import { exportToCSV } from '../utils/exportUtils';
 import { useKeyboardShortcut } from '../utils/useKeyboardShortcut';
 import { apiCall, fetchData } from '../utils/apiUtils';
-import type { EggEntry } from './testData';
+import type { EggEntry } from '../utils/supabase';
 
 interface ValidationError {
   field: string;

@@ -1,11 +1,7 @@
+
 // Utility to get the correct API base URL for both development and production
 export const getApiUrl = (endpoint: string): string => {
-  // In development, use localhost server
-  if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
-    return `http://localhost:3001${endpoint}`;
-  }
-  
-  // In production (Vercel), use relative API routes
+  // Always use relative API routes - Vite will proxy to Vercel functions in dev
   return `/api${endpoint}`;
 };
 
@@ -20,10 +16,10 @@ export const apiCall = async (endpoint: string, data: any) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    });    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API Error ${response.status}:`, errorText);
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
     }
 
     return await response.json();
@@ -43,10 +39,10 @@ export const fetchData = async () => {
       headers: {
         'Content-Type': 'application/json',
       },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    });    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Fetch Error ${response.status}:`, errorText);
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
     }
 
     const result = await response.json();
