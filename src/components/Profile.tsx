@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import testDataImport from './test.json';
-import type { FlockProfile, FlockEvent, TestData } from './testData';
+import type { FlockProfile, FlockEvent } from './testData';
 import { apiCall, fetchData } from '../utils/apiUtils';
-
-const testData = testDataImport as TestData;
 
 const EVENT_TYPES = {
   acquisition: '🐣 New Birds Acquired',
@@ -14,12 +11,12 @@ const EVENT_TYPES = {
   other: '📝 Other Event'
 };
 
-const saveToJson = async (profile: FlockProfile) => {
+const saveToDatabase = async (profile: FlockProfile) => {
   try {
     await apiCall('/saveFlockProfile', profile);
     return true;
   } catch (error) {
-    console.error('Error saving to test.json:', error);
+    console.error('Error saving to database:', error);
     return false;
   }
 };
@@ -49,7 +46,7 @@ export const Profile = () => {
     affectedBirds: undefined,
     notes: ''
   });  useEffect(() => {
-    // Load from database first, fallback to testData
+    // Load from database
     const loadProfile = async () => {
       try {
         const dbData = await fetchData();
@@ -69,29 +66,9 @@ export const Profile = () => {
             notes: profileData.notes || ""
           };
           setProfile(updatedProfile);
-          localStorage.setItem('flockProfile', JSON.stringify(updatedProfile));
-          return;
         }
       } catch (error) {
-        console.log('Failed to load from database, using local data:', error);
-      }
-      
-      // Fallback to local testData
-      const profileData = testData.flockProfile;
-      if (profileData) {
-        const updatedProfile = {
-          hens: profileData.hens || 0,
-          roosters: profileData.roosters || 0,
-          chicks: profileData.chicks || 0,
-          brooding: profileData.brooding || 0,
-          lastUpdated: profileData.lastUpdated || new Date().toISOString(),
-          breedTypes: profileData.breedTypes || [],
-          events: profileData.events || [],
-          flockStartDate: profileData.flockStartDate || new Date().toISOString(),
-          notes: profileData.notes || ""
-        };
-        setProfile(updatedProfile);
-        localStorage.setItem('flockProfile', JSON.stringify(updatedProfile));
+        console.log('Failed to load from database:', error);
       }
     };
     
@@ -108,13 +85,10 @@ export const Profile = () => {
       lastUpdated: new Date().toISOString(),
       breedTypes: profile.breedTypes || []
     };
-    
-    try {
-      const saved = await saveToJson(updatedProfile);
+      try {
+      const saved = await saveToDatabase(updatedProfile);
       if (saved) {
         setProfile(updatedProfile);
-        localStorage.setItem('flockProfile', JSON.stringify(updatedProfile));
-        testData.flockProfile = updatedProfile;
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);
       } else {
@@ -138,13 +112,10 @@ export const Profile = () => {
         ...profile,
         breedTypes: [...(profile.breedTypes || []), newBreed.trim()]
       };
-      
-      try {
-        const saved = await saveToJson(updatedProfile);
+        try {
+        const saved = await saveToDatabase(updatedProfile);
         if (saved) {
           setProfile(updatedProfile);
-          localStorage.setItem('flockProfile', JSON.stringify(updatedProfile));
-          testData.flockProfile = updatedProfile;
           setNewBreed('');
           setSuccess(true);
           setTimeout(() => setSuccess(false), 3000);
@@ -168,13 +139,10 @@ export const Profile = () => {
       ...profile,
       breedTypes: profile.breedTypes?.filter(b => b !== breed)
     };
-    
-    try {
-      const saved = await saveToJson(updatedProfile);
+      try {
+      const saved = await saveToDatabase(updatedProfile);
       if (saved) {
         setProfile(updatedProfile);
-        localStorage.setItem('flockProfile', JSON.stringify(updatedProfile));
-        testData.flockProfile = updatedProfile;
       } else {
         throw new Error('Failed to remove breed');
       }
@@ -208,15 +176,11 @@ export const Profile = () => {
       events: [...(profile.events || []), event].sort((a, b) => 
         new Date(a.date).getTime() - new Date(b.date).getTime()
       )
-    };
-
-    try {
+    };    try {
       console.log('Sending profile update:', updatedProfile);
-      const saved = await saveToJson(updatedProfile);
+      const saved = await saveToDatabase(updatedProfile);
       if (saved) {
         setProfile(updatedProfile);
-        localStorage.setItem('flockProfile', JSON.stringify(updatedProfile));
-        testData.flockProfile = updatedProfile;
         setNewEvent({
           type: 'acquisition',
           date: new Date().toISOString().split('T')[0],
@@ -245,13 +209,10 @@ export const Profile = () => {
       ...profile,
       events: profile.events.filter(e => e.id !== eventId)
     };
-    
-    try {
-      const saved = await saveToJson(updatedProfile);
+      try {
+      const saved = await saveToDatabase(updatedProfile);
       if (saved) {
         setProfile(updatedProfile);
-        localStorage.setItem('flockProfile', JSON.stringify(updatedProfile));
-        testData.flockProfile = updatedProfile;
       } else {
         throw new Error('Failed to remove event');
       }

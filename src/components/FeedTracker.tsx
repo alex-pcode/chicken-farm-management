@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import testData from './test.json';
-import type { FeedEntry, TestData } from './testData';
+import type { FeedEntry } from './testData';
 import { apiCall, fetchData } from '../utils/apiUtils';
 
 const FEED_TYPES = [
@@ -12,11 +11,11 @@ const FEED_TYPES = [
   'Other'
 ];
 
-const saveToJson = async (inventory: FeedEntry[]) => {
+const saveToDatabase = async (inventory: FeedEntry[]) => {
   try {
     await apiCall('/saveFeedInventory', inventory);
   } catch (error) {
-    console.error('Error saving to test.json:', error);
+    console.error('Error saving to database:', error);
   }
 };
 
@@ -32,25 +31,18 @@ export const FeedTracker = () => {
   const [openedDate, setOpenedDate] = useState(new Date().toISOString().split('T')[0]);
   const [batchNumber, setBatchNumber] = useState('');
   const [pricePerUnit, setPricePerUnit] = useState('');  useEffect(() => {
-    // Load from database first, fallback to testData
+    // Load from database
     const loadFeedInventory = async () => {
       try {
         const dbData = await fetchData();
         const inventory = dbData.feedInventory;
         
-        if (inventory && Array.isArray(inventory) && inventory.length > 0) {
+        if (inventory && Array.isArray(inventory)) {
           setFeedInventory(inventory);
-          localStorage.setItem('feedInventory', JSON.stringify(inventory));
-          return;
         }
       } catch (error) {
-        console.log('Failed to load feed inventory from database, using local data:', error);
+        console.log('Failed to load feed inventory from database:', error);
       }
-      
-      // Fallback to local testData
-      const inventory = (testData as TestData).feedInventory;
-      setFeedInventory(inventory);
-      localStorage.setItem('feedInventory', JSON.stringify(inventory));
     };
     
     loadFeedInventory();
@@ -77,34 +69,32 @@ export const FeedTracker = () => {
       pricePerUnit: parseFloat(pricePerUnit),
       description: `${brand} ${type} (${quantity} ${unit})`
     };
-    
-    const updatedInventory = [...feedInventory, newFeed];
+      const updatedInventory = [...feedInventory, newFeed];
     setFeedInventory(updatedInventory);
-    localStorage.setItem('feedInventory', JSON.stringify(updatedInventory));
-    (testData as TestData).feedInventory = updatedInventory;
-    saveToJson(updatedInventory);    // Add expense entry
-    const savedExpenses = localStorage.getItem('chickenExpenses');
-    const expenses = savedExpenses ? JSON.parse(savedExpenses) : (testData as TestData).chickenExpenses;
-    const newExpense = {
-      id: Date.now().toString(),
-      date: openedDate,
-      category: 'Feed',
-      description: `${brand} ${type} (${quantity} ${unit})`,
-      amount: parseFloat(quantity) * parseFloat(pricePerUnit)
-    };    const updatedExpenses = [...expenses, newExpense];
-    localStorage.setItem('chickenExpenses', JSON.stringify(updatedExpenses));
-    (testData as TestData).chickenExpenses = updatedExpenses;
-    
+    saveToDatabase(updatedInventory);
+
+    // Add expense entry via database
     try {
+      const dbData = await fetchData();
+      const expenses = dbData.expenses || [];
+      const newExpense = {
+        id: Date.now().toString(),
+        date: openedDate,
+        category: 'Feed',
+        description: `${brand} ${type} (${quantity} ${unit})`,
+        amount: parseFloat(quantity) * parseFloat(pricePerUnit)
+      };
+
+      const updatedExpenses = [...expenses, newExpense];
       await apiCall('/saveExpenses', updatedExpenses);
+
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new CustomEvent('dataUpdated', { 
+        detail: { type: 'expense', data: updatedExpenses } 
+      }));
     } catch (error) {
       console.error('Error saving expenses:', error);
     }
-
-    // Dispatch custom event to notify other components
-    window.dispatchEvent(new CustomEvent('dataUpdated', { 
-      detail: { type: 'expense', data: updatedExpenses } 
-    }));
     
     // Reset form
     setBrand('');
@@ -112,7 +102,6 @@ export const FeedTracker = () => {
     setBatchNumber('');
     setPricePerUnit('');
   };
-
   const handleDepleteFeed = (id: string) => {
     const updatedInventory = feedInventory.map(feed => {
       if (feed.id === id) {
@@ -121,18 +110,13 @@ export const FeedTracker = () => {
       return feed;
     });
     setFeedInventory(updatedInventory);
-    localStorage.setItem('feedInventory', JSON.stringify(updatedInventory));
-    (testData as TestData).feedInventory = updatedInventory;
-    saveToJson(updatedInventory);
+    saveToDatabase(updatedInventory);
   };
 
   const handleDelete = (id: string) => {
-    if (deleteConfirm === id) {
-      const updatedInventory = feedInventory.filter(feed => feed.id !== id);
+    if (deleteConfirm === id) {      const updatedInventory = feedInventory.filter(feed => feed.id !== id);
       setFeedInventory(updatedInventory);
-      localStorage.setItem('feedInventory', JSON.stringify(updatedInventory));
-      (testData as TestData).feedInventory = updatedInventory;
-      saveToJson(updatedInventory);
+      saveToDatabase(updatedInventory);
       setDeleteConfirm(null);
     } else {
       setDeleteConfirm(id);

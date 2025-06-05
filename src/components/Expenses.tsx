@@ -5,8 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSpinner } from './LoadingSpinner';
 import { exportToCSV } from '../utils/exportUtils';
 import { useKeyboardShortcut } from '../utils/useKeyboardShortcut';
-import testData from './test.json';
-import type { Expense, TestData } from './testData';
+import type { Expense } from './testData';
 import { apiCall, fetchData } from '../utils/apiUtils';
 
 interface ValidationError {
@@ -23,11 +22,11 @@ const CATEGORIES = [
   'Other'
 ];
 
-const saveToJson = async (expenses: Expense[]) => {
+const saveToDatabase = async (expenses: Expense[]) => {
   try {
     await apiCall('/saveExpenses', expenses);
   } catch (error) {
-    console.error('Error saving to test.json:', error);
+    console.error('Error saving to database:', error);
   }
 };
 
@@ -48,26 +47,16 @@ export const Expenses = () => {
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Try to load from database first
+        // Load from database
         try {
           const dbData = await fetchData();
           const expenseData = dbData.expenses;
           
-          if (expenseData && Array.isArray(expenseData) && expenseData.length > 0) {
+          if (expenseData && Array.isArray(expenseData)) {
             setExpenses(expenseData);
-            localStorage.setItem('chickenExpenses', JSON.stringify(expenseData));
-          } else {
-            // Fallback to local testData
-            const expenseData = (testData as TestData).chickenExpenses;
-            setExpenses(expenseData);
-            localStorage.setItem('chickenExpenses', JSON.stringify(expenseData));
           }
         } catch (error) {
-          console.log('Failed to load expenses from database, using local data:', error);
-          // Fallback to local testData
-          const expenseData = (testData as TestData).chickenExpenses;
-          setExpenses(expenseData);
-          localStorage.setItem('chickenExpenses', JSON.stringify(expenseData));
+          console.log('Failed to load expenses from database:', error);
         }
       } finally {
         setIsLoading(false);
@@ -126,15 +115,11 @@ export const Expenses = () => {
       category,
       description: description.trim(),
       amount: parseFloat(amount)
-    };
-
-    const updatedExpenses = [...expenses, newExpense];
+    };    const updatedExpenses = [...expenses, newExpense];
     setExpenses(updatedExpenses);
     
-    // Update both localStorage and test.json
-    localStorage.setItem('chickenExpenses', JSON.stringify(updatedExpenses));
-    (testData as TestData).chickenExpenses = updatedExpenses;
-    saveToJson(updatedExpenses);
+    // Save to database
+    saveToDatabase(updatedExpenses);
 
     // Reset form based on continue mode
     if (!continueMode) {
@@ -152,14 +137,11 @@ export const Expenses = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (deleteConfirm === id) {
-      const updatedExpenses = expenses.filter(expense => expense.id !== id);
+    if (deleteConfirm === id) {      const updatedExpenses = expenses.filter(expense => expense.id !== id);
       setExpenses(updatedExpenses);
       
-      // Update both localStorage and test.json
-      localStorage.setItem('chickenExpenses', JSON.stringify(updatedExpenses));
-      (testData as TestData).chickenExpenses = updatedExpenses;
-      saveToJson(updatedExpenses);
+      // Save to database
+      saveToDatabase(updatedExpenses);
       
       setDeleteConfirm(null);
     } else {

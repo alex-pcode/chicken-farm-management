@@ -7,8 +7,7 @@ import { FeedTracker } from './components/FeedTracker'
 import { Savings } from './components/Savings'
 import { Profile } from './components/Profile'
 import { motion } from 'framer-motion'
-import testData from './components/test.json'
-import type { TestData } from './components/testData'
+import { fetchData } from './utils/apiUtils'
 
 const navigation = [
   { name: 'Dashboard', emoji: '🏠', href: '/' },
@@ -40,31 +39,33 @@ const Dashboard = () => {
   const [dailyAverage, setDailyAverage] = useState(0);
   
   useEffect(() => {
-    // Load data from testData
-    const eggEntries = (testData as TestData).eggEntries;
-    const totalEggs = eggEntries.reduce((sum: number, entry: { count: number }) => 
-      sum + entry.count, 0);
-    
-    const expenseEntries = (testData as TestData).chickenExpenses;
-    const totalExpenses = expenseEntries.reduce((sum: number, expense: { amount: number }) => 
-      sum + expense.amount, 0);
+    // Load data from database
+    const loadDashboardData = async () => {
+      try {
+        const dbData = await fetchData();
+        
+        const eggEntries = dbData.eggEntries || [];
+        const totalEggs = eggEntries.reduce((sum: number, entry: { count: number }) => 
+          sum + entry.count, 0);
+        
+        const expenseEntries = dbData.expenses || [];
+        const totalExpenses = expenseEntries.reduce((sum: number, expense: { amount: number }) => 
+          sum + expense.amount, 0);
 
-    const feedInventory = (testData as TestData).feedInventory;
+        // Calculate daily average from last 7 days
+        const last7Days = eggEntries
+          .slice(-7)
+          .reduce((sum: number, entry: { count: number }) => sum + entry.count, 0) / 7;
+        
+        setEggCount(totalEggs);
+        setExpenses(totalExpenses);
+        setDailyAverage(Math.round(last7Days * 10) / 10);
+      } catch (error) {
+        console.log('Failed to load dashboard data:', error);
+      }
+    };
 
-    // Calculate daily average from last 7 days
-    const last7Days = eggEntries
-      .slice(-7)
-      .reduce((sum: number, entry: { count: number }) => sum + entry.count, 0) / 7;
-    
-    setEggCount(totalEggs);
-    setExpenses(totalExpenses);
-    setDailyAverage(Math.round(last7Days * 10) / 10);
-
-    // Update localStorage with all data
-    localStorage.setItem('eggEntries', JSON.stringify(eggEntries));
-    localStorage.setItem('chickenExpenses', JSON.stringify(expenseEntries));
-    localStorage.setItem('feedInventory', JSON.stringify(feedInventory));
-    localStorage.setItem('flockProfile', JSON.stringify((testData as TestData).flockProfile));
+    loadDashboardData();
   }, []);
 
   return (

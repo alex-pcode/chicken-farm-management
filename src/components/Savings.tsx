@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import testData from './test.json';
-import type { FlockProfile, TestData } from './testData';
+import type { FlockProfile } from './testData';
+import { fetchData } from '../utils/apiUtils';
 
 interface SavingsData {
   eggPrice: number;
@@ -30,48 +30,53 @@ export const Savings = () => {
     dailyLayRate: 0,
     revenuePerHen: 0
   });
-
   useEffect(() => {
-    const savedProfile = localStorage.getItem('flockProfile');
-    const savedEggEntries = localStorage.getItem('eggEntries');
+    const loadData = async () => {
+      try {
+        const dbData = await fetchData();
+        if (dbData.flockProfile) {
+          setFlockProfile(dbData.flockProfile);
+        }
+      } catch (error) {
+        console.log('Failed to load profile from database:', error);
+      }
+    };
     
-    if (savedProfile) {
-      const profile = JSON.parse(savedProfile);
-      setFlockProfile(profile);
-    }
-    
-    // Load egg entries from localStorage or test.json
-    if (savedEggEntries) {
-      (testData as TestData).eggEntries = JSON.parse(savedEggEntries);
-    }
-    
+    loadData();
     calculateSavings();
-  }, [eggPrice, startingCost, timePeriod]);
+  }, [eggPrice, startingCost, timePeriod]);  useEffect(() => {
+    const calculateProductivityStats = async () => {
+      if (flockProfile && flockProfile.hens > 0) {
+        try {
+          const dbData = await fetchData();
+          const eggEntries = dbData.eggEntries || [];
+          const totalEggs = eggEntries.reduce((sum: number, entry: { count: number }) => 
+            sum + entry.count, 0);
 
-  useEffect(() => {
-    if (flockProfile && flockProfile.hens > 0) {
-      const eggEntries = (testData as TestData).eggEntries;
-      const totalEggs = eggEntries.reduce((sum: number, entry: { count: number }) => 
-        sum + entry.count, 0);
+          // Calculate eggs per hen
+          const eggsPerHen = totalEggs / flockProfile.hens;
 
-      // Calculate eggs per hen
-      const eggsPerHen = totalEggs / flockProfile.hens;
+          // Calculate daily lay rate (last 7 days)
+          const last7DaysEggs = eggEntries
+            .slice(-7)
+            .reduce((sum: number, entry: { count: number }) => sum + entry.count, 0);
+          const dailyLayRate = (last7DaysEggs / (7 * flockProfile.hens)) * 100;
 
-      // Calculate daily lay rate (last 7 days)
-      const last7DaysEggs = eggEntries
-        .slice(-7)
-        .reduce((sum: number, entry: { count: number }) => sum + entry.count, 0);
-      const dailyLayRate = (last7DaysEggs / (7 * flockProfile.hens)) * 100;
+          // Calculate revenue per hen
+          const revenuePerHen = eggsPerHen * parseFloat(eggPrice);
 
-      // Calculate revenue per hen
-      const revenuePerHen = eggsPerHen * parseFloat(eggPrice);
-
-      setProductivityStats({
-        eggsPerHen,
-        dailyLayRate,
-        revenuePerHen
-      });
-    }
+          setProductivityStats({
+            eggsPerHen,
+            dailyLayRate,
+            revenuePerHen
+          });
+        } catch (error) {
+          console.log('Failed to load egg data for productivity stats:', error);
+        }
+      }
+    };
+    
+    calculateProductivityStats();
   }, [flockProfile, eggPrice, savingsData.totalEggs]);
 
   const getFilteredData = (date: string) => {
@@ -92,34 +97,39 @@ export const Savings = () => {
         return true;
     }
   };
+  const calculateSavings = async () => {
+    try {
+      const dbData = await fetchData();
+      
+      // Get egg data from database
+      const eggEntries = dbData.eggEntries || [];
+      const totalEggs = eggEntries
+        .filter((entry: any) => getFilteredData(entry.date))
+        .reduce((sum: number, entry: { count: number }) => sum + entry.count, 0);
 
-  const calculateSavings = () => {
-    // Get egg data from testData
-    const eggEntries = (testData as TestData).eggEntries;
-    const totalEggs = eggEntries
-      .filter((entry: any) => getFilteredData(entry.date))
-      .reduce((sum: number, entry: { count: number }) => sum + entry.count, 0);
+      // Get expenses data from database
+      const expenses = dbData.expenses || [];
+      const operatingExpenses = expenses
+        .filter((expense: any) => getFilteredData(expense.date))
+        .reduce((sum: number, expense: { amount: number }) => sum + expense.amount, 0);
 
-    // Get expenses data from testData
-    const expenses = (testData as TestData).chickenExpenses;
-    const operatingExpenses = expenses
-      .filter((expense: any) => getFilteredData(expense.date))
-      .reduce((sum: number, expense: { amount: number }) => sum + expense.amount, 0);
+      // Calculate total startup costs
+      const totalStartupCosts = parseFloat(startingCost);
 
-    // Calculate total startup costs
-    const totalStartupCosts = parseFloat(startingCost);
+      // Calculate total egg value and net savings (including startup costs)
+      const totalEggValue = totalEggs * parseFloat(eggPrice);
+      const netSavings = totalEggValue - operatingExpenses - totalStartupCosts;
 
-    // Calculate total egg value and net savings (including startup costs)
-    const totalEggValue = totalEggs * parseFloat(eggPrice);
-    const netSavings = totalEggValue - operatingExpenses - totalStartupCosts;
-
-    setSavingsData({
-      eggPrice: parseFloat(eggPrice),
-      startingCost: parseFloat(startingCost),
-      totalEggs,
-      totalExpenses: operatingExpenses + totalStartupCosts,
-      netSavings
-    });
+      setSavingsData({
+        eggPrice: parseFloat(eggPrice),
+        startingCost: parseFloat(startingCost),
+        totalEggs,
+        totalExpenses: operatingExpenses + totalStartupCosts,
+        netSavings
+      });
+    } catch (error) {
+      console.log('Failed to load data for savings calculation:', error);
+    }
   };
 
   const handleEggPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {

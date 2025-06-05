@@ -5,19 +5,19 @@ import { LoadingSpinner } from './LoadingSpinner';
 import { exportToCSV } from '../utils/exportUtils';
 import { useKeyboardShortcut } from '../utils/useKeyboardShortcut';
 import { apiCall, fetchData } from '../utils/apiUtils';
-import testData from './test.json';
-import type { EggEntry, TestData } from './testData';
+import type { EggEntry } from './testData';
 
 interface ValidationError {
   field: string;
   message: string;
 }
 
-const saveToJson = async (updatedEntries: EggEntry[]) => {
+const saveToDatabase = async (updatedEntries: EggEntry[]) => {
   try {
     await apiCall('/saveEggEntries', updatedEntries);
   } catch (error) {
-    console.error('Error saving to test.json:', error);
+    console.error('Error saving to database:', error);
+    throw error;
   }
 };
 
@@ -31,24 +31,18 @@ export const EggCounter = () => {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const entriesPerPage = 10;
+
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      try {        // Try to fetch data from database first
+      try {        
+        // Try to fetch data from database first
         const dbData = await fetchData();
         const entries: EggEntry[] = dbData.eggEntries || [];
         setEggEntries(entries.sort((a: EggEntry, b: EggEntry) => 
           new Date(b.date).getTime() - new Date(a.date).getTime()
-        ));
-        localStorage.setItem('eggEntries', JSON.stringify(entries));
-      } catch (error) {
-        console.error('Failed to load from database, using local data:', error);
-        // Fallback to testData if database fails
-        const entries = (testData as TestData).eggEntries;
-        setEggEntries(entries.sort((a, b) => 
-          new Date(b.date).getTime() - new Date(a.date).getTime()
-        ));
-        localStorage.setItem('eggEntries', JSON.stringify(entries));
+        ));      } catch (error) {
+        console.error('Failed to load from database:', error);
       } finally {
         setIsLoading(false);
       }
@@ -74,7 +68,7 @@ export const EggCounter = () => {
     return newErrors.length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSuccess(false);
 
@@ -82,34 +76,37 @@ export const EggCounter = () => {
       return;
     }
 
-    const existingEntry = eggEntries.find(entry => entry.date === selectedDate);
-    if (existingEntry) {
-      if (!window.confirm('An entry for this date already exists. Do you want to update it?')) {
-        return;
-      }
-      const updatedEntries = eggEntries.map(entry =>
-        entry.date === selectedDate ? { ...entry, count: parseInt(count) } : entry
-      );
-      setEggEntries(updatedEntries);
-      localStorage.setItem('eggEntries', JSON.stringify(updatedEntries));
-      (testData as TestData).eggEntries = updatedEntries;
-      saveToJson(updatedEntries);
-    } else {
-      const newEntry: EggEntry = { date: selectedDate, count: parseInt(count) };
-      const updatedEntries = [...eggEntries, newEntry].sort((a, b) => 
-        new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
-      setEggEntries(updatedEntries);
-      localStorage.setItem('eggEntries', JSON.stringify(updatedEntries));
-      (testData as TestData).eggEntries = updatedEntries;
-      saveToJson(updatedEntries);
-    }
+    try {
+      const existingEntry = eggEntries.find(entry => entry.date === selectedDate);
+      let updatedEntries: EggEntry[];
 
-    setCount('');
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
+      if (existingEntry) {
+        if (!window.confirm('An entry for this date already exists. Do you want to update it?')) {
+          return;
+        }
+        updatedEntries = eggEntries.map(entry =>
+          entry.date === selectedDate ? { ...entry, count: parseInt(count) } : entry
+        );
+      } else {
+        const newEntry: EggEntry = { date: selectedDate, count: parseInt(count) };
+        updatedEntries = [...eggEntries, newEntry].sort((a, b) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+      }
+
+      // Save to database
+      await saveToDatabase(updatedEntries);
+      
+      // Update local state only after successful save
+      setEggEntries(updatedEntries);
+      setCount('');
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (error) {
+      console.error('Error saving egg entry:', error);
+      setErrors([{ field: 'submit', message: 'Failed to save entry. Please try again.' }]);
+    }
   };
-  // Removed unused chartData calculation
 
   const calculateSummary = () => {
     const total = eggEntries.reduce((sum, entry) => sum + entry.count, 0);
@@ -217,7 +214,6 @@ export const EggCounter = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="space-y-8 max-w-3xl mx-auto py-8"
-      style={{ margin: '0px auto', opacity: 1 }}
     >
       {showShortcuts && (
         <motion.div
@@ -479,10 +475,9 @@ export const EggCounter = () => {
                     {[...Array(totalPages)].map((_, index) => (
                       <button
                         key={index + 1}
-                        onClick={() => paginate(index + 1)}
-                        className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold
+                        onClick={() => paginate(index + 1)}                        className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold
                           ${currentPage === index + 1
-                            ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                            ? 'z-10 bg-indigo-600 text-white focus:outline-2 focus:outline-offset-2 focus:outline-indigo-600'
                             : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50'}`}
                       >
                         {index + 1}
