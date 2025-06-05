@@ -1,5 +1,10 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { kv } from '@vercel/kv';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = 'https://yckjarujczxrlaftfjbv.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlja2phcnVqY3p4cmxhZnRmamJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNDkxMDIsImV4cCI6MjA2NDcyNTEwMn0.Q399p6ORsh7-HF4IRLQAJYzgxKk5C3MNCqEIrPA00l4';
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -13,20 +18,64 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
-  }
-  try {
+  }  try {
     const flockData = req.body;
     console.log('Received flock data:', flockData);
     
-    // Save to Vercel KV (Redis)
-    await kv.set('flockProfile', flockData);
-    await kv.set('flockProfile:lastUpdated', new Date().toISOString());
+    // Check if a profile already exists
+    const { data: existingProfiles, error: fetchError } = await supabase
+      .from('flock_profiles')
+      .select('id')
+      .limit(1);
+
+    if (fetchError) {
+      throw new Error(`Database fetch error: ${fetchError.message}`);
+    }
+
+    let result;
+    if (existingProfiles && existingProfiles.length > 0) {
+      // Update existing profile
+      const { data, error } = await supabase
+        .from('flock_profiles')
+        .update({
+          farm_name: flockData.farmName,
+          location: flockData.location,
+          flock_size: flockData.flockSize,
+          breed: flockData.breed,
+          start_date: flockData.startDate,
+          notes: flockData.notes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingProfiles[0].id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      result = data;
+    } else {
+      // Insert new profile
+      const { data, error } = await supabase
+        .from('flock_profiles')
+        .insert({
+          farm_name: flockData.farmName,
+          location: flockData.location,
+          flock_size: flockData.flockSize,
+          breed: flockData.breed,
+          start_date: flockData.startDate,
+          notes: flockData.notes
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      result = data;
+    }
     
-    console.log('Flock profile saved to KV database');
+    console.log('Flock profile saved to Supabase:', result);
     
     res.status(200).json({ 
       message: 'Flock profile saved successfully', 
-      data: { flockProfile: flockData },
+      data: { flockProfile: result },
       timestamp: new Date().toISOString()
     });
   } catch (error) {

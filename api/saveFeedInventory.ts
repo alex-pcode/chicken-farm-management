@@ -1,5 +1,10 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { kv } from '@vercel/kv';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = 'https://yckjarujczxrlaftfjbv.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlja2phcnVqY3p4cmxhZnRmamJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNDkxMDIsImV4cCI6MjA2NDcyNTEwMn0.Q399p6ORsh7-HF4IRLQAJYzgxKk5C3MNCqEIrPA00l4';
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
@@ -13,20 +18,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
-  }
-  try {
+  }  try {
     const feedData = req.body;
     console.log('Received feed inventory data:', feedData);
     
-    // Save to Vercel KV (Redis)
-    await kv.set('feedInventory', feedData);
-    await kv.set('feedInventory:lastUpdated', new Date().toISOString());
+    // Clear existing inventory and insert new items
+    await supabase.from('feed_inventory').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     
-    console.log('Feed inventory saved to KV database');
+    // Insert new inventory items
+    const { data, error } = await supabase
+      .from('feed_inventory')
+      .insert(
+        feedData.map((item: any) => ({
+          name: item.name,
+          quantity: item.quantity,
+          unit: item.unit,
+          cost_per_unit: item.costPerUnit,
+          purchase_date: item.purchaseDate,
+          expiry_date: item.expiryDate
+        }))
+      )
+      .select();
+
+    if (error) {
+      throw new Error(`Database insert error: ${error.message}`);
+    }
+    
+    console.log('Feed inventory saved to Supabase:', data);
     
     res.status(200).json({ 
       message: 'Feed inventory saved successfully', 
-      data: { feedInventory: feedData },
+      data: { feedInventory: data },
       timestamp: new Date().toISOString()
     });
   } catch (error) {
