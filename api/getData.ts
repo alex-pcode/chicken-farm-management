@@ -1,4 +1,4 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL || 'https://kmohmazolvilxpxhfjie.supabase.co';
@@ -25,74 +25,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Method not allowed' });
-  }  try {
-    console.log('Fetching all data from Supabase...');
+  }
+
+  try {
+    console.log('Attempting to fetch egg entries...');
     
-    // Fetch all data from different tables
-    const [flockProfileResult, eggEntriesResult, feedInventoryResult, expensesResult] = await Promise.all([
-      supabase.from('flock_profiles').select('*').limit(1).single(),
-      supabase.from('egg_entries').select('*').order('date', { ascending: false }),
-      supabase.from('feed_inventory').select('*').order('created_at', { ascending: false }),
-      supabase.from('expenses').select('*').order('date', { ascending: false })
-    ]);
+    // Start with just egg entries to test
+    const { data: eggEntries, error } = await supabase
+      .from('egg_entries')
+      .select('*')
+      .order('date', { ascending: false });
 
-    // Handle errors for each query
-    if (flockProfileResult.error && flockProfileResult.error.code !== 'PGRST116') {
-      console.error('Error fetching flock profile:', flockProfileResult.error);
-    }
-    if (eggEntriesResult.error) {
-      console.error('Error fetching egg entries:', eggEntriesResult.error);
-    }
-    if (feedInventoryResult.error) {
-      console.error('Error fetching feed inventory:', feedInventoryResult.error);
-    }
-    if (expensesResult.error) {
-      console.error('Error fetching expenses:', expensesResult.error);
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
     }
 
-    // Transform the data to match the expected format
-    const data = {
-      flockProfile: flockProfileResult.data ? {
-        farmName: flockProfileResult.data.farm_name,
-        location: flockProfileResult.data.location,
-        flockSize: flockProfileResult.data.flock_size,
-        breed: flockProfileResult.data.breed,
-        startDate: flockProfileResult.data.start_date,
-        notes: flockProfileResult.data.notes
-      } : null,
-      eggEntries: eggEntriesResult.data?.map(entry => ({
-        date: entry.date,
-        count: entry.count
-      })) || [],
-      feedInventory: feedInventoryResult.data?.map(item => ({
-        name: item.name,
-        quantity: item.quantity,
-        unit: item.unit,
-        costPerUnit: item.cost_per_unit,
-        purchaseDate: item.purchase_date,
-        expiryDate: item.expiry_date
-      })) || [],
-      expenses: expensesResult.data?.map(expense => ({
-        date: expense.date,
-        category: expense.category,
-        description: expense.description,
-        amount: expense.amount
-      })) || []
+    console.log('Egg entries fetched successfully:', eggEntries?.length || 0, 'entries');
+    
+    const response = {
+      message: 'Data fetched successfully',
+      data: {
+        eggEntries: eggEntries?.map(entry => ({
+          date: entry.date,
+          count: entry.count
+        })) || [],
+        flockProfile: null,
+        feedInventory: [],
+        expenses: []
+      },
+      timestamp: new Date().toISOString()
     };
     
-    console.log('Data fetched successfully from Supabase');
-    
-    res.status(200).json({
-      message: 'Data fetched successfully',
-      data,
-      timestamp: new Date().toISOString()
-    });
+    res.status(200).json(response);
   } catch (error) {
-    console.error('Error fetching data from Supabase:', error);
+    console.error('Error in getData:', error);
     res.status(500).json({
       message: 'Error fetching data from database',
-      error: error.message,
-      stack: error.stack
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
     });
   }
 }

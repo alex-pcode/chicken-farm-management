@@ -1,6 +1,6 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -11,30 +11,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const envCheck = {
-      hasSupabaseUrl: !!process.env.SUPABASE_URL,
-      hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY,
-      hasViteSupabaseUrl: !!process.env.VITE_SUPABASE_URL,
-      hasViteSupabaseKey: !!process.env.VITE_SUPABASE_ANON_KEY,
-      nodeEnv: process.env.NODE_ENV,
-      vercelEnv: process.env.VERCEL_ENV,
-      allEnvKeys: Object.keys(process.env).filter(key => 
-        key.includes('SUPABASE') || key.includes('VITE')
-      )
-    };
-
-    console.log('Environment debug:', envCheck);
-
+    // Very simple test
     res.status(200).json({
-      message: 'Environment test',
-      environment: envCheck,
-      timestamp: new Date().toISOString()
+      message: 'Test endpoint working',
+      timestamp: new Date().toISOString(),
+      method: req.method,
+      url: req.url,
+      nodeVersion: process.version
     });
   } catch (error) {
-    console.error('Test endpoint error:', error);
     res.status(500).json({
       message: 'Test endpoint error',
-      error: error.message
+      error: String(error)
     });
   }
 }
