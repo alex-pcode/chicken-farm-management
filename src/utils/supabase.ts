@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 
 // Use environment variables with fallbacks for development
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://kmohmazolvilxpxhfjie.supabase.co'
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlja2phcnVqY3p4cmxhZnRmamJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNDkxMDIsImV4cCI6MjA2NDcyNTEwMn0.Q399p6ORsh7-HF4IRLQAJYzgxKk5C3MNCqEIrPA00l4'
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imttb2htYXpvbHZpbHhweGhmanllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ1OTQwNTIsImV4cCI6MjA1MDE3MDA1Mn0.rqGHJQgaXeRWZO8YdxC0VW_F5Yxgp3xIjC4tWnuwUhw'
 
 // Debug logging in development
 if (import.meta.env.DEV) {
