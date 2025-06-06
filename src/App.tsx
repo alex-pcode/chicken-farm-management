@@ -15,7 +15,7 @@ const navigation = [
   { name: 'Production', emoji: '🥚', href: '/egg-counter' },
   { name: 'Expenses', emoji: '💰', href: '/expenses' },
   { name: 'Feed Management', emoji: '🌾', href: '/feed-tracker' },
-  { name: 'Analytics', emoji: '📊', href: '/savings' },
+  { name: 'Analytics', emoji: '📊', href: '/savings' }
 ];
 
 const NavLink = ({ item }: { item: typeof navigation[0] }) => {

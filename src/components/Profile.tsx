@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { FlockProfile, FlockEvent } from './testData';
+import type { FlockProfile, FlockEvent } from '../types';
 import { apiCall, fetchData } from '../utils/apiUtils';
 
 const EVENT_TYPES = {

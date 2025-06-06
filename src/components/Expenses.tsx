@@ -3,7 +3,6 @@ import { TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSpinner } from './LoadingSpinner';
-import { exportToCSV } from '../utils/exportUtils';
 import { useKeyboardShortcut } from '../utils/useKeyboardShortcut';
 import type { Expense } from './testData';
 import { apiCall, fetchData } from '../utils/apiUtils';

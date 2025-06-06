@@ -2,10 +2,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSpinner } from './LoadingSpinner';
-import { exportToCSV } from '../utils/exportUtils';
 import { useKeyboardShortcut } from '../utils/useKeyboardShortcut';
 import { apiCall, fetchData } from '../utils/apiUtils';
-import type { EggEntry } from '../utils/supabase';
+import type { EggEntry } from '../types';
 
 interface ValidationError {
   field: string;

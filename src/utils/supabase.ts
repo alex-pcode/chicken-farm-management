@@ -1,47 +1,23 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = 'https://yckjarujczxrlaftfjbv.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlja2phcnVqY3p4cmxhZnRmamJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNDkxMDIsImV4cCI6MjA2NDcyNTEwMn0.Q399p6ORsh7-HF4IRLQAJYzgxKk5C3MNCqEIrPA00l4'
+// Use environment variables with fallbacks for development
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://kmohmazolvilxpxhfjie.supabase.co'
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlja2phcnVqY3p4cmxhZnRmamJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNDkxMDIsImV4cCI6MjA2NDcyNTEwMn0.Q399p6ORsh7-HF4IRLQAJYzgxKk5C3MNCqEIrPA00l4'
 
-export const supabase = createClient(supabaseUrl, supabaseKey)
-
-// Database types for TypeScript support
-export interface FlockProfile {
-  id?: string
-  farm_name: string
-  location: string
-  flock_size: number
-  breed: string
-  start_date: string
-  notes?: string
-  created_at?: string
-  updated_at?: string
+// Debug logging in development
+if (import.meta.env.DEV) {
+  console.log('🔧 Supabase Configuration:')
+  console.log('URL:', supabaseUrl)
+  console.log('Key (first 20 chars):', supabaseKey.substring(0, 20) + '...')
 }
 
-export interface EggEntry {
-  id?: string
-  date: string
-  count: number
-  created_at?: string
-}
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+})
 
-export interface FeedInventoryItem {
-  id?: string
-  name: string
-  quantity: number
-  unit: string
-  cost_per_unit?: number
-  purchase_date?: string
-  expiry_date?: string
-  created_at?: string
-  updated_at?: string
-}
-
-export interface Expense {
-  id?: string
-  date: string
-  category: string
-  description: string
-  amount: number
-  created_at?: string
-}
+// Types are now centralized in src/types/index.ts
+import type { FlockProfile, EggEntry, FeedEntry, Expense } from '../types';

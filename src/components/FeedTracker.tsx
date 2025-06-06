@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import type { FeedEntry } from './testData';
+import type { FeedEntry } from '../types';
 import { apiCall, fetchData } from '../utils/apiUtils';
 
 const FEED_TYPES = [

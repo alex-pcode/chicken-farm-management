@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import type { FlockProfile } from './testData';
+import type { FlockProfile } from '../types';
 import { fetchData } from '../utils/apiUtils';
 
 interface SavingsData {
