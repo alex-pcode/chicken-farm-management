@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { FeedEntry } from '../types';
 import { apiCall, fetchData } from '../utils/apiUtils';
+import { v4 as uuidv4 } from 'uuid';
 
 const FEED_TYPES = [
   'Starter',
@@ -22,6 +23,7 @@ const saveToDatabase = async (inventory: FeedEntry[]) => {
 export const FeedTracker = () => {
   const [feedInventory, setFeedInventory] = useState<FeedEntry[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
   // Form states for new feed entry
   const [brand, setBrand] = useState('');
@@ -58,8 +60,9 @@ export const FeedTracker = () => {
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
     const newFeed: FeedEntry = {
-      id: Date.now().toString(),
+      id: uuidv4(),
       brand,
       type,
       quantity: parseFloat(quantity),
@@ -69,9 +72,14 @@ export const FeedTracker = () => {
       pricePerUnit: parseFloat(pricePerUnit),
       description: `${brand} ${type} (${quantity} ${unit})`
     };
-      const updatedInventory = [...feedInventory, newFeed];
+    const updatedInventory = [...feedInventory, newFeed];
     setFeedInventory(updatedInventory);
-    saveToDatabase(updatedInventory);
+    try {
+      await saveToDatabase(updatedInventory);
+    } catch (err) {
+      setErrorMsg('Failed to save feed inventory. Please try again.');
+      // Optionally revert local state if needed
+    }
 
     // Add expense entry via database
     try {
@@ -260,6 +268,9 @@ export const FeedTracker = () => {
             Add Feed to Inventory
           </button>
         </form>
+        {errorMsg && (
+          <div className="text-red-600 font-semibold mb-4">{errorMsg}</div>
+        )}
       </motion.div>
 
       <motion.div
