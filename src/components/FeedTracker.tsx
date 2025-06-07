@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import type { FeedEntry } from '../types';
+import type { FeedEntry, FlockProfile } from '../types';
 import { apiCall, fetchData } from '../utils/apiUtils';
 import { v4 as uuidv4 } from 'uuid';
 
 const FEED_TYPES = [
-  'Starter',
-  'Grower',
-  'Layer',
-  'Scratch Grains',
-  'Other'
+  'Baby chicks',
+  'Big chicks', 
+  'Both'
 ];
 
 const saveToDatabase = async (inventory: FeedEntry[]) => {
@@ -22,8 +20,10 @@ const saveToDatabase = async (inventory: FeedEntry[]) => {
 
 export const FeedTracker = () => {
   const [feedInventory, setFeedInventory] = useState<FeedEntry[]>([]);
+  const [flockProfile, setFlockProfile] = useState<FlockProfile | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showEstimator, setShowEstimator] = useState(false);
   
   // Form states for new feed entry
   const [brand, setBrand] = useState('');
@@ -31,16 +31,19 @@ export const FeedTracker = () => {
   const [quantity, setQuantity] = useState('');
   const [unit, setUnit] = useState<'kg' | 'lbs'>('kg');
   const [openedDate, setOpenedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [batchNumber, setBatchNumber] = useState('');
-  const [pricePerUnit, setPricePerUnit] = useState('');  useEffect(() => {
+  const [batchNumber, setBatchNumber] = useState('');  const [pricePerUnit, setPricePerUnit] = useState('');useEffect(() => {
     // Load from database
     const loadFeedInventory = async () => {
       try {
         const dbData = await fetchData();
         const inventory = dbData.feedInventory;
+        const profile = dbData.flockProfile;
         
         if (inventory && Array.isArray(inventory)) {
           setFeedInventory(inventory);
+        }
+        if (profile) {
+          setFlockProfile(profile);
         }
       } catch (error) {
         console.log('Failed to load feed inventory from database:', error);
@@ -49,7 +52,6 @@ export const FeedTracker = () => {
     
     loadFeedInventory();
   }, []);
-
   const calculateDuration = (openedDate: string, depletedDate?: string) => {
     if (!depletedDate) return null;
     
@@ -57,6 +59,88 @@ export const FeedTracker = () => {
     const end = new Date(depletedDate);
     const diffTime = Math.abs(end.getTime() - start.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+  // Calculate actual consumption rates from your completed feed cycles
+  const getActualConsumptionData = () => {
+    const completedFeeds = feedInventory.filter(feed => feed.depletedDate);
+    
+    if (completedFeeds.length === 0) return null;
+    
+    const consumptionData = completedFeeds.map(feed => {
+      const duration = calculateDuration(feed.openedDate, feed.depletedDate) || 1;
+      const dailyConsumption = feed.quantity / duration;
+      const totalCost = feed.quantity * feed.pricePerUnit;
+      const dailyCost = totalCost / duration;
+      
+      return {
+        feedType: feed.type,
+        brand: feed.brand,
+        duration,
+        quantity: feed.quantity,
+        unit: feed.unit,
+        dailyConsumption,
+        totalCost,
+        dailyCost,
+        startDate: feed.openedDate,
+        endDate: feed.depletedDate
+      };
+    });
+    
+    // Calculate averages by feed type
+    const avgByType: Record<string, any> = {};
+    
+    ['Baby chicks', 'Big chicks', 'Both'].forEach(type => {
+      const typeFeeds = consumptionData.filter(feed => feed.feedType === type);
+      if (typeFeeds.length > 0) {
+        const avgDaily = typeFeeds.reduce((sum, feed) => sum + feed.dailyConsumption, 0) / typeFeeds.length;
+        const avgCost = typeFeeds.reduce((sum, feed) => sum + feed.dailyCost, 0) / typeFeeds.length;
+        
+        avgByType[type] = {
+          count: typeFeeds.length,
+          avgDailyConsumption: avgDaily,
+          avgDailyCost: avgCost,
+          recentFeeds: typeFeeds.slice(-3) // Last 3 feeds of this type
+        };
+      }
+    });
+    
+    return {
+      allFeeds: consumptionData,
+      byType: avgByType,
+      totalCompleted: completedFeeds.length
+    };
+  };
+
+  // Estimate future needs based on YOUR actual data
+  const estimateFutureNeeds = (days: number = 30) => {
+    const actualData = getActualConsumptionData();
+    if (!actualData || !flockProfile) return null;
+    
+    const currentFlockSize = flockProfile.chicks + flockProfile.hens + flockProfile.roosters;
+    if (currentFlockSize === 0) return null;
+    
+    // Use the most appropriate feed type data
+    let bestEstimate = null;
+    
+    // Prefer 'Both' type if available, then 'Big chicks', then 'Baby chicks'
+    if (actualData.byType['Both']) {
+      bestEstimate = actualData.byType['Both'];
+    } else if (actualData.byType['Big chicks']) {
+      bestEstimate = actualData.byType['Big chicks'];
+    } else if (actualData.byType['Baby chicks']) {
+      bestEstimate = actualData.byType['Baby chicks'];
+    }
+    
+    if (!bestEstimate) return null;
+    
+    return {
+      dailyConsumption: bestEstimate.avgDailyConsumption,
+      dailyCost: bestEstimate.avgDailyCost,
+      totalNeed: bestEstimate.avgDailyConsumption * days,
+      totalCost: bestEstimate.avgDailyCost * days,
+      basedOnFeeds: bestEstimate.count,
+      currentFlockSize
+    };
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,11 +229,15 @@ export const FeedTracker = () => {
       animate={{ opacity: 1 }}
       className="space-y-8 max-w-7xl mx-auto"
       style={{ margin: '0px auto', opacity: 1 }}
-    >
-      <div className="flex justify-between items-center">
+    >      <div className="flex justify-between items-center">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
           Feed Management
-        </h1>
+        </h1>        <button
+          onClick={() => setShowEstimator(!showEstimator)}
+          className="neu-button"
+        >
+          {showEstimator ? 'Hide Analysis' : 'Show Feed Analysis'}
+        </button>
       </div>
 
       <motion.div 
@@ -274,11 +362,167 @@ export const FeedTracker = () => {
           <button type="submit" className="neu-button full-width md:w-auto md:min-w-[200px]">
             Add Feed to Inventory
           </button>
-        </form>
-        {errorMsg && (
+        </form>        {errorMsg && (
           <div className="text-red-600 font-semibold mb-4">{errorMsg}</div>
         )}
       </motion.div>
+
+      {/* Feed Consumption Estimator */}
+      {showEstimator && flockProfile && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card"
+        >          <h2 className="text-2xl font-bold text-gray-900 mb-6">Feed Consumption Based on Your Data</h2>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Current Flock Overview */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-800">Current Flock</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-yellow-50 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-yellow-600">{flockProfile.chicks}</div>
+                  <div className="text-sm text-gray-600">Baby Chicks</div>
+                </div>
+                <div className="p-4 bg-blue-50 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-blue-600">{flockProfile.hens + flockProfile.roosters}</div>
+                  <div className="text-sm text-gray-600">Adult Birds</div>
+                </div>
+              </div>
+              
+              {(() => {
+                const futureNeeds = estimateFutureNeeds(30);
+                const actualData = getActualConsumptionData();
+                
+                if (!futureNeeds || !actualData) {
+                  return (
+                    <div className="p-4 bg-gray-50 rounded-lg text-center">
+                      <div className="text-gray-600">Complete some feed cycles to see your actual consumption data</div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        Mark feed bags as "depleted" when empty to build your consumption history
+                      </div>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div className="space-y-3">
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <div className="text-lg font-bold text-green-600">
+                        Your Daily Consumption: {futureNeeds.dailyConsumption.toFixed(2)} {unit}
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        Daily Cost: ${futureNeeds.dailyCost.toFixed(2)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Based on {futureNeeds.basedOnFeeds} completed feed cycle(s)
+                      </div>
+                    </div>
+                    
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <div className="text-sm text-gray-600">Monthly Estimates</div>
+                      <div className="text-lg font-bold text-blue-600">
+                        {futureNeeds.totalNeed.toFixed(1)} {unit} • ${futureNeeds.totalCost.toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Consumption History */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-800">Your Feed History</h3>
+              {(() => {
+                const actualData = getActualConsumptionData();
+                
+                if (!actualData || actualData.totalCompleted === 0) {
+                  return (
+                    <div className="p-4 bg-gray-50 rounded-lg text-center text-gray-500">
+                      No completed feed cycles yet. Mark feed as depleted to start tracking!
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div className="space-y-3">
+                    {actualData.allFeeds.slice(-5).map((feed, index) => (
+                      <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="font-medium text-gray-800">
+                              {feed.brand} - {feed.feedType}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {feed.quantity} {feed.unit} • {feed.duration} days
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold text-gray-700">
+                              {feed.dailyConsumption.toFixed(2)} {feed.unit}/day
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              ${feed.dailyCost.toFixed(2)}/day
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <div className="text-xs text-gray-500 text-center">
+                      Showing last 5 completed feeds
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>          {/* Feed Type Guide & Consumption Insights */}
+          <div className="mt-6 space-y-4">
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <h4 className="font-semibold text-blue-800 mb-2">Feed Type Guide</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <span className="font-medium text-blue-700">Baby chicks:</span>
+                  <div className="text-blue-600">For birds 0-6 weeks old. High protein starter feed.</div>
+                </div>
+                <div>
+                  <span className="font-medium text-blue-700">Big chicks:</span>
+                  <div className="text-blue-600">For birds 6+ weeks old. Layer or grower feed.</div>
+                </div>
+                <div>
+                  <span className="font-medium text-blue-700">Both:</span>
+                  <div className="text-blue-600">All-flock feed suitable for mixed ages.</div>
+                </div>
+              </div>
+            </div>
+            
+            {(() => {
+              const actualData = getActualConsumptionData();
+              if (actualData && Object.keys(actualData.byType).length > 0) {
+                return (
+                  <div className="p-4 bg-green-50 rounded-lg">
+                    <h4 className="font-semibold text-green-800 mb-2">Your Consumption Patterns</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      {Object.entries(actualData.byType).map(([type, data]: [string, any]) => (
+                        <div key={type}>
+                          <span className="font-medium text-green-700">{type}:</span>
+                          <div className="text-green-600">
+                            {data.avgDailyConsumption.toFixed(2)} {unit}/day avg
+                          </div>
+                          <div className="text-green-500 text-xs">
+                            ${data.avgDailyCost.toFixed(2)}/day • {data.count} cycles
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+          </div>
+        </motion.div>
+      )}
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
