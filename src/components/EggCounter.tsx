@@ -4,7 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useKeyboardShortcut } from '../utils/useKeyboardShortcut';
 import { apiCall, fetchData } from '../utils/apiUtils';
+import { exportToCSV } from '../utils/exportUtils';
 import type { EggEntry } from '../types';
+import { v4 as uuidv4 } from 'uuid';
 
 interface ValidationError {
   field: string;
@@ -13,7 +15,12 @@ interface ValidationError {
 
 const saveToDatabase = async (updatedEntries: EggEntry[]) => {
   try {
-    await apiCall('/saveEggEntries', updatedEntries);
+    // Ensure all entries have IDs before saving
+    const entriesWithIds = updatedEntries.map(entry => ({
+      ...entry,
+      id: entry.id || uuidv4()
+    }));
+    await apiCall('/saveEggEntries', entriesWithIds);
   } catch (error) {
     console.error('Error saving to database:', error);
     throw error;
@@ -30,7 +37,6 @@ export const EggCounter = () => {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const entriesPerPage = 10;
-
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
@@ -38,7 +44,14 @@ export const EggCounter = () => {
         // Try to fetch data from database first
         const dbData = await fetchData();
         const entries: EggEntry[] = dbData.eggEntries || [];
-        setEggEntries(entries.sort((a: EggEntry, b: EggEntry) => 
+        
+        // Ensure all entries have IDs
+        const entriesWithIds = entries.map(entry => ({
+          ...entry,
+          id: entry.id || uuidv4() // Assign UUID if missing
+        }));
+        
+        setEggEntries(entriesWithIds.sort((a: EggEntry, b: EggEntry) => 
           new Date(b.date).getTime() - new Date(a.date).getTime()
         ));      } catch (error) {
         console.error('Failed to load from database:', error);
@@ -77,9 +90,7 @@ export const EggCounter = () => {
 
     try {
       const existingEntry = eggEntries.find(entry => entry.date === selectedDate);
-      let updatedEntries: EggEntry[];
-
-      if (existingEntry) {
+      let updatedEntries: EggEntry[];      if (existingEntry) {
         if (!window.confirm('An entry for this date already exists. Do you want to update it?')) {
           return;
         }
@@ -87,7 +98,11 @@ export const EggCounter = () => {
           entry.date === selectedDate ? { ...entry, count: parseInt(count) } : entry
         );
       } else {
-        const newEntry: EggEntry = { date: selectedDate, count: parseInt(count) };
+        const newEntry: EggEntry = { 
+          id: uuidv4(),
+          date: selectedDate, 
+          count: parseInt(count) 
+        };
         updatedEntries = [...eggEntries, newEntry].sort((a, b) => 
           new Date(b.date).getTime() - new Date(a.date).getTime()
         );

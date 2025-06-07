@@ -2,7 +2,7 @@
 
 // Basic types used in components
 export interface EggEntry {
-  id?: string;
+  id: string;
   date: string;
   count: number;
   created_at?: string;

@@ -29,17 +29,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const entries = req.body;
     console.log('Received egg entries:', entries);
     
-    // Clear existing entries and insert new ones
-    await supabase.from('egg_entries').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    
-    // Insert new entries
+    // Upsert egg entries by id (or insert if no id exists)
     const { data, error } = await supabase
       .from('egg_entries')
-      .insert(
+      .upsert(
         entries.map((entry: any) => ({
+          id: entry.id, // Include the id for upsert
           date: entry.date,
           count: entry.count
-        }))
+        })),
+        { onConflict: 'id' }
       )
       .select();
 
