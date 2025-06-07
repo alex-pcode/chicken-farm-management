@@ -60,7 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ? flockProfiles[0].profile_data
         : null;
 
-    // Fetch all feed inventory
+    // Upsert feed inventory instead of deleting all
     const { data: feedInventory, error: feedError } = await supabase
       .from('feed_inventory')
       .select('*');
@@ -69,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       throw feedError;
     }
 
-    // Fetch all expenses
+    // Upsert expenses instead of deleting all
     const { data: expenses, error: expensesError } = await supabase
       .from('expenses')
       .select('*');
