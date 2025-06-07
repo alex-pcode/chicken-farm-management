@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL || 'https://kmohmazolvilxpxhfjie.supabase.co';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imttb2htYXpvbHZpbHhweGhmamllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMzMxNzUsImV4cCI6MjA2NDgwOTE3NX0.b-biGmoVFvMW9vF6YN2fomyh3kzEGdhQCZ69jdmH7G8';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imttb2htYXpvbHZpbHhpeGhmamllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMzMxNzUsImV4cCI6MjA2NDgwOTE3NX0.b-biGmoVFvMW9vF6YN2fomyh3kzEGdhQCZ69jdmH7G8';
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -34,16 +34,11 @@ async function handler(req: VercelRequest, res: VercelResponse) {
 
     let result;
     if (existingProfiles && existingProfiles.length > 0) {
-      // Update existing profile
+      // Update existing profile (store full profile in profile_data JSONB column)
       const { data, error } = await supabase
         .from('flock_profiles')
         .update({
-          farm_name: flockData.farmName,
-          location: flockData.location,
-          flock_size: flockData.flockSize,
-          breed: flockData.breed,
-          start_date: flockData.startDate,
-          notes: flockData.notes,
+          profile_data: flockData, // Save the whole profile object
           updated_at: new Date().toISOString()
         })
         .eq('id', existingProfiles[0].id)
@@ -53,16 +48,12 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       if (error) throw error;
       result = data;
     } else {
-      // Insert new profile
+      // Insert new profile (store full profile in profile_data JSONB column)
       const { data, error } = await supabase
         .from('flock_profiles')
         .insert({
-          farm_name: flockData.farmName,
-          location: flockData.location,
-          flock_size: flockData.flockSize,
-          breed: flockData.breed,
-          start_date: flockData.startDate,
-          notes: flockData.notes
+          profile_data: flockData,
+          created_at: new Date().toISOString()
         })
         .select()
         .single();

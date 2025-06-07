@@ -54,7 +54,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       throw flockProfileError;
     }
 
-    const flockProfile = flockProfiles && flockProfiles.length > 0 ? flockProfiles[0] : null;
+    // Use the profile_data JSONB column for the frontend
+    const flockProfile =
+      flockProfiles && flockProfiles.length > 0 && flockProfiles[0].profile_data
+        ? flockProfiles[0].profile_data
+        : null;
 
     // Fetch all feed inventory
     const { data: feedInventory, error: feedError } = await supabase
