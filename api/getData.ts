@@ -56,6 +56,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const flockProfile = flockProfiles && flockProfiles.length > 0 ? flockProfiles[0] : null;
 
+    // Fetch all feed inventory
+    const { data: feedInventory, error: feedError } = await supabase
+      .from('feed_inventory')
+      .select('*');
+    if (feedError) {
+      console.error('Supabase feed_inventory error:', feedError);
+      throw feedError;
+    }
+
+    // Fetch all expenses
+    const { data: expenses, error: expensesError } = await supabase
+      .from('expenses')
+      .select('*');
+    if (expensesError) {
+      console.error('Supabase expenses error:', expensesError);
+      throw expensesError;
+    }
+
     const response = {
       message: 'Data fetched successfully',
       data: {
@@ -65,8 +83,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           count: entry.count
         })) || [],
         flockProfile,
-        feedInventory: [],
-        expenses: []
+        feedInventory: feedInventory || [],
+        expenses: expenses || []
       },
       timestamp: new Date().toISOString()
     };
