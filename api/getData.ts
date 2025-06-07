@@ -43,6 +43,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log('Egg entries fetched successfully:', eggEntries?.length || 0, 'entries');
     
+    // Fetch singleton flock profile
+    const { data: flockProfiles, error: flockProfileError } = await supabase
+      .from('flock_profiles')
+      .select('*')
+      .limit(1);
+
+    if (flockProfileError) {
+      console.error('Supabase flock_profiles error:', flockProfileError);
+      throw flockProfileError;
+    }
+
+    const flockProfile = flockProfiles && flockProfiles.length > 0 ? flockProfiles[0] : null;
+
     const response = {
       message: 'Data fetched successfully',
       data: {
@@ -51,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           date: entry.date,
           count: entry.count
         })) || [],
-        flockProfile: null,
+        flockProfile,
         feedInventory: [],
         expenses: []
       },
