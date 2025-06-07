@@ -67,18 +67,25 @@ export const FeedTracker = () => {
       type,
       quantity: parseFloat(quantity),
       unit,
-      openedDate,
-      batchNumber,
+      openedDate, // already in YYYY-MM-DD format
       pricePerUnit: parseFloat(pricePerUnit),
-      description: `${brand} ${type} (${quantity} ${unit})`
+      // Do not include batchNumber or description here
     };
     const updatedInventory = [...feedInventory, newFeed];
     setFeedInventory(updatedInventory);
     try {
-      await saveToDatabase(updatedInventory);
+      await saveToDatabase(updatedInventory.map(feed => ({
+        id: feed.id,
+        brand: feed.brand,
+        type: feed.type,
+        quantity: feed.quantity,
+        unit: feed.unit,
+        pricePerUnit: feed.pricePerUnit,
+        openedDate: feed.openedDate,
+        depletedDate: feed.depletedDate // undefined if not set
+      })));
     } catch (err) {
       setErrorMsg('Failed to save feed inventory. Please try again.');
-      // Optionally revert local state if needed
     }
 
     // Add expense entry via database
