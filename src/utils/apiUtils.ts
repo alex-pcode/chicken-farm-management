@@ -74,7 +74,15 @@ export const fetchData = async () => {
       console.error(`API Error ${response.status}:`, errorText);
       throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
     }
-    return await response.json();
+    const result = await response.json();
+    
+    // Normalize the response structure - API returns { data: { ... } } but components expect direct access
+    if (result.data) {
+      return result.data;
+    }
+    
+    // Fallback for unexpected response structure
+    return result;
   } catch (error) {
     console.error('API fetchData failed:', error);
     throw error;
