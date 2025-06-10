@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
+import { useLocation } from 'react-router-dom';
 
 interface LoginProps {
   onLogin: (username: string) => void;
 }
 
 export const Login = ({ onLogin }: LoginProps) => {
+  const location = useLocation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -15,13 +17,17 @@ export const Login = ({ onLogin }: LoginProps) => {
   const [isPasswordReset, setIsPasswordReset] = useState(false);
 
   useEffect(() => {
-    // Check if this is a password reset session
-    supabase.auth.onAuthStateChange((event, _session) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setIsPasswordReset(true);
+    // Check for password recovery in URL (Supabase magic link)
+    const params = new URLSearchParams(location.search);
+    if (params.get('type') === 'recovery') {
+      setIsPasswordReset(true);
+      // Try to get the session from the URL (Supabase provides access_token)
+      const accessToken = params.get('access_token');
+      if (accessToken) {
+        supabase.auth.setSession({ access_token: accessToken, refresh_token: params.get('refresh_token') || '' });
       }
-    });
-  }, []);
+    }
+  }, [location.search]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
