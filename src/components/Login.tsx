@@ -179,3 +179,11 @@ export const Login = ({ onLogin }: LoginProps) => {
     </div>
   );
 };
+
+// Remember to wrap <App /> with <Router> in main.tsx
+// import { BrowserRouter as Router } from 'react-router-dom';
+// ReactDOM.createRoot(document.getElementById('root')).render(
+//   <Router>
+//     <App />
+//   </Router>
+// );
