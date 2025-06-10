@@ -8,6 +8,8 @@ import { Savings } from './components/Savings'
 import { Profile } from './components/Profile'
 import { motion } from 'framer-motion'
 import { fetchData } from './utils/apiUtils'
+import { StatCard } from './components/testCom'
+import { Login } from './components/Login'
 
 const navigation = [
   { name: 'Dashboard', emoji: '🏠', href: '/' },
@@ -93,61 +95,10 @@ const Dashboard = () => {
       >
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Quick Stats</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <motion.div 
-            className="neu-stat"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl" role="img" aria-label="production">🥚</span>
-              <h3 className="text-lg font-medium text-gray-600">Total Production</h3>
-            </div>
-            <p className="text-4xl font-bold text-gray-900">{eggCount}</p>
-            <p className="text-sm text-gray-500 mt-1">total eggs</p>
-          </motion.div>
-
-          <motion.div 
-            className="neu-stat"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl" role="img" aria-label="expenses">💰</span>
-              <h3 className="text-lg font-medium text-gray-600">Total Expenses</h3>
-            </div>
-            <p className="text-4xl font-bold text-gray-900">${expenses.toFixed(2)}</p>
-            <p className="text-sm text-gray-500 mt-1">running total</p>
-          </motion.div>
-
-          <motion.div 
-            className="neu-stat"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl" role="img" aria-label="daily average">📅</span>
-              <h3 className="text-lg font-medium text-gray-600">Daily Average</h3>
-            </div>
-            <p className="text-4xl font-bold text-gray-900">{dailyAverage}</p>
-            <p className="text-sm text-gray-500 mt-1">eggs per day (7-day avg)</p>
-          </motion.div>
-
-          <motion.div 
-            className="neu-stat"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl" role="img" aria-label="efficiency">✨</span>
-              <h3 className="text-lg font-medium text-gray-600">Feed Efficiency</h3>
-            </div>
-            <p className="text-4xl font-bold text-gray-900">${(expenses / eggCount || 0).toFixed(2)}</p>
-            <p className="text-sm text-gray-500 mt-1">cost per egg</p>
-          </motion.div>
+          <StatCard title="Total Production" total={eggCount} label="total eggs" />
+          <StatCard title="Total Expenses" total={expenses} label="running total" />
+          <StatCard title="Daily Average" total={dailyAverage} label="eggs per day (7-day avg)" />
+          <StatCard title="Feed Efficiency" total={Number.isFinite(expenses / eggCount) ? parseFloat((expenses / eggCount).toFixed(2)) : 0} label="cost per egg" />
         </div>
       </motion.div>
 
@@ -202,6 +153,23 @@ const Dashboard = () => {
 };
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+
+  const handleLogin = (user: string) => {
+    setIsAuthenticated(true);
+    setUsername(user);
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setUsername(null);
+  };
+
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <Router>
       <div className="flex min-h-screen">
@@ -217,6 +185,14 @@ function App() {
               {navigation.map((item) => (
                 <NavLink key={item.name} item={item} />
               ))}
+            </div>
+            <div className="mt-8">
+              <button
+                onClick={handleLogout}
+                className="neu-button w-full bg-red-100 text-red-600 hover:bg-red-200 mt-4"
+              >
+                Logout{username ? ` (${username})` : ''}
+              </button>
             </div>
           </nav>
         </aside>
@@ -248,6 +224,12 @@ function App() {
                   {navigation.map((item) => (
                     <NavLink key={item.name} item={item} />
                   ))}
+                  <button
+                    onClick={handleLogout}
+                    className="neu-button w-full bg-red-100 text-red-600 hover:bg-red-200 mt-4"
+                  >
+                    Logout{username ? ` (${username})` : ''}
+                  </button>
                 </div>
               </Disclosure.Panel>
             </>

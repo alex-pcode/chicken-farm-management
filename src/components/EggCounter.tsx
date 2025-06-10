@@ -7,6 +7,7 @@ import { apiCall, fetchData } from '../utils/apiUtils';
 import { exportToCSV } from '../utils/exportUtils';
 import type { EggEntry } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { StatCard } from './testCom';
 
 interface ValidationError {
   field: string;
@@ -337,69 +338,15 @@ export const EggCounter = () => {
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="neu-stat"
-        >
-          <h3 className="text-lg font-medium text-gray-600">This Week</h3>
-          <p className="text-4xl font-bold mt-2 text-gray-900">{summary.thisWeek}</p>
-          <p className="text-sm text-gray-500 mt-1">eggs collected</p>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="neu-stat"
-        >
-          <h3 className="text-lg font-medium text-gray-600">This Month</h3>
-          <p className="text-4xl font-bold mt-2 text-gray-900">{summary.thisMonth}</p>
-          <p className="text-sm text-gray-500 mt-1">eggs collected</p>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="neu-stat"
-        >
-          <h3 className="text-lg font-medium text-gray-600">Total</h3>
-          <p className="text-4xl font-bold mt-2 text-gray-900">{summary.total}</p>
-          <p className="text-sm text-gray-500 mt-1">eggs collected</p>
-        </motion.div>
+        <StatCard title="This Week" total={summary.thisWeek} label="eggs collected" />
+        <StatCard title="This Month" total={summary.thisMonth} label="eggs collected" />
+        <StatCard title="Total" total={summary.total} label="eggs collected" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="neu-stat"
-        >
-          <h3 className="text-lg font-medium text-gray-600">7 Days</h3>
-          <p className="text-4xl font-bold mt-2 text-gray-900">{summary.last7Days}</p>
-          <p className="text-sm text-gray-500 mt-1">rolling weekly total</p>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="neu-stat"
-        >
-          <h3 className="text-lg font-medium text-gray-600">30 Days</h3>
-          <p className="text-4xl font-bold mt-2 text-gray-900">{summary.last30Days}</p>
-          <p className="text-sm text-gray-500 mt-1">rolling monthly total</p>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="neu-stat"
-        >
-          <h3 className="text-lg font-medium text-gray-600">Average</h3>
-          <p className="text-4xl font-bold mt-2 text-gray-900">{summary.dailyAverage}</p>
-          <p className="text-sm text-gray-500 mt-1">eggs per day</p>
-        </motion.div>
+        <StatCard title="7 Days" total={summary.last7Days} label="rolling weekly total" />
+        <StatCard title="30 Days" total={summary.last30Days} label="rolling monthly total" />
+        <StatCard title="Average" total={summary.dailyAverage} label="eggs per day" />
       </div>
 
       <motion.div
@@ -413,8 +360,8 @@ export const EggCounter = () => {
           <LoadingSpinner />
         ) : (
           <>
-            <div className="overflow-hidden rounded-xl">
-              <table className="min-w-full">
+            <div className="overflow-x-auto w-full rounded-xl">
+              <table className="min-w-max">
                 <thead>
                   <tr>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Date</th>

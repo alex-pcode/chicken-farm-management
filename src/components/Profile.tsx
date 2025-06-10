@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { FlockProfile, FlockEvent } from '../types';
 import { apiCall, fetchData } from '../utils/apiUtils';
+import { StatCard } from './testCom';
 
 const EVENT_TYPES = {
   acquisition: '🐣 New Birds Acquired',
@@ -654,46 +655,10 @@ export const Profile = () => {
       >
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Flock Statistics</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="neu-stat">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl" role="img" aria-label="hen">🐔</span>
-              <h3 className="text-lg font-medium text-gray-600">Laying Hens</h3>
-            </div>
-            <p className="text-4xl font-bold text-gray-900">
-              {profile.hens}
-            </p>
-            <p className="text-sm text-gray-500 mt-1">productive birds</p>
-          </div>
-          <div className="neu-stat">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl" role="img" aria-label="rooster">🐓</span>
-              <h3 className="text-lg font-medium text-gray-600">Roosters</h3>
-            </div>
-            <p className="text-4xl font-bold text-gray-900">
-              {profile.roosters}
-            </p>
-            <p className="text-sm text-gray-500 mt-1">male birds</p>
-          </div>
-          <div className="neu-stat">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl" role="img" aria-label="baby chick">🐥</span>
-              <h3 className="text-lg font-medium text-gray-600">Chicks</h3>
-            </div>
-            <p className="text-4xl font-bold text-gray-900">
-              {profile.chicks}
-            </p>
-            <p className="text-sm text-gray-500 mt-1">growing birds</p>
-          </div>
-          <div className="neu-stat">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-2xl" role="img" aria-label="brooding hen">🥚</span>
-              <h3 className="text-lg font-medium text-gray-600">Brooding</h3>
-            </div>
-            <p className="text-4xl font-bold text-gray-900">
-              {profile.brooding}
-            </p>
-            <p className="text-sm text-gray-500 mt-1">nesting hens</p>
-          </div>
+          <StatCard title="🐔 Laying Hens" total={profile.hens} label="productive birds" />
+          <StatCard title="🐓 Roosters" total={profile.roosters} label="male birds" />
+          <StatCard title="🐥 Chicks" total={profile.chicks} label="growing birds" />
+          <StatCard title="🥚 Brooding" total={profile.brooding} label="nesting hens" />
         </div>
       </motion.div>
     </motion.div>
