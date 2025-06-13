@@ -19,15 +19,31 @@ export const Login = ({ onLogin }: LoginProps) => {
   useEffect(() => {
     // Check for password recovery in URL (Supabase magic link)
     const params = new URLSearchParams(location.search);
-    if (params.get('type') === 'recovery') {
-      setIsPasswordReset(true);
-      // Try to get the session from the URL (Supabase provides access_token)
+    const type = params.get('type');
+
+    if (type === 'recovery') {
       const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+
       if (accessToken) {
-        supabase.auth.setSession({ access_token: accessToken, refresh_token: params.get('refresh_token') || '' });
+        setIsPasswordReset(true); // Show the "Set New Password" form
+        supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken || ''
+        }).then(({ error: sessionError }) => {
+          if (sessionError) {
+            setError('Invalid or expired password recovery link: ' + sessionError.message + '. Please request a new one.');
+            setIsPasswordReset(false); // Revert to login form as recovery is not possible
+          }
+          // If no error, session is set, user can proceed to update password via the form.
+        });
+      } else {
+        // type=recovery but no access_token, link is malformed.
+        setError('Password recovery link is incomplete or invalid. Please request a new one.');
+        setIsPasswordReset(false); // Don't show password reset form
       }
     }
-  }, [location.search]);
+  }, [location.search, supabase.auth]); // Added supabase.auth to dependency array
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,29 +61,37 @@ export const Login = ({ onLogin }: LoginProps) => {
         return;
       }
 
-      const { error } = await supabase.auth.updateUser({
+      const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword
       });
 
-      if (error) {
-        setError('Failed to update password: ' + error.message);
+      if (updateError) {
+        setError('Failed to update password: ' + updateError.message);
       } else {
-        // Password updated successfully, user should be logged in
-        const { data } = await supabase.auth.getUser();
-        if (data.user && data.user.email) {
-          onLogin(data.user.email);
+        // Password updated successfully. Attempt to finalize session and log in.
+        const { data: { user }, error: getUserError } = await supabase.auth.getUser();
+        if (getUserError) {
+          setError('Password updated, but failed to retrieve your session: ' + getUserError.message + '. Please try logging in.');
+        } else if (user && user.email) {
+          // Successfully updated password and retrieved user session
+          onLogin(user.email);
+        } else {
+          setError('Password updated, but could not confirm your session. Please try logging in with your new password.');
         }
       }
     } else {
       // Regular login
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: username,
         password,
       });
-      if (error) {
-        setError('Invalid email or password');
+      if (signInError) {
+        setError(`Login failed: ${signInError.message}`); // Display Supabase error
       } else if (data.user && data.user.email) {
         onLogin(data.user.email);
+      } else {
+        // This case implies data.user or data.user.email is null/undefined even if no error was thrown.
+        setError('Login attempt resulted in an unexpected state. Please try again.');
       }
     }
   };
