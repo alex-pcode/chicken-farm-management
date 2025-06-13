@@ -49,17 +49,24 @@ export const Login = ({ onLogin }: LoginProps) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('onAuthStateChange event:', event, 'session:', session);
 
-      if (event === 'PASSWORD_RECOVERY' && session) {
-        // Supabase has processed the recovery token and established a session.
-        setIsPasswordReset(true); // Ensure form is shown
-        setError(''); // Clear any errors
-        console.log('PASSWORD_RECOVERY event processed by Supabase, session established:', session);
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log('PASSWORD_RECOVERY event detected. Raw session object from Supabase:', session); // More detailed log
+        if (session) {
+          // Supabase has processed the recovery token and established a session.
+          setIsPasswordReset(true); // Ensure form is shown
+          setError(''); // Clear any errors
+          console.log('PASSWORD_RECOVERY event processed by Supabase, session established:', session);
         
-        // Now it's safe to clear the hash from the URL.
-        // Check if the hash still contains recovery info before clearing, to avoid clearing unrelated hashes.
-        if (window.location.hash.includes('type=recovery')) {
-          window.history.replaceState(null, '', window.location.pathname + window.location.search);
-          console.log('URL hash cleared after PASSWORD_RECOVERY.');
+          // Now it's safe to clear the hash from the URL.
+          // Check if the hash still contains recovery info before clearing, to avoid clearing unrelated hashes.
+          if (window.location.hash.includes('type=recovery')) {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            console.log('URL hash cleared after PASSWORD_RECOVERY.');
+          }
+        } else {
+          console.error('PASSWORD_RECOVERY event occurred, but no session was provided by Supabase. This might indicate an issue with the recovery token (e.g., expired, invalid) or Supabase client processing.');
+          setError('Could not verify password recovery link. It might be invalid or expired. Please try requesting a new password reset link.');
+          // Optionally, you might want to set isPasswordReset(false) here or guide the user differently.
         }
       } else if (event === 'SIGNED_IN' && isPasswordReset && session) {
         // Fallback: if a general SIGNED_IN event occurs while in password reset mode

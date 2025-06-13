@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
+import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import { Disclosure } from '@headlessui/react'
 import { EggCounter } from './components/EggCounter'
 import { Expenses } from './components/Expenses'
@@ -171,8 +171,7 @@ function App() {
   }
 
   return (
-    <Router>
-      <div className="flex min-h-screen">
+    <div className="flex min-h-screen">
         <aside className="sidebar">
           <div className="brand">
             <span className="text-2xl" role="img" aria-label="brand">🐔</span>
@@ -236,7 +235,6 @@ function App() {
           )}
         </Disclosure>
       </div>
-    </Router>
   );
 }
 
