@@ -14,8 +14,7 @@ export const Login = ({ onLogin }: LoginProps) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isResettingPassword, setIsResettingPassword] = useState(false);
-  const [isPasswordReset, setIsPasswordReset] = useState(false);
-  // Effect to detect recovery mode from URL hash and show the form
+  const [isPasswordReset, setIsPasswordReset] = useState(false);  // Effect to detect recovery mode from URL hash - let Supabase handle session automatically
   useEffect(() => {
     // Check for explicit errors in the URL hash first
     if (location.hash.includes('error_description=')) {
@@ -28,50 +27,16 @@ export const Login = ({ onLogin }: LoginProps) => {
       return; // Stop further processing if there's an error in the hash
     }
 
-    // Attempt to parse recovery parameters directly from the hash for initial UI update
+    // Check if this is a password recovery URL but let Supabase handle the session automatically
     const hashParams = new URLSearchParams(location.hash.substring(1)); // Remove '#'
     const type = hashParams.get('type');
     const accessToken = hashParams.get('access_token');
-    const refreshToken = hashParams.get('refresh_token');
 
     if (type === 'recovery' && accessToken) {
-      console.log('Recovery type detected in URL hash. Attempting to set session manually.');
-      setIsPasswordReset(true);
-      setError('');
-      
-      // Manually set the session using the tokens from the URL
-      const setSessionFromTokens = async () => {
-        try {
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken || ''
-          });
-          
-          if (error) {
-            console.error('Failed to set session from tokens:', error);
-            setError('Failed to verify password reset link: ' + error.message);
-            setIsPasswordReset(false);
-          } else if (data.session) {
-            console.log('Session set successfully from recovery tokens:', data.session);
-            setIsPasswordReset(true);
-            setError('');
-            // Clear the hash now that we've processed it
-            window.history.replaceState(null, '', window.location.pathname + window.location.search);
-          } else {
-            console.error('No session returned from setSession');
-            setError('Failed to establish session for password reset. Please try requesting a new reset link.');
-            setIsPasswordReset(false);
-          }
-        } catch (err) {
-          console.error('Exception during setSession:', err);
-          setError('An error occurred while processing the reset link. Please try again.');
-          setIsPasswordReset(false);
-        }
-      };
-      
-      setSessionFromTokens();
+      console.log('Recovery type detected in URL hash. Letting Supabase handle session automatically.');
+      // Don't manually set session - let Supabase's detectSessionInUrl handle it
+      // The onAuthStateChange will catch the PASSWORD_RECOVERY event
     }
-    // No 'else' block to set isPasswordReset to false here, because it defaults to false.
   }, [location.hash]); // Re-run this effect if the URL hash changes.
 
   // Effect to handle auth state changes, specifically for password recovery
@@ -184,6 +149,10 @@ export const Login = ({ onLogin }: LoginProps) => {
     setIsResettingPassword(true);
     setError('');
 
+    // Clear any existing sessions first
+    await supabase.auth.signOut();
+    console.log('Cleared any existing sessions before password reset');
+
     const { error } = await supabase.auth.resetPasswordForEmail(username, {
       redirectTo: 'https://chicken-farm-management.vercel.app', // Explicitly set redirectTo
     });
@@ -191,7 +160,7 @@ export const Login = ({ onLogin }: LoginProps) => {
     if (error) {
       setError('Failed to send reset email: ' + error.message);
     } else {
-      setError('Password reset email sent! Check your inbox.');
+      setError('Password reset email sent! Check your inbox and use the latest email.');
     }
     setIsResettingPassword(false);
   };
