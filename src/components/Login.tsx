@@ -15,7 +15,6 @@ export const Login = ({ onLogin }: LoginProps) => {
   const [error, setError] = useState('');
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [isPasswordReset, setIsPasswordReset] = useState(false);
-
   // Effect to detect recovery mode from URL hash and show the form
   useEffect(() => {
     // Check for explicit errors in the URL hash first
@@ -32,14 +31,45 @@ export const Login = ({ onLogin }: LoginProps) => {
     // Attempt to parse recovery parameters directly from the hash for initial UI update
     const hashParams = new URLSearchParams(location.hash.substring(1)); // Remove '#'
     const type = hashParams.get('type');
-    const accessToken = hashParams.get('access_token'); // Check for access_token to confirm
+    const accessToken = hashParams.get('access_token');
+    const refreshToken = hashParams.get('refresh_token');
 
     if (type === 'recovery' && accessToken) {
+      console.log('Recovery type detected in URL hash. Attempting to set session manually.');
       setIsPasswordReset(true);
       setError('');
-      // DO NOT clear hash here. Supabase needs to process it.
-      // onAuthStateChange will handle clearing the hash once the session is confirmed.
-      console.log('Recovery type detected in URL hash. Password reset form should be visible.');
+      
+      // Manually set the session using the tokens from the URL
+      const setSessionFromTokens = async () => {
+        try {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || ''
+          });
+          
+          if (error) {
+            console.error('Failed to set session from tokens:', error);
+            setError('Failed to verify password reset link: ' + error.message);
+            setIsPasswordReset(false);
+          } else if (data.session) {
+            console.log('Session set successfully from recovery tokens:', data.session);
+            setIsPasswordReset(true);
+            setError('');
+            // Clear the hash now that we've processed it
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          } else {
+            console.error('No session returned from setSession');
+            setError('Failed to establish session for password reset. Please try requesting a new reset link.');
+            setIsPasswordReset(false);
+          }
+        } catch (err) {
+          console.error('Exception during setSession:', err);
+          setError('An error occurred while processing the reset link. Please try again.');
+          setIsPasswordReset(false);
+        }
+      };
+      
+      setSessionFromTokens();
     }
     // No 'else' block to set isPasswordReset to false here, because it defaults to false.
   }, [location.hash]); // Re-run this effect if the URL hash changes.
