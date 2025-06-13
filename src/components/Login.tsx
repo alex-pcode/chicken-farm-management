@@ -43,6 +43,11 @@ export const Login = ({ onLogin }: LoginProps) => {
       // from these URL tokens. This session is what allows `updateUser` to work later.
       setIsPasswordReset(true);
       setError(''); // Clear any previous errors (e.g., from a failed login attempt)
+      
+      // Log session after detecting recovery token
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        console.log('Session after detecting recovery token:', session);
+      });
 
       // Clear the hash from the URL after we've identified it's a recovery link.
       // This prevents re-processing if the component re-renders or if the user navigates back.
@@ -67,6 +72,14 @@ export const Login = ({ onLogin }: LoginProps) => {
       
       if (newPassword.length < 6) {
         setError('Password must be at least 6 characters');
+        return;
+      }
+
+      // Log session before attempting to update user
+      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+      console.log('Session before updateUser:', currentSession);
+      if (sessionError || !currentSession) {
+        setError('Failed to update password: No active session found before update. ' + (sessionError?.message || ''));
         return;
       }
 
