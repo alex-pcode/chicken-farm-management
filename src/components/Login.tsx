@@ -25,17 +25,21 @@ export const Login = ({ onLogin }: LoginProps) => {
       // Clear the hash to prevent re-processing and remove error from URL
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
       return; // Stop further processing if there's an error in the hash
-    }
-
-    // Check if this is a password recovery URL but let Supabase handle the session automatically
+    }    // Check if this is a password recovery URL
     const hashParams = new URLSearchParams(location.hash.substring(1)); // Remove '#'
     const type = hashParams.get('type');
     const accessToken = hashParams.get('access_token');
 
     if (type === 'recovery' && accessToken) {
-      console.log('Recovery type detected in URL hash. Letting Supabase handle session automatically.');
-      // Don't manually set session - let Supabase's detectSessionInUrl handle it
-      // The onAuthStateChange will catch the PASSWORD_RECOVERY event
+      console.log('Recovery type detected in URL hash. Showing password reset form immediately.');
+      console.log('Hash params:', { type, accessTokenLength: accessToken.length });
+      
+      // Show the password reset form immediately when we detect recovery tokens
+      setIsPasswordReset(true);
+      setError('');
+      
+      // Let Supabase handle the session in the background
+      // If it fails, the form will still be shown and user will get an error when trying to submit
     }
   }, [location.hash]); // Re-run this effect if the URL hash changes.
 
