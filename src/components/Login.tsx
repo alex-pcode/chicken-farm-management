@@ -16,13 +16,13 @@ export const Login = ({ onLogin }: LoginProps) => {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [isPasswordReset, setIsPasswordReset] = useState(false);
 
+  // Effect to detect recovery mode from URL hash and show the form
   useEffect(() => {
     // Check for explicit errors in the URL hash first
-    // e.g., #error_description=Invalid+Link%3A+Token+has+expired+or+is+invalid
     if (location.hash.includes('error_description=')) {
       const hashParams = new URLSearchParams(location.hash.substring(1)); // Remove '#'
       const errorDescription = hashParams.get('error_description');
-      setError('Error: ' + (errorDescription?.replace(/\\+/g, ' ') || 'An unknown error occurred. Please try again.'));
+      setError('Error: ' + (errorDescription?.replace(/\+/g, ' ') || 'An unknown error occurred. Please try again.'));
       setIsPasswordReset(false); // Ensure reset form is not shown
       // Clear the hash to prevent re-processing and remove error from URL
       window.history.replaceState(null, '', window.location.pathname + window.location.search);
@@ -30,34 +30,55 @@ export const Login = ({ onLogin }: LoginProps) => {
     }
 
     // Attempt to parse recovery parameters directly from the hash for initial UI update
-    // This makes the UI responsive. Supabase client handles session internally.
-    // Example hash: #access_token=xxx&expires_in=3600&refresh_token=yyy&token_type=bearer&type=recovery
     const hashParams = new URLSearchParams(location.hash.substring(1)); // Remove '#'
     const type = hashParams.get('type');
     const accessToken = hashParams.get('access_token'); // Check for access_token to confirm
 
     if (type === 'recovery' && accessToken) {
-      // If the URL clearly indicates a recovery attempt, show the password reset form.
-      // Supabase's `detectSessionInUrl: true` (configured in your supabase.ts)
-      // should automatically handle setting up the necessary temporary session
-      // from these URL tokens. This session is what allows `updateUser` to work later.
       setIsPasswordReset(true);
-      setError(''); // Clear any previous errors (e.g., from a failed login attempt)
-      
-      // Log session after detecting recovery token
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        console.log('Session after detecting recovery token:', session);
-      });
-
-      // Clear the hash from the URL after we've identified it's a recovery link.
-      // This prevents re-processing if the component re-renders or if the user navigates back.
-      // It also hides sensitive tokens from the address bar for security.
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      setError('');
+      // DO NOT clear hash here. Supabase needs to process it.
+      // onAuthStateChange will handle clearing the hash once the session is confirmed.
+      console.log('Recovery type detected in URL hash. Password reset form should be visible.');
     }
     // No 'else' block to set isPasswordReset to false here, because it defaults to false.
-    // It should only become true if the recovery link conditions are met.
-
   }, [location.hash]); // Re-run this effect if the URL hash changes.
+
+  // Effect to handle auth state changes, specifically for password recovery
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('onAuthStateChange event:', event, 'session:', session);
+
+      if (event === 'PASSWORD_RECOVERY' && session) {
+        // Supabase has processed the recovery token and established a session.
+        setIsPasswordReset(true); // Ensure form is shown
+        setError(''); // Clear any errors
+        console.log('PASSWORD_RECOVERY event processed by Supabase, session established:', session);
+        
+        // Now it's safe to clear the hash from the URL.
+        // Check if the hash still contains recovery info before clearing, to avoid clearing unrelated hashes.
+        if (window.location.hash.includes('type=recovery')) {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          console.log('URL hash cleared after PASSWORD_RECOVERY.');
+        }
+      } else if (event === 'SIGNED_IN' && isPasswordReset && session) {
+        // Fallback: if a general SIGNED_IN event occurs while in password reset mode
+        console.log('SIGNED_IN event during password reset, session:', session);
+        if (window.location.hash.includes('type=recovery')) {
+           window.history.replaceState(null, '', window.location.pathname + window.location.search);
+           console.log('URL hash cleared after SIGNED_IN during password reset.');
+        }
+      }
+      // USER_UPDATED event might occur after a successful password update.
+      // if (event === 'USER_UPDATED') {
+      //   console.log('USER_UPDATED event:', session);
+      // }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, [isPasswordReset]); // Rerun if isPasswordReset changes, to ensure logic inside onAuthStateChange is current.
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,10 +97,11 @@ export const Login = ({ onLogin }: LoginProps) => {
       }
 
       // Log session before attempting to update user
-      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
-      console.log('Session before updateUser:', currentSession);
-      if (sessionError || !currentSession) {
-        setError('Failed to update password: No active session found before update. ' + (sessionError?.message || ''));
+      const { data: { session: currentSessionBeforeUpdate }, error: sessionError } = await supabase.auth.getSession();
+      console.log('Session before updateUser call:', currentSessionBeforeUpdate);
+
+      if (sessionError || !currentSessionBeforeUpdate) {
+        setError('Failed to update password: No active session found. ' + (sessionError?.message || 'This might be due to an expired link or session issue. Please try requesting a new password reset link if the problem persists.'));
         return;
       }
 
@@ -90,16 +112,13 @@ export const Login = ({ onLogin }: LoginProps) => {
       if (updateError) {
         setError('Failed to update password: ' + updateError.message);
       } else {
-        // Password updated successfully. Attempt to finalize session and log in.
-        const { data: { user }, error: getUserError } = await supabase.auth.getUser();
-        if (getUserError) {
-          setError('Password updated, but failed to retrieve your session: ' + getUserError.message + '. Please try logging in.');
-        } else if (user && user.email) {
-          // Successfully updated password and retrieved user session
-          onLogin(user.email);
-        } else {
-          setError('Password updated, but could not confirm your session. Please try logging in with your new password.');
-        }
+        // Password updated successfully. 
+        setError('Password updated successfully! You can now log in with your new password.');
+        setNewPassword('');
+        setConfirmPassword('');
+        setIsPasswordReset(false); // Return to the login form
+        // Consider navigating the user or automatically logging them in if desired.
+        // For now, user will see the success message and then the login form.
       }
     } else {
       // Regular login
