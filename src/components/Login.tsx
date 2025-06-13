@@ -81,6 +81,7 @@ export const Login = ({ onLogin }: LoginProps) => {
       }
     } else {
       // Regular login
+      console.log('Attempting login with:', { email: username, password }); // Temporary log
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: username,
         password,
