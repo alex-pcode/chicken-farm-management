@@ -9,7 +9,7 @@ import { Profile } from './components/Profile'
 import { motion } from 'framer-motion'
 import { fetchData } from './utils/apiUtils'
 import { StatCard } from './components/testCom'
-import { Login } from './components/Login'
+// import { Login } from './components/Login' // Temporarily disabled
 
 const navigation = [
   { name: 'Dashboard', emoji: '🏠', href: '/' },
@@ -153,22 +153,15 @@ const Dashboard = () => {
 };
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [username, setUsername] = useState<string | null>(null);
-
-  const handleLogin = (user: string) => {
-    setIsAuthenticated(true);
-    setUsername(user);
-  };
+  // Temporarily disable authentication for development
+  const [username, setUsername] = useState<string | null>('dev-user'); // Set default user
 
   const handleLogout = () => {
-    setIsAuthenticated(false);
-    setUsername(null);
+    // For now, just reset to dev user instead of showing login
+    setUsername('dev-user');
   };
 
-  if (!isAuthenticated) {
-    return <Login onLogin={handleLogin} />;
-  }
+  // Authentication is currently disabled for development
 
   return (
     <div className="flex min-h-screen">
