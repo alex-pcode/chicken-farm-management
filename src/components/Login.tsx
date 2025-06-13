@@ -148,7 +148,7 @@ export const Login = ({ onLogin }: LoginProps) => {
     setError('');
 
     const { error } = await supabase.auth.resetPasswordForEmail(username, {
-      redirectTo: window.location.origin,
+      redirectTo: 'https://chicken-farm-management.vercel.app', // Explicitly set redirectTo
     });
 
     if (error) {
