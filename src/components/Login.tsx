@@ -17,33 +17,42 @@ export const Login = ({ onLogin }: LoginProps) => {
   const [isPasswordReset, setIsPasswordReset] = useState(false);
 
   useEffect(() => {
-    // Check for password recovery in URL (Supabase magic link)
-    const params = new URLSearchParams(location.search);
-    const type = params.get('type');
-
-    if (type === 'recovery') {
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
-
-      if (accessToken) {
-        setIsPasswordReset(true); // Show the "Set New Password" form
-        supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken || ''
-        }).then(({ error: sessionError }) => {
-          if (sessionError) {
-            setError('Invalid or expired password recovery link: ' + sessionError.message + '. Please request a new one.');
-            setIsPasswordReset(false); // Revert to login form as recovery is not possible
-          }
-          // If no error, session is set, user can proceed to update password via the form.
-        });
-      } else {
-        // type=recovery but no access_token, link is malformed.
-        setError('Password recovery link is incomplete or invalid. Please request a new one.');
-        setIsPasswordReset(false); // Don't show password reset form
-      }
+    // Check for explicit errors in the URL hash first
+    // e.g., #error_description=Invalid+Link%3A+Token+has+expired+or+is+invalid
+    if (location.hash.includes('error_description=')) {
+      const hashParams = new URLSearchParams(location.hash.substring(1)); // Remove '#'
+      const errorDescription = hashParams.get('error_description');
+      setError('Error: ' + (errorDescription?.replace(/\\+/g, ' ') || 'An unknown error occurred. Please try again.'));
+      setIsPasswordReset(false); // Ensure reset form is not shown
+      // Clear the hash to prevent re-processing and remove error from URL
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      return; // Stop further processing if there's an error in the hash
     }
-  }, [location.search, supabase.auth]); // Added supabase.auth to dependency array
+
+    // Attempt to parse recovery parameters directly from the hash for initial UI update
+    // This makes the UI responsive. Supabase client handles session internally.
+    // Example hash: #access_token=xxx&expires_in=3600&refresh_token=yyy&token_type=bearer&type=recovery
+    const hashParams = new URLSearchParams(location.hash.substring(1)); // Remove '#'
+    const type = hashParams.get('type');
+    const accessToken = hashParams.get('access_token'); // Check for access_token to confirm
+
+    if (type === 'recovery' && accessToken) {
+      // If the URL clearly indicates a recovery attempt, show the password reset form.
+      // Supabase's `detectSessionInUrl: true` (configured in your supabase.ts)
+      // should automatically handle setting up the necessary temporary session
+      // from these URL tokens. This session is what allows `updateUser` to work later.
+      setIsPasswordReset(true);
+      setError(''); // Clear any previous errors (e.g., from a failed login attempt)
+
+      // Clear the hash from the URL after we've identified it's a recovery link.
+      // This prevents re-processing if the component re-renders or if the user navigates back.
+      // It also hides sensitive tokens from the address bar for security.
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+    // No 'else' block to set isPasswordReset to false here, because it defaults to false.
+    // It should only become true if the recovery link conditions are met.
+
+  }, [location.hash]); // Re-run this effect if the URL hash changes.
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
