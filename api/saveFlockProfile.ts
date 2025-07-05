@@ -32,15 +32,30 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       throw new Error(`Database fetch error: ${fetchError.message}`);
     }
 
+    // Prepare data for existing schema
+    const dbData = {
+      farm_name: flockData.farmName || 'My Chicken Farm',
+      location: flockData.location || '',
+      flock_size: flockData.flockSize || (flockData.hens + flockData.roosters + flockData.chicks) || 0,
+      breed: flockData.breedTypes?.join(', ') || '',
+      start_date: flockData.flockStartDate?.split('T')[0] || new Date().toISOString().split('T')[0],
+      notes: JSON.stringify({
+        hens: flockData.hens || 0,
+        roosters: flockData.roosters || 0,
+        chicks: flockData.chicks || 0,
+        brooding: flockData.brooding || 0,
+        events: flockData.events || [],
+        originalNotes: flockData.notes || ''
+      }),
+      updated_at: new Date().toISOString()
+    };
+
     let result;
     if (existingProfiles && existingProfiles.length > 0) {
-      // Update existing profile (store full profile in profile_data JSONB column)
+      // Update existing profile
       const { data, error } = await supabase
         .from('flock_profiles')
-        .update({
-          profile_data: flockData, // Save the whole profile object
-          updated_at: new Date().toISOString()
-        })
+        .update(dbData)
         .eq('id', existingProfiles[0].id)
         .select()
         .single();
@@ -48,11 +63,11 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       if (error) throw error;
       result = data;
     } else {
-      // Insert new profile (store full profile in profile_data JSONB column)
+      // Insert new profile
       const { data, error } = await supabase
         .from('flock_profiles')
         .insert({
-          profile_data: flockData,
+          ...dbData,
           created_at: new Date().toISOString()
         })
         .select()

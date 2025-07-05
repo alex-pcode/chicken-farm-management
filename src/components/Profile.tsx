@@ -53,17 +53,40 @@ export const Profile = () => {
         const profileData = dbData.flockProfile;
         
         if (profileData && Object.keys(profileData).length > 0) {
-          // Use database data
+          // Parse data from notes field (which contains JSON)
+          let parsedData = {
+            hens: 7,
+            roosters: 2,
+            chicks: 11,
+            brooding: 1,
+            events: [],
+            originalNotes: ""
+          };
+          
+          try {
+            if (profileData.notes) {
+              const parsed = JSON.parse(profileData.notes);
+              parsedData = { ...parsedData, ...parsed };
+            }
+          } catch (e) {
+            // If notes is not JSON, treat it as original notes
+            parsedData.originalNotes = profileData.notes || "";
+          }
+          
+          // Map database fields to component structure
           const updatedProfile = {
-            hens: profileData.hens || 0,
-            roosters: profileData.roosters || 0,
-            chicks: profileData.chicks || 0,
-            brooding: profileData.brooding || 0,
-            lastUpdated: profileData.lastUpdated || new Date().toISOString(),
-            breedTypes: profileData.breedTypes || [],
-            events: profileData.events || [],
-            flockStartDate: profileData.flockStartDate || new Date().toISOString(),
-            notes: profileData.notes || ""
+            hens: parsedData.hens || 7,
+            roosters: parsedData.roosters || 2,
+            chicks: parsedData.chicks || 11,
+            brooding: parsedData.brooding || 1,
+            lastUpdated: profileData.updated_at || new Date().toISOString(),
+            breedTypes: profileData.breed ? profileData.breed.split(', ').filter((b: string) => b.trim()) : [],
+            events: parsedData.events || [],
+            flockStartDate: profileData.start_date || new Date().toISOString(),
+            notes: parsedData.originalNotes || "",
+            farmName: profileData.farm_name || "",
+            location: profileData.location || "",
+            flockSize: profileData.flock_size || 0
           };
           setProfile(updatedProfile);
         }

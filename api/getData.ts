@@ -1,19 +1,17 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import * as dotenv from 'dotenv';
 
-const supabaseUrl = process.env.SUPABASE_URL || 'https://kmohmazolvilxpxhfjie.supabase.co';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imttb2htYXpvbHZpbHhpeGhmamllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMzMxNzUsImV4cCI6MjA2NDgwOTE3NX0.b-biGmoVFvMW9vF6YN2fomyh3kzEGdhQCZ69jdmH7G8';
-
-console.log('Environment check:', {
-  hasSupabaseUrl: !!process.env.SUPABASE_URL,
-  hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY,
-  urlFromEnv: process.env.SUPABASE_URL,
-  fallbackUrl: supabaseUrl
-});
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+dotenv.config();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  console.log('Handler called');
+  
+  const supabaseUrl = 'https://yckjarujczxrlaftfjbv.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlja2phcnVqY3p4cmxhZnRmamJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNDkxMDIsImV4cCI6MjA2NDcyNTEwMn0.Q399p6ORsh7-HF4IRLQAJYzgxKk5C3MNCqEIrPA00l4';
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -54,13 +52,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       throw flockProfileError;
     }
 
-    // Use the profile_data JSONB column for the frontend
-    const flockProfile =
-      flockProfiles && flockProfiles.length > 0 && flockProfiles[0].profile_data
-        ? flockProfiles[0].profile_data
-        : null;
+    // Get the first profile instead of looking for profile_data JSONB column
+    const flockProfile = flockProfiles && flockProfiles.length > 0 ? flockProfiles[0] : null;
 
-    // Upsert feed inventory instead of deleting all
+    // Fetch feed inventory
     const { data: feedInventory, error: feedError } = await supabase
       .from('feed_inventory')
       .select('*');
@@ -69,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       throw feedError;
     }
 
-    // Upsert expenses instead of deleting all
+    // Fetch expenses
     const { data: expenses, error: expensesError } = await supabase
       .from('expenses')
       .select('*');
@@ -93,12 +88,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timestamp: new Date().toISOString()
     };
     
+    console.log('Returning response with data:', response);
     res.status(200).json(response);
   } catch (error) {
     console.error('Error in getData:', error);
     res.status(500).json({
       message: 'Error fetching data from database',
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined    });
+      stack: error instanceof Error ? error.stack : undefined
+    });
   }
 }
