@@ -10,11 +10,27 @@ Document the structure and relationships of the flock profiles table
 - Relationships with other tables
 
 ### egg_entries
-Document the structure for tracking egg production
-- Primary key
-- Daily count fields
-- Timestamp fields
-- Related calculations
+**Purpose**: Track daily egg production with proper data persistence
+
+**Schema**:
+- `id` (UUID, Primary Key): Unique identifier for each entry
+- `date` (DATE, NOT NULL): Date of egg collection
+- `count` (INTEGER, NOT NULL): Number of eggs collected
+
+**API Operations**:
+- **Save**: Uses `upsert` with `onConflict: 'id'` to prevent data loss
+- **Read**: Returns all entries ordered by date (descending)
+
+**Data Integrity**:
+- All entries must have UUID `id` field for proper upsert functionality
+- Frontend generates UUIDs for new entries using `uuidv4()`
+- Existing entries from CSV imports retain their original IDs
+- No duplicate dates allowed per entry
+
+**Recent Fixes**:
+- ✅ Fixed data loss issue where new entries overwrote existing data
+- ✅ Ensured proper ID assignment for all entries
+- ✅ Normalized API response structure for consistent data access
 
 ### feed_inventory
 Document the feed tracking system

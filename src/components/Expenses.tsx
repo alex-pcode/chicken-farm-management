@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useKeyboardShortcut } from '../utils/useKeyboardShortcut';
@@ -195,23 +195,6 @@ export const Expenses = () => {
       currency: 'USD'
     }).format(amount);
   };
-
-  const dailyExpenseData = useMemo(() => {
-    const last30Days = [...Array(30)].map((_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      return date.toISOString().split('T')[0];
-    }).reverse();
-
-    return last30Days.map(date => {
-      const dayExpenses = expenses.filter(e => e.date === date);
-      return {
-        date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        total: dayExpenses.reduce((sum, exp) => sum + exp.amount, 0)
-      };
-    });
-  }, [expenses]);
-
   const categoryData = useMemo(() => {
     return CATEGORIES.map(category => ({
       name: category,
@@ -466,111 +449,50 @@ export const Expenses = () => {
             </div>
           </div>
         )}
-      </motion.div>
-
-      <motion.div
+      </motion.div>      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+        className="glass-card"
       >
-        <div className="glass-card">
-          <h2 className="text-2xl font-bold mb-6 text-gray-900">Daily Expenses (Last 30 Days)</h2>
-          {isLoading ? (
-            <LoadingSpinner />
-          ) : (
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={dailyExpenseData}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
-                  <defs>
-                    <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="date"
-                    angle={-45}
-                    textAnchor="end"
-                    height={70}
-                    interval={2}
-                    tick={{ fill: '#6b7280', fontSize: 12 }}
-                  />
-                  <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                      border: 'none',
-                      borderRadius: '12px',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-                    }}
-                    formatter={(value: number) => [`$${value.toFixed(2)}`, 'Expenses']}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="total"
-                    stroke="#6366f1"
-                    fillOpacity={1}
-                    fill="url(#expenseGradient)"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="total"
-                    stroke="#6366f1"
-                    strokeWidth={3}
-                    dot={{ fill: '#6366f1', strokeWidth: 2 }}
-                    activeDot={{ r: 6, fill: '#4f46e5' }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </div>
-
-        <div className="glass-card">
-          <h2 className="text-2xl font-bold mb-6 text-gray-900">Expenses by Category</h2>
-          {isLoading ? (
-            <LoadingSpinner />
-          ) : (
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={categoryData}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis
-                    dataKey="name"
-                    angle={-45}
-                    textAnchor="end"
-                    height={70}
-                    tick={{ fill: '#6b7280', fontSize: 12 }}
-                  />
-                  <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                      border: 'none',
-                      borderRadius: '12px',
-                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-                    }}
-                    formatter={(value: number) => [`$${value.toFixed(2)}`, 'Total']}
-                  />
-                  <Bar
-                    dataKey="total"
-                    fill="#6366f1"
-                    name="Total"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </div>
+        <h2 className="text-2xl font-bold mb-6 text-gray-900">Expenses by Category</h2>
+        {isLoading ? (
+          <LoadingSpinner />
+        ) : (
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={categoryData}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis
+                  dataKey="name"
+                  angle={-45}
+                  textAnchor="end"
+                  height={70}
+                  tick={{ fill: '#6b7280', fontSize: 12 }}
+                />
+                <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    border: 'none',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                  }}
+                  formatter={(value: number) => [`$${value.toFixed(2)}`, 'Total']}
+                />
+                <Bar
+                  dataKey="total"
+                  fill="#6366f1"
+                  name="Total"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </motion.div>
 
       <motion.div
@@ -584,19 +506,18 @@ export const Expenses = () => {
           <div className="text-sm text-gray-500">
             Showing {Math.min(expenses.length, 10)} of {expenses.length} entries
           </div>
-        </div>
-        {isLoading ? (
+        </div>        {isLoading ? (
           <LoadingSpinner />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full">
               <thead>
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Date</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Category</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Description</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Amount</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Actions</th>
+                  <th className="px-2 md:px-6 py-2 md:py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Date</th>
+                  <th className="px-2 md:px-6 py-2 md:py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Category</th>
+                  <th className="px-2 md:px-6 py-2 md:py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Description</th>
+                  <th className="px-2 md:px-6 py-2 md:py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Amount</th>
+                  <th className="px-2 md:px-6 py-2 md:py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">

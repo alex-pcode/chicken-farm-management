@@ -28,7 +28,28 @@
   - Usage: Handles all GET operations from Supabase
 
 ## Error Handling
-Document common API errors and their solutions here.
+
+### Common Issues and Solutions
+
+#### Data Reading Problems (Resolved)
+**Issue**: Application could write to database but not read from it, causing data loss when new entries overwrote existing data.
+
+**Root Cause**: API response structure mismatch between localStorage and Supabase modes:
+- **Supabase API** returns: `{ message: "...", data: { eggEntries: [...], flockProfile: {...} }, timestamp: "..." }`
+- **localStorage mode** returns: `{ eggEntries: [...], flockProfile: {...} }`
+- **Components expected**: Direct access to `dbData.eggEntries`
+
+**Solution**: Updated `fetchData()` function in `src/utils/apiUtils.ts` to normalize response structure:
+```typescript
+// Normalize the response structure - API returns { data: { ... } } but components expect direct access
+if (result.data) {
+  return result.data;
+}
+```
+
+This ensures both localStorage and Supabase modes return the same data structure to components.
+
+**Prevention**: Always test both development (localStorage) and production (Supabase) modes when implementing new features.
 
 ## Rate Limits
 Document any rate limits or usage quotas here.
@@ -84,3 +105,37 @@ This workflow is recommended for all new features and local development to ensur
 ### 6. Extending for New Features
 - Follow the same pattern: define types, ensure form data matches the schema, use UUIDs if needed, only send/receive schema fields, and handle errors gracefully.
 - Update this documentation and the database schema docs when adding new features or tables.
+
+## Troubleshooting
+
+### Database Connectivity Issues
+
+#### Symptoms
+- Data saves successfully but doesn't appear in the UI
+- Historical data disappears after adding new entries
+- Components show empty state despite database containing data
+
+#### Diagnosis Steps
+1. Check browser developer tools console for API errors
+2. Verify `.env` file has correct `VITE_USE_LOCAL_STORAGE` setting
+3. Test API endpoint directly: `GET /api/getData`
+4. Compare response structure between localStorage and Supabase modes
+
+#### Data Recovery
+If data was lost due to this issue:
+1. Check Supabase database directly - data may still be there
+2. Re-upload CSV files if necessary
+3. Ensure all entries have proper UUID `id` fields
+
+### Development Best Practices
+
+#### Dual-Mode Testing
+Always test features in both modes:
+- **Development**: `VITE_USE_LOCAL_STORAGE=true` for safe local testing
+- **Production**: `VITE_USE_LOCAL_STORAGE=false` for Supabase integration
+
+#### Data Structure Consistency
+Ensure API responses maintain consistent structure:
+- Use `result.data` normalization in `fetchData()`
+- Keep localStorage and Supabase response formats aligned
+- Test data flow from API → components → UI

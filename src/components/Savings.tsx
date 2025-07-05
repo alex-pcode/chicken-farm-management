@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { FlockProfile } from '../types';
 import { fetchData } from '../utils/apiUtils';
+import { StatCard } from './testCom';
 
 interface SavingsData {
   eggPrice: number;
@@ -295,18 +296,9 @@ export const Savings = () => {
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Flock Composition</h3>
             {flockProfile ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-sm text-gray-500">Productive Hens</div>
-                  <div className="text-2xl font-bold text-gray-900">{flockProfile.hens}</div>
-                </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-sm text-gray-500">Roosters</div>
-                  <div className="text-2xl font-bold text-gray-900">{flockProfile.roosters}</div>
-                </div>
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-sm text-gray-500">Growing Chicks</div>
-                  <div className="text-2xl font-bold text-gray-900">{flockProfile.chicks}</div>
-                </div>
+                <StatCard title="🐔 Productive Hens" total={flockProfile.hens} label="hens" />
+                <StatCard title="🐓 Roosters" total={flockProfile.roosters} label="roosters" />
+                <StatCard title="🐥 Growing Chicks" total={flockProfile.chicks} label="chicks" />
               </div>
             ) : (
               <div className="text-gray-500 text-center py-6">
