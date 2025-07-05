@@ -54,6 +54,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Get the first profile instead of looking for profile_data JSONB column
     const flockProfile = flockProfiles && flockProfiles.length > 0 ? flockProfiles[0] : null;
+    
+    // Map database fields to frontend expectations for flock profile
+    let mappedFlockProfile: any = null;
+    if (flockProfile) {
+      mappedFlockProfile = {
+        id: flockProfile.id,
+        farmName: flockProfile.farm_name,
+        location: flockProfile.location,
+        flockSize: flockProfile.flock_size,
+        breedTypes: flockProfile.breed ? flockProfile.breed.split(', ') : [],
+        flockStartDate: flockProfile.start_date,
+        notes: flockProfile.notes || '',
+        // Use proper columns for bird counts
+        hens: flockProfile.hens || 0,
+        roosters: flockProfile.roosters || 0,
+        chicks: flockProfile.chicks || 0,
+        brooding: flockProfile.brooding || 0,
+        events: [], // TODO: Implement events table or column
+        createdAt: flockProfile.created_at,
+        updatedAt: flockProfile.updated_at
+      };
+    }
 
     // Fetch feed inventory
     const { data: feedInventory, error: feedError } = await supabase
@@ -81,8 +103,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           date: entry.date,
           count: entry.count
         })) || [],
-        flockProfile,
-        feedInventory: feedInventory || [],
+        flockProfile: mappedFlockProfile,
+        feedInventory: feedInventory?.map(feed => ({
+          id: feed.id,
+          brand: feed.name, // Map name to brand for frontend
+          type: feed.type || 'Layer Feed', // Default type since it's not in DB
+          quantity: feed.quantity,
+          unit: feed.unit,
+          pricePerUnit: feed.cost_per_unit, // Map cost_per_unit to pricePerUnit
+          openedDate: feed.purchase_date, // Map purchase_date to openedDate
+          depletedDate: feed.expiry_date, // Map expiry_date to depletedDate
+          batchNumber: feed.batch_number || '', // Default since not in current schema
+          createdAt: feed.created_at,
+          updatedAt: feed.updated_at
+        })) || [],
         expenses: expenses || []
       },
       timestamp: new Date().toISOString()

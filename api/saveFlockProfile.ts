@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL || 'https://kmohmazolvilxpxhfjie.supabase.co';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imttb2htYXpvbHZpbHhpeGhmamllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkyMzMxNzUsImV4cCI6MjA2NDgwOTE3NX0.b-biGmoVFvMW9vF6YN2fomyh3kzEGdhQCZ69jdmH7G8';
+const supabaseUrl = 'https://yckjarujczxrlaftfjbv.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlja2phcnVqY3p4cmxhZnRmamJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNDkxMDIsImV4cCI6MjA2NDcyNTEwMn0.Q399p6ORsh7-HF4IRLQAJYzgxKk5C3MNCqEIrPA00l4';
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -32,21 +32,18 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       throw new Error(`Database fetch error: ${fetchError.message}`);
     }
 
-    // Prepare data for existing schema
+    // Prepare data for updated schema with proper columns
     const dbData = {
       farm_name: flockData.farmName || 'My Chicken Farm',
       location: flockData.location || '',
       flock_size: flockData.flockSize || (flockData.hens + flockData.roosters + flockData.chicks) || 0,
       breed: flockData.breedTypes?.join(', ') || '',
       start_date: flockData.flockStartDate?.split('T')[0] || new Date().toISOString().split('T')[0],
-      notes: JSON.stringify({
-        hens: flockData.hens || 0,
-        roosters: flockData.roosters || 0,
-        chicks: flockData.chicks || 0,
-        brooding: flockData.brooding || 0,
-        events: flockData.events || [],
-        originalNotes: flockData.notes || ''
-      }),
+      hens: flockData.hens || 0,
+      roosters: flockData.roosters || 0,
+      chicks: flockData.chicks || 0,
+      brooding: flockData.brooding || 0,
+      notes: flockData.notes || '',
       updated_at: new Date().toISOString()
     };
 
