@@ -57,6 +57,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     // Map database fields to frontend expectations for flock profile
     let mappedFlockProfile: any = null;
+    // Fetch flock events
+    let flockEvents: any[] = [];
+    if (flockProfile) {
+      const { data: events, error: eventsError } = await supabase
+        .from('flock_events')
+        .select('*')
+        .eq('flock_profile_id', flockProfile.id)
+        .order('date', { ascending: true });
+      
+      if (eventsError) {
+        console.error('Error fetching flock events:', eventsError);
+      } else {
+        flockEvents = events || [];
+      }
+    }
+
     if (flockProfile) {
       mappedFlockProfile = {
         id: flockProfile.id,
@@ -71,7 +87,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         roosters: flockProfile.roosters || 0,
         chicks: flockProfile.chicks || 0,
         brooding: flockProfile.brooding || 0,
-        events: [], // TODO: Implement events table or column
+        events: flockEvents.map(event => ({
+          id: event.id,
+          date: event.date,
+          type: event.type,
+          description: event.description,
+          affectedBirds: event.affected_birds,
+          notes: event.notes
+        })),
         createdAt: flockProfile.created_at,
         updatedAt: flockProfile.updated_at
       };

@@ -26,6 +26,18 @@ export const apiCall = async (endpoint: string, data: any) => {
       localStorage.setItem('flockProfile', JSON.stringify(data));
       return { message: 'Flock profile saved locally', data: { flockProfile: data }, timestamp: new Date().toISOString() };
     }
+    if (endpoint === '/saveFlockEvents') {
+      const existingEvents = JSON.parse(localStorage.getItem('flockEvents') || '[]');
+      const newEvents = [...existingEvents, data.event];
+      localStorage.setItem('flockEvents', JSON.stringify(newEvents));
+      return { message: 'Event saved locally', data: { event: data.event }, timestamp: new Date().toISOString() };
+    }
+    if (endpoint === '/deleteFlockEvent') {
+      const existingEvents = JSON.parse(localStorage.getItem('flockEvents') || '[]');
+      const filteredEvents = existingEvents.filter((e: any) => e.id !== data.eventId);
+      localStorage.setItem('flockEvents', JSON.stringify(filteredEvents));
+      return { message: 'Event deleted locally', eventId: data.eventId, timestamp: new Date().toISOString() };
+    }
     // Default fallback
     return { message: 'Saved locally', data, timestamp: new Date().toISOString() };
   }
@@ -46,6 +58,41 @@ export const apiCall = async (endpoint: string, data: any) => {
     return await response.json();
   } catch (error) {
     console.error(`API call failed for ${endpoint}:`, error);
+    throw error;
+  }
+};
+
+// Helper function for DELETE API calls
+export const apiDelete = async (endpoint: string, data: any) => {
+  if (isLocalStorageMode()) {
+    // Simulate API endpoints for localStorage
+    if (endpoint === '/deleteFlockEvent') {
+      const existingEvents = JSON.parse(localStorage.getItem('flockEvents') || '[]');
+      const filteredEvents = existingEvents.filter((e: any) => e.id !== data.eventId);
+      localStorage.setItem('flockEvents', JSON.stringify(filteredEvents));
+      return { message: 'Event deleted locally', eventId: data.eventId, timestamp: new Date().toISOString() };
+    }
+    // Default fallback
+    return { message: 'Deleted locally', data, timestamp: new Date().toISOString() };
+  }
+  
+  const url = getApiUrl(endpoint);
+  try {
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API Error ${response.status}:`, errorText);
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(`API delete failed for ${endpoint}:`, error);
     throw error;
   }
 };

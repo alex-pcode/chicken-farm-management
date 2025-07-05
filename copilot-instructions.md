@@ -34,27 +34,46 @@ This documentation outlines standards and instructions for the Chicken Manager p
   - `EggCounter.tsx` for egg production tracking
   - `FeedTracker.tsx` for feed inventory management
   - `Expenses.tsx` for financial tracking
-  - `Profile.tsx` for flock profile management
+  - `Profile.tsx` for flock profile management and timeline events
+  - `Savings.tsx` for analytics and profitability analysis
   - `ReportGenerator.tsx` for data analysis and reporting
 
 ## Data Management
 
 ### Database Structure
 - Document Supabase table schemas and relationships:
-  - `flock_profiles` - Stores chicken flock information
+  - `flock_profiles` - Stores chicken flock information with individual bird counts (hens, roosters, chicks, brooding)
+  - `flock_events` - Tracks timeline events and milestones in flock lifecycle
   - `egg_entries` - Tracks daily egg production
   - `expenses` - Records all financial transactions
   - `feed_inventory` - Manages feed stock and consumption
 
+### API Endpoints
+- Data retrieval: `GET /api/getData` - Returns all application data
+- Profile management: `POST /api/saveFlockProfile` - Create/update flock profiles
+- Event management: 
+  - `POST /api/saveFlockEvents` - Create new timeline events
+  - `PUT /api/saveFlockEvents` - Update existing timeline events
+  - `DELETE /api/deleteFlockEvent` - Remove timeline events
+- Production tracking: `POST /api/saveEggEntries` - Track daily egg production
+- Inventory management: `POST /api/saveFeedInventory` - Manage feed inventory
+- Financial tracking: `POST /api/saveExpenses` - Record expenses
+
 ### Data Import Process
-- CSV files are used for initial data import only:
-  - `egg_entries_with_id.csv` → `egg_entries` table
-  - `expenses_with_id.csv` → `expenses` table
-  - `feed_inventory_with_id.csv` → `feed_inventory` table
-  - `flock_profiles_with_id.csv` → `flock_profiles` table
+- CSV files are used for initial data import only (currently only `egg_entries_with_id.csv` exists)
+- Legacy data migration has been completed from CSV files to Supabase tables
+- Event data has been migrated from JSON storage to dedicated `flock_events` table
+- Bird counts have been migrated from JSON to individual columns in `flock_profiles`
 - Document data migration and import procedures
 - Maintain clear documentation for Supabase schema and relationships
 - Document data validation and error handling procedures
+
+### Recent Schema Updates
+- **flock_events table**: Added dedicated table for timeline events (replaced JSON storage)
+- **flock_profiles columns**: Added individual bird count columns (hens, roosters, chicks, brooding)
+- **Event management**: Full CRUD operations for timeline events with proper foreign key relationships
+- **Data migration**: Completed migration from legacy JSON-based storage to normalized database structure
+- **API modernization**: Updated all endpoints to work with new schema and proper data validation
 
 ### Deployment
 - Document Vercel deployment process and configuration
@@ -89,8 +108,21 @@ This documentation outlines standards and instructions for the Chicken Manager p
 - Detail reporting and analysis features
 
 ### Flock Profiles
-- Document bird tracking system
-- Explain flock performance metrics
-- Detail profile management procedures
+- Document bird tracking system with individual counts (hens, roosters, chicks, brooding)
+- Explain flock performance metrics and analytics integration
+- Detail profile management procedures and data validation
+- Document timeline event integration and relationship management
+
+### Timeline and Event Management
+- Document event tracking system for flock milestones
+- Explain event types: acquisition, laying_start, broody, hatching, other
+- Detail event CRUD operations (create, read, update, delete)
+- Document relationship between flock profiles and events
+
+### Analytics and Reporting
+- Document savings calculations and profitability analysis in `Savings.tsx`
+- Explain productivity metrics (eggs per hen, daily lay rate, revenue per hen)
+- Detail cost analysis and break-even calculations
+- Document time period filtering (month, quarter, year, all-time)
 
 This documentation emphasizes maintaining accuracy across all chicken management features, avoiding duplication, and ensuring that all references to code and file paths remain current as the project evolves. It serves as a comprehensive guide for maintaining and extending the Chicken Manager application.

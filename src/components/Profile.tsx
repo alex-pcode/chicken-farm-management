@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { FlockProfile, FlockEvent } from '../types';
-import { apiCall, fetchData } from '../utils/apiUtils';
+import { apiCall, fetchData, apiDelete } from '../utils/apiUtils';
 import { StatCard } from './testCom';
 
 const EVENT_TYPES = {
@@ -24,6 +24,7 @@ const saveToDatabase = async (profile: FlockProfile) => {
 
 export const Profile = () => {
   const [profile, setProfile] = useState<FlockProfile>({
+    id: undefined,
     hens: 0,
     roosters: 0,
     chicks: 0,
@@ -39,6 +40,7 @@ export const Profile = () => {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<string | null>(null);
   
   const [newEvent, setNewEvent] = useState<Partial<FlockEvent>>({
     type: 'acquisition',
@@ -54,40 +56,21 @@ export const Profile = () => {
         const profileData = dbData.flockProfile;
         
         if (profileData && Object.keys(profileData).length > 0) {
-          // Parse data from notes field (which contains JSON)
-          let parsedData = {
-            hens: 7,
-            roosters: 2,
-            chicks: 11,
-            brooding: 1,
-            events: [],
-            originalNotes: ""
-          };
-          
-          try {
-            if (profileData.notes) {
-              const parsed = JSON.parse(profileData.notes);
-              parsedData = { ...parsedData, ...parsed };
-            }
-          } catch (e) {
-            // If notes is not JSON, treat it as original notes
-            parsedData.originalNotes = profileData.notes || "";
-          }
-          
-          // Map database fields to component structure
+          // Use the proper database columns directly
           const updatedProfile = {
-            hens: parsedData.hens || 7,
-            roosters: parsedData.roosters || 2,
-            chicks: parsedData.chicks || 11,
-            brooding: parsedData.brooding || 1,
+            id: profileData.id, // Make sure to include the database ID
+            hens: profileData.hens || 0,
+            roosters: profileData.roosters || 0,
+            chicks: profileData.chicks || 0,
+            brooding: profileData.brooding || 0,
             lastUpdated: profileData.updated_at || new Date().toISOString(),
-            breedTypes: profileData.breed ? profileData.breed.split(', ').filter((b: string) => b.trim()) : [],
-            events: parsedData.events || [],
-            flockStartDate: profileData.start_date || new Date().toISOString(),
-            notes: parsedData.originalNotes || "",
-            farmName: profileData.farm_name || "",
+            breedTypes: profileData.breedTypes || [],
+            events: profileData.events || [],
+            flockStartDate: profileData.flockStartDate || new Date().toISOString(),
+            notes: profileData.notes || "",
+            farmName: profileData.farmName || "",
             location: profileData.location || "",
-            flockSize: profileData.flock_size || 0
+            flockSize: profileData.flockSize || 0
           };
           setProfile(updatedProfile);
         }
@@ -189,21 +172,47 @@ export const Profile = () => {
     setError(null);
 
     const event: FlockEvent = {
-      id: Date.now().toString(),
+      id: Date.now().toString(), // Temporary ID, will be replaced by database ID
       date: newEvent.date || new Date().toISOString().split('T')[0],
       type: newEvent.type as FlockEvent['type'],
       description: newEvent.description.trim(),
       affectedBirds: newEvent.affectedBirds,
       notes: newEvent.notes?.trim()
-    };    const updatedProfile = {
-      ...profile,
-      events: [...(profile.events || []), event].sort((a, b) => 
-        new Date(a.date).getTime() - new Date(b.date).getTime()
-      )
-    };    try {
-      console.log('Sending profile update:', updatedProfile);
-      const saved = await saveToDatabase(updatedProfile);
-      if (saved) {
+    };
+
+    try {
+      // Check if we have a profile ID, if not we need to get it first
+      if (!profile.id) {
+        setError('Profile not loaded yet. Please wait and try again.');
+        return;
+      }
+
+      // Save event to database using new API
+      const response = await apiCall('/saveFlockEvents', {
+        flockProfileId: profile.id,
+        event: event
+      });
+      
+      if (response && response.data && response.data.event) {
+        // Use the database event data which includes the proper ID
+        const dbEvent = response.data.event;
+        const eventForState: FlockEvent = {
+          id: dbEvent.id.toString(),
+          date: dbEvent.date,
+          type: dbEvent.type,
+          description: dbEvent.description,
+          affectedBirds: dbEvent.affected_birds,
+          notes: dbEvent.notes
+        };
+        
+        // Update local state with the new event
+        const updatedProfile = {
+          ...profile,
+          events: [...(profile.events || []), eventForState].sort((a, b) => 
+            new Date(a.date).getTime() - new Date(b.date).getTime()
+          )
+        };
+        
         setProfile(updatedProfile);
         setNewEvent({
           type: 'acquisition',
@@ -229,20 +238,121 @@ export const Profile = () => {
     setIsLoading(true);
     setError(null);
     
-    const updatedProfile = {
-      ...profile,
-      events: profile.events.filter(e => e.id !== eventId)
-    };
-      try {
-      const saved = await saveToDatabase(updatedProfile);
-      if (saved) {
+    try {
+      // Delete event from database using new API
+      const response = await apiDelete('/deleteFlockEvent', { eventId });
+      
+      if (response) {
+        // Update local state by removing the event
+        const updatedProfile = {
+          ...profile,
+          events: profile.events.filter(e => e.id !== eventId)
+        };
+        
         setProfile(updatedProfile);
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
       } else {
-        throw new Error('Failed to remove event');
+        throw new Error('Failed to delete event');
       }
     } catch (err) {
-      setError('Failed to remove event. Please try again.');
       console.error('Error removing event:', err);
+      setError('Failed to remove event. Please try again. Error: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const startEditEvent = (event: FlockEvent) => {
+    setEditingEvent(event.id);
+    setNewEvent({
+      type: event.type,
+      date: event.date,
+      description: event.description,
+      affectedBirds: event.affectedBirds,
+      notes: event.notes
+    });
+  };
+
+  const cancelEditEvent = () => {
+    setEditingEvent(null);
+    setNewEvent({
+      type: 'acquisition',
+      date: new Date().toISOString().split('T')[0],
+      description: '',
+      affectedBirds: undefined,
+      notes: ''
+    });
+  };
+
+  const updateEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEvent || !newEvent.description?.trim()) {
+      setError('Please provide an event description');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    const updatedEventData = {
+      date: newEvent.date || new Date().toISOString().split('T')[0],
+      type: newEvent.type,
+      description: newEvent.description.trim(),
+      affectedBirds: newEvent.affectedBirds,
+      notes: newEvent.notes?.trim()
+    };
+
+    try {
+      // Update event in database using PUT method
+      const response = await fetch(`/api/saveFlockEvents`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          flockProfileId: profile.id || 1,
+          event: updatedEventData,
+          eventId: editingEvent
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update event');
+      }
+
+      const result = await response.json();
+      
+      if (result && result.data && result.data.event) {
+        // Use the database event data
+        const dbEvent = result.data.event;
+        const eventForState: FlockEvent = {
+          id: dbEvent.id.toString(),
+          date: dbEvent.date,
+          type: dbEvent.type,
+          description: dbEvent.description,
+          affectedBirds: dbEvent.affected_birds,
+          notes: dbEvent.notes
+        };
+        
+        // Update local state by replacing the updated event
+        const updatedProfile = {
+          ...profile,
+          events: profile.events.map(e => e.id === editingEvent ? eventForState : e).sort((a, b) => 
+            new Date(a.date).getTime() - new Date(b.date).getTime()
+          )
+        };
+        
+        setProfile(updatedProfile);
+        cancelEditEvent();
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        throw new Error('Failed to update event');
+      }
+    } catch (err) {
+      console.error('Error updating event:', err);
+      setError('Failed to update event. Please try again. Error: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setIsLoading(false);
     }
@@ -443,8 +553,8 @@ export const Profile = () => {
         transition={{ delay: 0.1 }}
         className="neu-form"
       >
-        <h2 className="neu-title">Flock Timeline 📅</h2>
-        <form onSubmit={addEvent} className="space-y-6">
+        <h2 className="neu-title">{editingEvent ? 'Edit Event 📝' : 'Flock Timeline 📅'}</h2>
+        <form onSubmit={editingEvent ? updateEvent : addEvent} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
               <label className="block text-gray-600 text-sm mb-2" htmlFor="eventType">
@@ -517,9 +627,21 @@ export const Profile = () => {
               rows={3}
             />
           </div>
-          <button type="submit" className="neu-button full-width md:w-auto md:min-w-[200px]" disabled={isLoading}>
-            {isLoading ? 'Adding...' : 'Add Event'}
-          </button>
+          <div className="flex gap-4">
+            <button type="submit" className="neu-button full-width md:w-auto md:min-w-[200px]" disabled={isLoading}>
+              {isLoading ? (editingEvent ? 'Updating...' : 'Adding...') : (editingEvent ? 'Update Event' : 'Add Event')}
+            </button>
+            {editingEvent && (
+              <button 
+                type="button" 
+                onClick={cancelEditEvent}
+                className="neu-button-secondary full-width md:w-auto md:min-w-[200px]"
+                disabled={isLoading}
+              >
+                Cancel
+              </button>
+            )}
+          </div>
         </form>        <div className="mt-8">
           <h3 className="text-xl font-semibold text-gray-900 mb-6">Timeline</h3>
           
@@ -602,6 +724,17 @@ export const Profile = () => {
                               ×
                             </motion.button>
 
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => startEditEvent(event)}
+                              className={`absolute ${isEven ? '-left-2 translate-x-full' : '-right-2 -translate-x-full'} top-8 w-6 h-6 rounded-full bg-blue-50 text-blue-500 hover:bg-blue-100 hover:text-blue-700 flex items-center justify-center text-sm`}
+                              disabled={isLoading}
+                              title="Edit event"
+                            >
+                              ✎
+                            </motion.button>
+
                             <div className={`absolute top-1/2 ${isEven ? '-right-8' : '-left-8'} transform -translate-y-1/2 w-8 h-0.5 ${eventColor}`}></div>
                           </motion.div>
                         </div>
@@ -649,16 +782,28 @@ export const Profile = () => {
                             {event.notes && (                              <p className="text-xs text-gray-600 italic">{event.notes}</p>
                             )}
                           </div>
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => removeEvent(event.id)}
-                            className="shrink-0 w-6 h-6 rounded-full bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 flex items-center justify-center text-sm"
-                            disabled={isLoading}
-                            title="Remove event"
-                          >
-                            ×
-                          </motion.button>
+                          <div className="flex flex-col gap-2">
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => startEditEvent(event)}
+                              className="shrink-0 w-6 h-6 rounded-full bg-blue-50 text-blue-500 hover:bg-blue-100 hover:text-blue-700 flex items-center justify-center text-sm"
+                              disabled={isLoading}
+                              title="Edit event"
+                            >
+                              ✎
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => removeEvent(event.id)}
+                              className="shrink-0 w-6 h-6 rounded-full bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 flex items-center justify-center text-sm"
+                              disabled={isLoading}
+                              title="Remove event"
+                            >
+                              ×
+                            </motion.button>
+                          </div>
                         </div>
                       </div>
                     </div>
