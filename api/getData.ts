@@ -1,24 +1,51 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
+import * as path from 'path';
 
-dotenv.config();
+// Explicitly load .env file from the project root
+const envPath = path.resolve(process.cwd(), '.env');
+dotenv.config({ path: envPath });
+
+// Log the relevant environment variables to check if they are loaded
+console.log('Attempting to load .env from:', envPath);
+console.log('VITE_SUPABASE_URL from env:', process.env.VITE_SUPABASE_URL ? 'Loaded' : 'Not Loaded');
+console.log('SUPABASE_SERVICE_ROLE_KEY from env:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Loaded' : 'Not Loaded');
 
 // Helper function to get user from authorization header
 async function getAuthenticatedUser(req: VercelRequest, supabase: any) {
   const authHeader = req.headers.authorization;
-  if (!authHeader) return null;
+  console.log('Auth header check:', authHeader ? 'Present' : 'Missing');
+  
+  if (!authHeader) {
+    console.log('No authorization header found');
+    return null;
+  }
   
   const token = authHeader.replace('Bearer ', '');
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  return error ? null : user;
+  console.log('Token extracted, length:', token.length);
+  
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    console.log('Supabase auth result:', { user: !!user, error: error?.message });
+    return error ? null : user;
+  } catch (err) {
+    console.log('Auth error:', err);
+    return null;
+  }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log('Handler called');
+  console.log('Authorization header:', req.headers.authorization ? 'Present' : 'Missing');
   
-  const supabaseUrl = 'https://yckjarujczxrlaftfjbv.supabase.co';
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlja2phcnVqY3p4cmxhZnRmamJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNDkxMDIsImV4cCI6MjA2NDcyNTEwMn0.Q399p6ORsh7-HF4IRLQAJYzgxKk5C3MNCqEIrPA00l4';
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Supabase environment variables are not set!');
+    return res.status(500).json({ message: 'Internal Server Error: Missing Supabase configuration.' });
+  }
 
   const supabase = createClient(supabaseUrl, supabaseKey);
 

@@ -8,7 +8,9 @@ A comprehensive web application for managing your chicken flock, tracking egg pr
 - **Secure user registration and login** with Supabase Auth
 - **Private user profiles** - each user has their own isolated data
 - **Protected routes** - authentication required for all app features
-- **Session management** with automatic token refresh
+- **Session management** with automatic token refresh (1-hour expiry)
+- **Automatic token renewal** - seamless authentication experience
+- **Emergency session recovery** - handles token expiration gracefully
 
 ### 🥚 **Egg Production Tracking**
 - Daily egg count logging with date tracking
@@ -63,10 +65,14 @@ A comprehensive web application for managing your chicken flock, tracking egg pr
 3. **Configure environment variables**
    Create a `.env` file in the root directory:
    ```env
+   VITE_API_URL=/api
    VITE_SUPABASE_URL=your_supabase_project_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
    VITE_USE_LOCAL_STORAGE=false
    ```
+   
+   ⚠️ **Important**: Never commit your `.env` file to git. It's already excluded in `.gitignore`.
 
 4. **Set up Supabase database**
    - Import the provided `supabase-schema.sql` file
@@ -75,11 +81,15 @@ A comprehensive web application for managing your chicken flock, tracking egg pr
 
 5. **Start the development server**
    ```bash
+   # Using Vercel CLI (recommended for full API support)
+   npx vercel dev
+   
+   # Or using Vite directly
    npm run dev
    ```
 
 6. **Visit the application**
-   Open [http://localhost:5173](http://localhost:5173) in your browser
+   Open [http://localhost:3001](http://localhost:3001) (Vercel dev) or [http://localhost:5173](http://localhost:5173) (Vite) in your browser
 
 ## 🏗️ Architecture
 
@@ -99,9 +109,11 @@ A comprehensive web application for managing your chicken flock, tracking egg pr
 
 ### Security
 - **User authentication** required for all operations
-- **JWT tokens** for secure API communication
+- **JWT tokens** with 1-hour expiry and automatic refresh
 - **Row Level Security** policies protect user data
 - **CORS** properly configured for production
+- **Environment variables** secured (`.env` excluded from git)
+- **Service role key** used only in backend API functions
 
 ## 📱 User Guide
 
@@ -163,8 +175,11 @@ All API endpoints require authentication:
 ```env
 VITE_SUPABASE_URL=your_production_supabase_url
 VITE_SUPABASE_ANON_KEY=your_production_supabase_key
+SUPABASE_SERVICE_ROLE_KEY=your_production_service_role_key
 VITE_USE_LOCAL_STORAGE=false
 ```
+
+⚠️ **Security Note**: Set these in your Vercel dashboard, never commit them to git.
 
 ## 📚 Documentation
 

@@ -92,6 +92,9 @@ This documentation outlines standards and instructions for the Chicken Manager p
 - **User Authentication Integration**: Added Supabase Auth with complete user session management
 - **Multi-User Support**: Added `user_id` columns to all data tables for user isolation
 - **Row Level Security (RLS)**: Enabled database-level security policies for data protection
+- **Authentication Token Management**: Implemented automatic JWT token refresh (1-hour expiry)
+- **Session Recovery**: Added graceful handling of token expiration and session corruption
+- **Security Hardening**: Environment variables properly secured, CORS configured, production logging controls
 - **flock_events table**: Added dedicated table for timeline events (replaced JSON storage) with user_id
 - **flock_profiles columns**: Added individual bird count columns (hens, roosters, chicks, brooding) with user_id
 - **Event management**: Full CRUD operations for timeline events with proper foreign key relationships and user restrictions
@@ -108,7 +111,10 @@ This documentation outlines standards and instructions for the Chicken Manager p
 - **Security Environment Variables**:
   - `VITE_SUPABASE_URL` - Supabase project URL
   - `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key for auth
+  - `SUPABASE_SERVICE_ROLE_KEY` - Service role key for backend API operations
   - `VITE_USE_LOCAL_STORAGE` - Set to false for production (use Supabase)
+- **Development Server**: Use `npx vercel dev` for full API support during development
+- **Security**: Environment variables must never be committed to git (secured in `.gitignore`)
 
 ## Maintenance Practices
 

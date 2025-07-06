@@ -1,10 +1,22 @@
 import { supabase } from './supabase';
 
-// Helper function to get authenticated headers
+// Helper function to get authenticated headers with automatic token refresh
 export const getAuthHeaders = async () => {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  if (error || !session) {
-    throw new Error('User not authenticated');
+  // First try to get the current session
+  let { data: { session }, error } = await supabase.auth.getSession();
+  
+  // If no session or session is expired, try to refresh
+  if (error || !session || !session.access_token) {
+    console.log('No valid session found, attempting refresh...');
+    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+    
+    if (refreshError || !refreshData.session) {
+      console.error('Token refresh failed:', refreshError);
+      throw new Error('User not authenticated - please log in again');
+    }
+    
+    session = refreshData.session;
+    console.log('Token refreshed successfully');
   }
   
   return {
@@ -13,7 +25,7 @@ export const getAuthHeaders = async () => {
   };
 };
 
-// Original fetchData function
+// Original fetchData function with better error handling
 export const fetchData = async () => {
   try {
     const response = await fetch('/api/getData', {
@@ -22,6 +34,9 @@ export const fetchData = async () => {
     });
 
     if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Authentication failed - please refresh the page or log in again');
+      }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
@@ -29,6 +44,13 @@ export const fetchData = async () => {
     return result.data;
   } catch (error) {
     console.error('Error fetching data:', error);
+    
+    // If it's an authentication error, the user needs to log in again
+    if (error instanceof Error && error.message.includes('not authenticated')) {
+      // This will trigger the AuthContext to show the login screen
+      await supabase.auth.signOut();
+    }
+    
     throw error;
   }
 };
