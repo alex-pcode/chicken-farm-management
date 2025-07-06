@@ -4,6 +4,16 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
+// Helper function to get user from authorization header
+async function getAuthenticatedUser(req: VercelRequest, supabase: any) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return null;
+  
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  return error ? null : user;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log('Handler called');
   
@@ -15,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -26,12 +36,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    console.log('Attempting to fetch egg entries...');
+    // Get authenticated user
+    const user = await getAuthenticatedUser(req, supabase);
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized - Please log in' });
+    }
+
+    console.log('Attempting to fetch data for user:', user.id);
     
-    // Fetch all egg entries, order by date descending
+    // Fetch user's egg entries, order by date descending
     const { data: eggEntries, error } = await supabase
       .from('egg_entries')
       .select('id, date, count')
+      .eq('user_id', user.id)
       .order('date', { ascending: false });
 
     if (error) {
@@ -41,10 +58,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log('Egg entries fetched successfully:', eggEntries?.length || 0, 'entries');
     
-    // Fetch singleton flock profile
+    // Fetch user's flock profile
     const { data: flockProfiles, error: flockProfileError } = await supabase
       .from('flock_profiles')
       .select('*')
+      .eq('user_id', user.id)
       .limit(1);
 
     if (flockProfileError) {
@@ -100,19 +118,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       };
     }
 
-    // Fetch feed inventory
+    // Fetch user's feed inventory
     const { data: feedInventory, error: feedError } = await supabase
       .from('feed_inventory')
-      .select('*');
+      .select('*')
+      .eq('user_id', user.id);
     if (feedError) {
       console.error('Supabase feed_inventory error:', feedError);
       throw feedError;
     }
 
-    // Fetch expenses
+    // Fetch user's expenses
     const { data: expenses, error: expensesError } = await supabase
       .from('expenses')
-      .select('*');
+      .select('*')
+      .eq('user_id', user.id);
     if (expensesError) {
       console.error('Supabase expenses error:', expensesError);
       throw expensesError;

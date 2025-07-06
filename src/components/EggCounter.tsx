@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useKeyboardShortcut } from '../utils/useKeyboardShortcut';
-import { apiCall, fetchData } from '../utils/apiUtils';
+import { saveEggEntries, fetchData } from '../utils/authApiUtils';
 import { exportToCSV } from '../utils/exportUtils';
 import type { EggEntry } from '../types';
 import { v4 as uuidv4 } from 'uuid';
@@ -21,7 +21,7 @@ const saveToDatabase = async (updatedEntries: EggEntry[]) => {
       ...entry,
       id: entry.id || uuidv4()
     }));
-    await apiCall('/saveEggEntries', entriesWithIds);
+    await saveEggEntries(entriesWithIds);
   } catch (error) {
     console.error('Error saving to database:', error);
     throw error;

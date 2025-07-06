@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { FlockProfile } from '../types';
-import { fetchData } from '../utils/apiUtils';
+import { fetchData } from '../utils/authApiUtils';
 import { StatCard } from './testCom';
 
 interface SavingsData {

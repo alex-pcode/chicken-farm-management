@@ -7,8 +7,11 @@ import { FeedTracker } from './components/FeedTracker'
 import { Savings } from './components/Savings'
 import { Profile } from './components/Profile'
 import { motion } from 'framer-motion'
-import { fetchData } from './utils/apiUtils'
+import { fetchData } from './utils/authApiUtils'
 import { StatCard } from './components/testCom'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ProtectedRoute } from './components/ProtectedRoute'
+import { UserProfile } from './components/UserProfile'
 // import { Login } from './components/Login' // Temporarily disabled
 
 const navigation = [
@@ -64,6 +67,10 @@ const Dashboard = () => {
         setDailyAverage(Math.round(last7Days * 10) / 10);
       } catch (error) {
         console.log('Failed to load dashboard data:', error);
+        // Set default values if data loading fails
+        setEggCount(0);
+        setExpenses(0);
+        setDailyAverage(0);
       }
     };
 
@@ -153,41 +160,44 @@ const Dashboard = () => {
 };
 
 function App() {
-  // Temporarily disable authentication for development
-  const [username, setUsername] = useState<string | null>('dev-user'); // Set default user
+  return (
+    <AuthProvider>
+      <ProtectedRoute>
+        <MainApp />
+      </ProtectedRoute>
+    </AuthProvider>
+  );
+}
 
-  const handleLogout = () => {
-    // For now, just reset to dev user instead of showing login
-    setUsername('dev-user');
-  };
-
-  // Authentication is currently disabled for development
+const MainApp = () => {
+  const { user, signOut } = useAuth();
 
   return (
     <div className="flex min-h-screen">
-        <aside className="sidebar">
-          <div className="brand">
-            <span className="text-2xl" role="img" aria-label="brand">🐔</span>
-            <h1>Chicken Manager</h1>
-          </div>
+      <UserProfile />
+    <aside className="sidebar">
+      <div className="brand">
+        <span className="text-2xl" role="img" aria-label="brand">🐔</span>
+        <h1>Chicken Manager</h1>
+      </div>
 
-          <nav className="space-y-8">
-            <div className="nav-section">
-              <h2 className="nav-title text-xs uppercase font-medium text-gray-500 mb-4">Menu</h2>
-              {navigation.map((item) => (
-                <NavLink key={item.name} item={item} />
-              ))}
-            </div>
-            <div className="mt-8">
-              <button
-                onClick={handleLogout}
-                className="neu-button w-full bg-red-100 text-red-600 hover:bg-red-200 mt-4"
-              >
-                Logout{username ? ` (${username})` : ''}
-              </button>
-            </div>
-          </nav>
-        </aside>
+      <nav className="space-y-8">
+        <div className="nav-section">
+          <h2 className="nav-title text-xs uppercase font-medium text-gray-500 mb-4">Menu</h2>
+          {navigation.map((item) => (
+            <NavLink key={item.name} item={item} />
+          ))}
+        </div>
+        <div className="mt-8">
+          <button
+            onClick={signOut}
+            className="neu-button w-full bg-red-100 text-red-600 hover:bg-red-200 mt-4"
+          >
+            Logout ({user?.email?.split('@')[0]})
+          </button>
+        </div>
+      </nav>
+    </aside>
 
         <main className="main-content">
           <Routes>
@@ -217,10 +227,10 @@ function App() {
                     <NavLink key={item.name} item={item} />
                   ))}
                   <button
-                    onClick={handleLogout}
+                    onClick={signOut}
                     className="neu-button w-full bg-red-100 text-red-600 hover:bg-red-200 mt-4"
                   >
-                    Logout{username ? ` (${username})` : ''}
+                    Logout ({user?.email?.split('@')[0]})
                   </button>
                 </div>
               </Disclosure.Panel>
@@ -228,7 +238,7 @@ function App() {
           )}
         </Disclosure>
       </div>
-  );
-}
+    );
+  };
 
 export default App;

@@ -1,12 +1,60 @@
 # Database Schema Documentation
 
-## Supabase Tables
+## Overview
+
+The Chicken Manager application uses Supabase (PostgreSQL) with Row Level Security (RLS) enabled for multi-user data isolation. Each table includes a `user_id` column to associate records with specific users.
+
+## Authentication & Security
+
+### User Authentication (Supabase Auth)
+Supabase provides built-in user authentication with the following features:
+- **User Registration**: Email/password signup
+- **User Login**: Secure session management
+- **JWT Tokens**: Automatic token generation and refresh
+- **Session Persistence**: Maintains login state across browser sessions
+
+### Row Level Security (RLS)
+All tables have RLS policies that ensure:
+- Users can only access their own data
+- All new records are automatically tagged with the user's ID
+- Database-level security prevents unauthorized access
+
+### Required RLS Policies
+```sql
+-- Enable RLS on all tables
+ALTER TABLE flock_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE egg_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE feed_inventory ENABLE ROW LEVEL SECURITY;
+ALTER TABLE flock_events ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for each table
+CREATE POLICY "Users can only access their own flock profiles" ON flock_profiles
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only access their own egg entries" ON egg_entries
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only access their own expenses" ON expenses
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only access their own feed inventory" ON feed_inventory
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only access their own flock events" ON flock_events
+  FOR ALL USING (auth.uid() = user_id);
+```
+
+---
+
+## Tables
 
 ### flock_profiles
 **Purpose**: Store farm and flock information with detailed bird counts and metadata
 
 **Schema**:
 - `id` (UUID, Primary Key): Unique identifier for each flock profile
+- `user_id` (UUID, NOT NULL): Foreign key to auth.users (Supabase Auth)
 - `farm_name` (TEXT): Name of the farm (default: 'My Chicken Farm')
 - `location` (TEXT): Farm location/address
 - `flock_size` (INTEGER): Total number of birds in the flock
@@ -20,41 +68,22 @@
 - `created_at` (TIMESTAMP): Record creation timestamp
 - `updated_at` (TIMESTAMP): Last update timestamp
 
-**API Operations**:
-- **Save**: Uses upsert logic - updates existing profile or creates new one
-- **Read**: Returns the first (and typically only) profile with all fields mapped to frontend format
-
-**Data Integrity**:
-- Only one flock profile is expected per application instance
-- Bird counts are stored in dedicated columns (not in JSON)
-- Frontend maps database field names to application field names
-- All bird count fields have default values of 0
-
-**Relationships**:
-- Parent table for `flock_events` (one-to-many relationship)
+**Security**:
+- RLS policy ensures users only access their own profiles
+- Each user typically has one flock profile
 
 ### egg_entries
 **Purpose**: Track daily egg production with proper data persistence
 
 **Schema**:
 - `id` (UUID, Primary Key): Unique identifier for each entry
+- `user_id` (UUID, NOT NULL): Foreign key to auth.users
 - `date` (DATE, NOT NULL): Date of egg collection
 - `count` (INTEGER, NOT NULL): Number of eggs collected
 
-**API Operations**:
-- **Save**: Uses `upsert` with `onConflict: 'id'` to prevent data loss
-- **Read**: Returns all entries ordered by date (descending)
-
-**Data Integrity**:
-- All entries must have UUID `id` field for proper upsert functionality
-- Frontend generates UUIDs for new entries using `uuidv4()`
-- Existing entries from CSV imports retain their original IDs
-- No duplicate dates allowed per entry
-
-**Recent Fixes**:
-- ✅ Fixed data loss issue where new entries overwrote existing data
-- ✅ Ensured proper ID assignment for all entries
-- ✅ Normalized API response structure for consistent data access
+**Security**:
+- RLS policy filters entries by user_id
+- Users can only see their own egg production data
 
 ### flock_events
 **Purpose**: Track timeline events and milestones in the flock's lifecycle
@@ -119,6 +148,7 @@
 
 **Schema**:
 - `id` (UUID, Primary Key): Unique identifier for each expense
+- `user_id` (UUID, NOT NULL): Foreign key to auth.users
 - `date` (DATE, NOT NULL): Date when expense was incurred
 - `category` (TEXT, NOT NULL): Expense category (feed, medical, equipment, etc.)
 - `description` (TEXT, NOT NULL): Description of the expense

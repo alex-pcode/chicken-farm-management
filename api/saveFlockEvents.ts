@@ -6,11 +6,21 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Helper function to get user from authorization header
+async function getAuthenticatedUser(req: VercelRequest) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return null;
+  
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  return error ? null : user;
+}
+
 async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, PUT, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -21,6 +31,12 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // Get authenticated user
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized - Please log in' });
+    }
+
     const { flockProfileId, event, eventId } = req.body;
     console.log('Received event data:', { flockProfileId, event, eventId });
 
@@ -28,9 +44,22 @@ async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ message: 'Missing required fields: flockProfileId and event' });
     }
 
+    // Verify the flock profile belongs to the user
+    const { data: flockProfile, error: profileError } = await supabase
+      .from('flock_profiles')
+      .select('id')
+      .eq('id', flockProfileId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (profileError || !flockProfile) {
+      return res.status(403).json({ message: 'Access denied - Flock profile not found or not owned by user' });
+    }
+
     // Prepare event data for database
     const eventData = {
       flock_profile_id: flockProfileId,
+      user_id: user.id,
       date: event.date,
       type: event.type,
       description: event.description,

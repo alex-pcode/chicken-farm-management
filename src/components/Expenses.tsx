@@ -4,8 +4,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useKeyboardShortcut } from '../utils/useKeyboardShortcut';
-import type { Expense } from './testData';
-import { apiCall, fetchData } from '../utils/apiUtils';
+import type { Expense } from '../types';
+import { saveExpenses, fetchData } from '../utils/authApiUtils';
 
 interface ValidationError {
   field: string;
@@ -23,7 +23,7 @@ const CATEGORIES = [
 
 const saveToDatabase = async (expenses: Expense[]) => {
   try {
-    await apiCall('/saveExpenses', expenses);
+    await saveExpenses(expenses);
   } catch (error) {
     console.error('Error saving to database:', error);
   }
@@ -535,17 +535,19 @@ export const Expenses = () => {
                       {formatCurrency(expense.amount)}
                     </td>
                     <td className="px-6 py-4 text-sm">
-                      <button
-                        onClick={() => handleDelete(expense.id)}
-                        className={`inline-flex items-center p-2 rounded-full
-                          ${deleteConfirm === expense.id
-                            ? 'text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100'
-                            : 'text-gray-400 hover:text-gray-500 hover:bg-gray-100'
-                          } transition-colors`}
-                        title={deleteConfirm === expense.id ? "Click again to confirm deletion" : "Delete expense"}
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </button>
+                      {expense.id && (
+                        <button
+                          onClick={() => handleDelete(expense.id!)}
+                          className={`inline-flex items-center p-2 rounded-full
+                            ${deleteConfirm === expense.id
+                              ? 'text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100'
+                              : 'text-gray-400 hover:text-gray-500 hover:bg-gray-100'
+                            } transition-colors`}
+                          title={deleteConfirm === expense.id ? "Click again to confirm deletion" : "Delete expense"}
+                        >
+                          <TrashIcon className="h-5 w-5" />
+                        </button>
+                      )}
                     </td>
                   </motion.tr>
                 ))}

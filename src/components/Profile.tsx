@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { FlockProfile, FlockEvent } from '../types';
-import { apiCall, fetchData, apiDelete } from '../utils/apiUtils';
+import { saveFlockProfile, fetchData, deleteFlockEvent, saveFlockEvent } from '../utils/authApiUtils';
 import { StatCard } from './testCom';
 
 const EVENT_TYPES = {
@@ -14,7 +14,7 @@ const EVENT_TYPES = {
 
 const saveToDatabase = async (profile: FlockProfile) => {
   try {
-    await apiCall('/saveFlockProfile', profile);
+    await saveFlockProfile(profile);
     return true;
   } catch (error) {
     console.error('Error saving to database:', error);
@@ -188,10 +188,7 @@ export const Profile = () => {
       }
 
       // Save event to database using new API
-      const response = await apiCall('/saveFlockEvents', {
-        flockProfileId: profile.id,
-        event: event
-      });
+      const response = await saveFlockEvent(profile.id, event);
       
       if (response && response.data && response.data.event) {
         // Use the database event data which includes the proper ID
@@ -240,7 +237,7 @@ export const Profile = () => {
     
     try {
       // Delete event from database using new API
-      const response = await apiDelete('/deleteFlockEvent', { eventId });
+      const response = await deleteFlockEvent(eventId);
       
       if (response) {
         // Update local state by removing the event

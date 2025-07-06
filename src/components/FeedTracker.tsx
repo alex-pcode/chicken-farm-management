@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { FeedEntry, FlockProfile } from '../types';
-import { apiCall, fetchData } from '../utils/apiUtils';
+import { saveFeedInventory, fetchData, saveExpenses } from '../utils/authApiUtils';
 import { v4 as uuidv4 } from 'uuid';
 
 const FEED_TYPES = [
@@ -12,7 +12,7 @@ const FEED_TYPES = [
 
 const saveToDatabase = async (inventory: FeedEntry[]) => {
   try {
-    await apiCall('/saveFeedInventory', inventory);
+    await saveFeedInventory(inventory);
   } catch (error) {
     console.error('Error saving to database:', error);
   }
@@ -185,7 +185,7 @@ export const FeedTracker = () => {
       };
 
       const updatedExpenses = [...expenses, newExpense];
-      await apiCall('/saveExpenses', updatedExpenses);
+      await saveExpenses(updatedExpenses);
 
       // Dispatch custom event to notify other components
       window.dispatchEvent(new CustomEvent('dataUpdated', { 
