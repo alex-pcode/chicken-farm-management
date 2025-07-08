@@ -1,15 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import * as dotenv from 'dotenv';
-import * as path from 'path';
-
-// Explicitly load .env file from the project root
-const envPath = path.resolve(process.cwd(), '.env');
-dotenv.config({ path: envPath });
 
 // Log the relevant environment variables to check if they are loaded
-console.log('Attempting to load .env from:', envPath);
-console.log('VITE_SUPABASE_URL from env:', process.env.VITE_SUPABASE_URL ? 'Loaded' : 'Not Loaded');
+console.log('SUPABASE_URL from env:', process.env.SUPABASE_URL ? 'Loaded' : 'Not Loaded');
 console.log('SUPABASE_SERVICE_ROLE_KEY from env:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Loaded' : 'Not Loaded');
 
 // Helper function to get user from authorization header
@@ -39,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log('Handler called');
   console.log('Authorization header:', req.headers.authorization ? 'Present' : 'Missing');
   
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
