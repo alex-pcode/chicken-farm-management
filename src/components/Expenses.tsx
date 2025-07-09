@@ -4,8 +4,10 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useKeyboardShortcut } from '../utils/useKeyboardShortcut';
+import { exportToCSV } from '../utils/exportUtils';
 import type { Expense } from '../types';
 import { saveExpenses, fetchData } from '../utils/authApiUtils';
+import { AnimatedCoin } from './AnimatedCoin';
 
 interface ValidationError {
   field: string;
@@ -265,6 +267,16 @@ export const Expenses = () => {
           </motion.div>
         </motion.div>
       )}
+
+      {/* Animated Piggy Bank Section - Testing (will be for new users) */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="w-full"
+      >
+        <AnimatedCoin />
+      </motion.div>
 
       <div className="flex justify-between items-center">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">

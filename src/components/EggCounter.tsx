@@ -8,6 +8,7 @@ import { exportToCSV } from '../utils/exportUtils';
 import type { EggEntry } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { StatCard } from './testCom';
+import { AnimatedHen } from './AnimatedHen';
 
 interface ValidationError {
   field: string;
@@ -230,6 +231,16 @@ export const EggCounter = () => {
       animate={{ opacity: 1 }}
       className="space-y-8 max-w-3xl mx-auto py-8"
     >
+      {/* Animated Hen Section - Testing (will be for new users) */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="w-full"
+      >
+        <AnimatedHen />
+      </motion.div>
+
       {showShortcuts && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
