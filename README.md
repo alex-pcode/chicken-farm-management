@@ -17,12 +17,14 @@ A comprehensive web application for managing your chicken flock, tracking egg pr
 - Visual statistics and trends
 - Export data to CSV format
 - Historical data analysis
+- **Welcome animation** with animated hen on egg pyramid
 
 ### 💰 **Expense Management**
 - Track feed, equipment, veterinary, and other expenses
 - Categorized expense tracking
 - Visual expense analytics with charts
 - Monthly/yearly expense summaries
+- **Welcome animation** with spinning Euro coin featuring chicken design
 
 ### 🌾 **Feed Inventory Management**
 - Monitor feed levels and consumption
@@ -149,10 +151,13 @@ A comprehensive web application for managing your chicken flock, tracking egg pr
 ### Key Components
 - **Authentication**: Full user auth with Supabase
 - **Dashboard**: Overview of key metrics
-- **EggCounter**: Daily egg production logging
-- **Expenses**: Expense tracking and categorization
+- **EggCounter**: Daily egg production logging with animated hen welcome
+- **Expenses**: Expense tracking and categorization with animated coin welcome
 - **FeedTracker**: Feed inventory management
 - **Profile**: Flock management and events
+- **Animations**: Welcome animations for enhanced user experience
+  - `AnimatedHen`: Hen on egg pyramid animation
+  - `AnimatedCoin`: Spinning Euro coin with chicken design
 
 ### API Endpoints
 All API endpoints require authentication:
@@ -187,6 +192,22 @@ VITE_USE_LOCAL_STORAGE=false
 - [API Documentation](docs/api-documentation.md)
 - [Component Guide](docs/components.md)
 - [User Guide](docs/simple-feed-guide.md)
+
+## 🎨 Recent Updates
+
+### Animation Features (July 2025)
+- **Welcome Animations**: Added engaging welcome animations to key tabs
+  - **EggCounter**: Animated hen sitting on a pyramid of eggs
+  - **Expenses**: Spinning Euro coin with chicken design on one side
+- **Modular Design**: Animations built as reusable components
+- **Performance Optimized**: Lightweight CSS animations with smooth transitions
+
+### Technical Improvements
+- Refactored animation logic into separate components (`AnimatedHen.tsx`, `AnimatedCoin.tsx`)
+- Enhanced user experience with themed welcome animations
+- Maintained responsive design across all devices
+
+---
 
 ## 🤝 Contributing
 

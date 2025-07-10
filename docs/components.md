@@ -65,6 +65,7 @@ const MyComponent = () => {
 - Visual statistics and trends
 - Export data to CSV format
 - Historical data analysis
+- **Welcome Animation**: Animated hen sitting on pyramid of eggs for new users
 - **Authentication**: Uses `authApiUtils` for secure API calls
 - **Data Isolation**: Only shows current user's egg entries
 
@@ -73,6 +74,9 @@ const MyComponent = () => {
 - Bulk operations
 - Data validation
 - Automatic saving
+
+**Animation Components**:
+- `AnimatedHen`: Welcome animation featuring a hen on eggs pyramid
 
 ### FeedTracker.tsx
 **Purpose**: Monitor feed inventory with user-specific data
@@ -96,11 +100,15 @@ const MyComponent = () => {
 - Multiple expense categories (Feed, Equipment, Veterinary, etc.)
 - Visual analytics with charts
 - Monthly/yearly summaries
+- **Welcome Animation**: Spinning Euro coin with chicken design for new users
 - **Authentication**: All expense data is user-specific
 - **Security**: Uses authenticated API endpoints
 
 **Categories**:
 - Feed, Equipment, Veterinary, Maintenance, Supplies, Other
+
+**Animation Components**:
+- `AnimatedCoin`: Welcome animation featuring spinning Euro coin with chicken
 
 ### Profile.tsx
 **Purpose**: Manage flock information with user-specific profiles
@@ -133,6 +141,40 @@ const MyComponent = () => {
 - Cost comparison analysis
 - Visual charts and metrics
 - **Data Source**: Uses user's expenses and production data
+
+---
+
+## Animation Components
+
+### AnimatedHen.tsx
+**Purpose**: Welcome animation for the EggCounter tab
+
+**Features**:
+- Animated hen sitting on a pyramid of eggs
+- Smooth CSS transitions and transforms
+- Responsive design
+- Welcome message for new users
+
+**Animation Details**:
+- Gentle floating motion for the hen
+- Subtle scaling and rotation effects
+- Gradient pyramid of eggs underneath
+- Themed colors matching the app design
+
+### AnimatedCoin.tsx
+**Purpose**: Welcome animation for the Expenses tab
+
+**Features**:
+- Spinning Euro coin with dual sides
+- One side shows € symbol, other shows chicken silhouette
+- Continuous rotation animation
+- Financial theme appropriate for expenses
+
+**Animation Details**:
+- 3D flip rotation effect
+- Alternating sides visibility
+- Smooth CSS transitions
+- Themed colors and gradients
 
 ---
 
@@ -225,6 +267,66 @@ const MyComponent = () => {
 - **API**: All endpoints validate user sessions
 - **Database**: RLS policies ensure data isolation
 - **Network**: JWT tokens secure all communications
+
+---
+
+## Animation Components
+
+### AnimatedFarm.tsx
+**Purpose**: Welcome animation component featuring a characteristic rooster, hens, and chicks
+
+**Features**:
+- Wide, detailed rooster with elaborate tail feathers and comb
+- Four animated hens with different colors and bobbing animations  
+- Three animated chicks that appear progressively
+- Farm setting with fence, clouds, sun, and scattered feed
+- Welcome message bubble and info badge
+- Smooth entrance animations with Framer Motion
+
+**Usage**:
+```tsx
+import AnimatedFarm from './AnimatedFarm';
+
+// Used at the top of Profile page
+<AnimatedFarm />
+```
+
+**Design Details**:
+- Rooster: Wider body, prominent white breast, red comb and wattles
+- Hens: Varied colors (amber, red, white, black) with individual animations
+- Chicks: Small yellow birds with cute bobbing motion
+- Background: Sky gradient, clouds, sun, fence structure
+
+### AnimatedFeedPile.tsx
+**Purpose**: Welcome animation component showing chickens consuming a pile of feed
+
+**Features**:
+- Large, highly visible feed pile that shrinks in stages
+- Five chickens appear progressively as pile shrinks
+- Each chicken has unique pecking/bobbing animation
+- Scattered grain details for realism
+- Welcome message bubble and info badge
+- Multi-stage timing synchronized with chicken arrivals
+
+**Usage**:
+```tsx
+import AnimatedFeedPile from './AnimatedFeedPile';
+
+// Used at the top of FeedTracker page
+<AnimatedFeedPile />
+```
+
+**Design Details**:
+- Feed pile: Yellow gradients with borders and shadow for visibility
+- Ground patch underneath for contrast
+- Five shrinking stages timed to chicken arrivals
+- Varied chicken colors and animation speeds
+- Sky background with sun and clouds
+
+**Animation Timing**:
+- Stage 1: Initial pile appears (0.8s)
+- Stages 2-6: Progressive shrinking as chickens arrive (1.2s - 4.5s)
+- Each chicken has unique bobbing animation cycle
 
 ---
 

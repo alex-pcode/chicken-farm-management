@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import type { FeedEntry, FlockProfile } from '../types';
 import { saveFeedInventory, fetchData, saveExpenses } from '../utils/authApiUtils';
 import { v4 as uuidv4 } from 'uuid';
+import AnimatedFeedPile from './AnimatedFeedPile';
 
 const FEED_TYPES = [
   'Baby chicks',
@@ -229,7 +230,18 @@ export const FeedTracker = () => {
       animate={{ opacity: 1 }}
       className="space-y-8 max-w-7xl mx-auto"
       style={{ margin: '0px auto', opacity: 1 }}
-    >      <div className="flex justify-between items-center">
+    >
+      {/* Animated Feed Pile Section - Welcome animation for new users */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="w-full"
+      >
+        <AnimatedFeedPile />
+      </motion.div>
+
+      <div className="flex justify-between items-center">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
           Feed Management
         </h1>        <button

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { FlockProfile, FlockEvent } from '../types';
 import { saveFlockProfile, fetchData, deleteFlockEvent, saveFlockEvent } from '../utils/authApiUtils';
 import { StatCard } from './testCom';
+import AnimatedFarm from './AnimatedFarm';
 
 const EVENT_TYPES = {
   acquisition: '🐣 New Birds Acquired',
@@ -362,6 +363,15 @@ export const Profile = () => {
       className="space-y-8 max-w-7xl mx-auto"
       style={{ margin: '0px auto', opacity: 1 }}
     >
+      {/* Animated Farm Welcome Component */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <AnimatedFarm />
+      </motion.div>
+
       <div className="flex justify-between items-center">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
           🐔 Flock Profile

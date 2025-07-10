@@ -2,7 +2,35 @@
 
 All notable changes to the Chicken Manager project will be documented in this file.
 
-## [Latest] - 2025-07-06
+# Changelog
+
+All notable changes to the Chicken Manager project will be documented in this file.
+
+## [Latest] - 2025-07-09
+
+### 🎨 Animation Features
+- **Welcome Animations**: Added engaging welcome animations to enhance user experience
+  - **EggCounter Tab**: Animated hen sitting on a pyramid of eggs with floating motion
+  - **Expenses Tab**: Spinning Euro coin with dual sides (€ symbol and chicken silhouette)
+- **Modular Animation Components**: Created reusable animation components
+  - `AnimatedHen.tsx`: Themed animation for egg production tracking
+  - `AnimatedCoin.tsx`: Financial-themed animation for expense management
+- **Performance Optimized**: Lightweight CSS animations with smooth transitions
+- **Responsive Design**: Animations work seamlessly across all device sizes
+
+### 🧹 Code Organization
+- **Component Refactoring**: Moved animation logic into separate, reusable components
+- **Clean Architecture**: Proper separation of concerns for animation features
+- **Import Updates**: Updated all component imports to use new animation components
+
+### 📝 Documentation Updates
+- **Component Documentation**: Updated `components.md` with animation component details
+- **README Enhancement**: Added animation features to main project description
+- **Technical Details**: Documented animation implementation and usage
+
+---
+
+## [2025-07-06] - Security & Authentication
 
 ### 🔒 Security Enhancements
 - **Environment Security**: Added `.env` files to `.gitignore` to prevent sensitive keys from being committed
