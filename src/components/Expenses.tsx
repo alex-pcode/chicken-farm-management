@@ -1,12 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { TrashIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { TrashIcon } from '@heroicons/react/24/outline';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSpinner } from './LoadingSpinner';
-import { useKeyboardShortcut } from '../utils/useKeyboardShortcut';
-import { exportToCSV } from '../utils/exportUtils';
 import type { Expense } from '../types';
-import { saveExpenses, fetchData } from '../utils/authApiUtils';
+import { saveExpenses } from '../utils/authApiUtils';
+import { useExpenses } from '../contexts/DataContext';
 import { AnimatedCoin } from './AnimatedCoin';
 
 interface ValidationError {
@@ -32,6 +31,7 @@ const saveToDatabase = async (expenses: Expense[]) => {
 };
 
 export const Expenses = () => {
+  const { expenses: cachedExpenses, isLoading: dataLoading, updateExpenses } = useExpenses();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [description, setDescription] = useState('');
@@ -41,42 +41,14 @@ export const Expenses = () => {
   const [success, setSuccess] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showShortcuts, setShowShortcuts] = useState(false);
-  const [continueMode, setContinueMode] = useState(false);  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Load from database
-        try {
-          const dbData = await fetchData();
-          const expenseData = dbData.expenses;
-          
-          if (expenseData && Array.isArray(expenseData)) {
-            setExpenses(expenseData);
-          }
-        } catch (error) {
-          console.log('Failed to load expenses from database:', error);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadData();
-
-    // Listen for data updates from other components
-    const handleDataUpdate = (event: CustomEvent) => {
-      if (event.detail.type === 'expense') {
-        setExpenses(event.detail.data);
-      }
-    };
-
-    window.addEventListener('dataUpdated', handleDataUpdate as EventListener);
-    return () => {
-      window.removeEventListener('dataUpdated', handleDataUpdate as EventListener);
-    };
-  }, []);
+  const [continueMode, setContinueMode] = useState(false);  
+  
+  useEffect(() => {
+    if (!dataLoading) {
+      setExpenses(cachedExpenses);
+      setIsLoading(false);
+    }
+  }, [cachedExpenses, dataLoading]);
 
   const validateForm = (): boolean => {
     const newErrors: ValidationError[] = [];
@@ -118,6 +90,7 @@ export const Expenses = () => {
       amount: parseFloat(amount)
     };    const updatedExpenses = [...expenses, newExpense];
     setExpenses(updatedExpenses);
+    updateExpenses(updatedExpenses);
     
     // Save to database
     saveToDatabase(updatedExpenses);
@@ -140,6 +113,7 @@ export const Expenses = () => {
   const handleDelete = (id: string) => {
     if (deleteConfirm === id) {      const updatedExpenses = expenses.filter(expense => expense.id !== id);
       setExpenses(updatedExpenses);
+      updateExpenses(updatedExpenses);
       
       // Save to database
       saveToDatabase(updatedExpenses);
@@ -149,16 +123,6 @@ export const Expenses = () => {
       setDeleteConfirm(id);
       setTimeout(() => setDeleteConfirm(null), 3000);
     }
-  };
-
-  const handleExport = () => {
-    const exportData = expenses.map(expense => ({
-      Date: expense.date,
-      Category: expense.category,
-      Description: expense.description,
-      Amount: expense.amount.toFixed(2),
-    }));
-    exportToCSV(exportData, `expenses-${new Date().toISOString().split('T')[0]}.csv`);
   };
 
   const calculateSummary = () => {
@@ -208,28 +172,6 @@ export const Expenses = () => {
 
   const summary = calculateSummary();
 
-  useKeyboardShortcut([
-    {
-      key: 'n',
-      ctrlKey: true,
-      callback: () => {
-        const input = document.getElementById('description');
-        if (input) {
-          input.focus();
-        }
-      }
-    },
-    {
-      key: 'e',
-      ctrlKey: true,
-      callback: handleExport
-    },
-    {
-      key: '?',
-      callback: () => setShowShortcuts(prev => !prev)
-    }
-  ]);
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -237,37 +179,6 @@ export const Expenses = () => {
       className="space-y-8 max-w-7xl mx-auto"
       style={{ margin: '0px auto', opacity: 1 }}
     >
-      {showShortcuts && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
-          onClick={() => setShowShortcuts(false)}
-        >
-          <motion.div
-            className="glass-card max-w-md w-full"
-            onClick={e => e.stopPropagation()}
-          >
-            <h3 className="text-xl font-bold mb-6 text-gray-900">Keyboard Shortcuts</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Add new expense</span>
-                <kbd className="px-3 py-1.5 bg-gray-100 rounded-lg text-sm font-mono">Ctrl + N</kbd>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Export expenses</span>
-                <kbd className="px-3 py-1.5 bg-gray-100 rounded-lg text-sm font-mono">Ctrl + E</kbd>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Show/hide shortcuts</span>
-                <kbd className="px-3 py-1.5 bg-gray-100 rounded-lg text-sm font-mono">?</kbd>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-
       {/* Animated Piggy Bank Section - Testing (will be for new users) */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -282,14 +193,6 @@ export const Expenses = () => {
         <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
           Expenses
         </h1>
-        <button
-          onClick={() => setShowShortcuts(true)}
-          className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </button>
       </div>
 
       <motion.div
@@ -422,13 +325,6 @@ export const Expenses = () => {
 
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Expense Records</h2>
-        <button
-          onClick={handleExport}
-          className="inline-flex items-center px-4 py-2 rounded-xl text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors font-medium"
-        >
-          <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
-          Export Data
-        </button>
       </div>
 
       <motion.div

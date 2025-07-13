@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { getGoldAnimationClasses } from '../utils/animationUtils';
 
 /**
  * AnimatedCoin - A welcome animation component featuring a spinning Euro coin
@@ -6,7 +7,7 @@ import { motion } from 'framer-motion';
  */
 export const AnimatedCoin = () => (
   <motion.div 
-    className="relative w-full h-48 overflow-hidden bg-gradient-to-b from-blue-100 to-yellow-100 rounded-2xl border-2 border-gray-200 shadow-lg"
+    className={getGoldAnimationClasses()}
     initial={{ opacity: 0, scale: 0.8 }}
     animate={{ opacity: 1, scale: 1 }}
     transition={{ duration: 0.8, type: "spring" }}

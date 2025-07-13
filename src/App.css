@@ -81,14 +81,87 @@ body {
   color: white;
 }
 
+/* Mobile Navigation Styles */
+.mobile-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: all 0.2s;
+  margin-bottom: 0.5rem;
+}
+
+.mobile-nav-link:hover {
+  background-color: var(--primary-light);
+  color: var(--primary);
+}
+
 /* Main Content */
 .main-content {
   flex: 1;
   margin-left: 280px;
   padding: 2rem;
-  width: 80%;
+  width: calc(100% - 280px);
   max-width: calc(100vw - 280px);
   overflow-x: auto;
+}
+
+/* Content wrapper improvements for wide screens */
+.content-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Desktop spacing improvements */
+@media (min-width: 1024px) {
+  .main-content {
+    padding: 2rem 3rem;
+    margin-left: 280px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .main-content {
+    padding: 2rem 4rem;
+    max-width: 1400px;
+    margin-left: 280px;
+    margin-right: auto;
+  }
+}
+
+@media (min-width: 1536px) {
+  .main-content {
+    padding: 2rem 6rem;
+    max-width: 1600px;
+    margin-left: 280px;
+    margin-right: auto;
+  }
+}
+
+/* Improve grid spacing on wider screens */
+@media (min-width: 1280px) {
+  .grid-cols-1.lg\\:grid-cols-4 {
+    gap: 2rem;
+  }
+  
+  .grid-cols-1.lg\\:grid-cols-3 {
+    gap: 2rem;
+  }
+}
+
+/* Better card spacing on large screens */
+@media (min-width: 1536px) {
+  .glass-card {
+    padding: 2.5rem;
+  }
+  
+  .neu-form {
+    padding: 2rem;
+  }
 }
 
 .header {
@@ -101,6 +174,42 @@ body {
 .header-actions {
   display: flex;
   gap: 1rem;
+}
+
+/* Enhanced Mobile Responsive */
+@media (max-width: 1023px) {
+  .main-content {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    max-width: 100vw !important;
+    width: 100% !important;
+    padding: 1rem !important;
+    padding-top: 5rem !important; /* Account for mobile header */
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
+    padding-top: 4.5rem;
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .header-actions {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .main-content {
+    padding: 0.75rem 0.5rem;
+    padding-top: 4rem;
+  }
 }
 
 /* Cards and Grids */

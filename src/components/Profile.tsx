@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { FlockProfile, FlockEvent } from '../types';
-import { saveFlockProfile, fetchData, deleteFlockEvent, saveFlockEvent } from '../utils/authApiUtils';
+import { saveFlockProfile, deleteFlockEvent, saveFlockEvent } from '../utils/authApiUtils';
+import { useFlockProfile } from '../contexts/DataContext';
 import { StatCard } from './testCom';
 import AnimatedFarm from './AnimatedFarm';
 
@@ -24,6 +25,7 @@ const saveToDatabase = async (profile: FlockProfile) => {
 };
 
 export const Profile = () => {
+  const { flockProfile: cachedProfile, isLoading: profileLoading, updateFlockProfile } = useFlockProfile();
   const [profile, setProfile] = useState<FlockProfile>({
     id: undefined,
     hens: 0,
@@ -49,39 +51,26 @@ export const Profile = () => {
     description: '',
     affectedBirds: undefined,
     notes: ''
-  });  useEffect(() => {
-    // Load from database
-    const loadProfile = async () => {
-      try {
-        const dbData = await fetchData();
-        const profileData = dbData.flockProfile;
-        
-        if (profileData && Object.keys(profileData).length > 0) {
-          // Use the proper database columns directly
-          const updatedProfile = {
-            id: profileData.id, // Make sure to include the database ID
-            hens: profileData.hens || 0,
-            roosters: profileData.roosters || 0,
-            chicks: profileData.chicks || 0,
-            brooding: profileData.brooding || 0,
-            lastUpdated: profileData.updated_at || new Date().toISOString(),
-            breedTypes: profileData.breedTypes || [],
-            events: profileData.events || [],
-            flockStartDate: profileData.flockStartDate || new Date().toISOString(),
-            notes: profileData.notes || "",
-            farmName: profileData.farmName || "",
-            location: profileData.location || "",
-            flockSize: profileData.flockSize || 0
-          };
-          setProfile(updatedProfile);
-        }
-      } catch (error) {
-        console.log('Failed to load from database:', error);
-      }
-    };
-    
-    loadProfile();
-  }, []);
+  });  
+
+  useEffect(() => {
+    if (!profileLoading && cachedProfile) {
+      // Use the cached profile data
+      const updatedProfile = {
+        id: cachedProfile.id,
+        hens: cachedProfile.hens || 0,
+        roosters: cachedProfile.roosters || 0,
+        chicks: cachedProfile.chicks || 0,
+        brooding: cachedProfile.brooding || 0,
+        lastUpdated: cachedProfile.lastUpdated || new Date().toISOString(),
+        breedTypes: cachedProfile.breedTypes || [],
+        events: cachedProfile.events || [],
+        flockStartDate: cachedProfile.flockStartDate || new Date().toISOString(),
+        notes: cachedProfile.notes || ""
+      };
+      setProfile(updatedProfile);
+    }
+  }, [cachedProfile, profileLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,6 +86,7 @@ export const Profile = () => {
       const saved = await saveToDatabase(updatedProfile);
       if (saved) {
         setProfile(updatedProfile);
+        updateFlockProfile(updatedProfile);
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);
       } else {
@@ -372,11 +362,7 @@ export const Profile = () => {
         <AnimatedFarm />
       </motion.div>
 
-      <div className="flex justify-between items-center">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
-          🐔 Flock Profile
-        </h1>
-      </div>
+      {/* Profile Stats */}
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

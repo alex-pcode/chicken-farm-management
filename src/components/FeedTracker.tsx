@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { FeedEntry, FlockProfile } from '../types';
-import { saveFeedInventory, fetchData, saveExpenses } from '../utils/authApiUtils';
+import { saveFeedInventory, saveExpenses } from '../utils/authApiUtils';
+import { useFeedInventory, useFlockProfile, useAppData } from '../contexts/DataContext';
 import { v4 as uuidv4 } from 'uuid';
 import AnimatedFeedPile from './AnimatedFeedPile';
 
@@ -20,6 +21,10 @@ const saveToDatabase = async (inventory: FeedEntry[]) => {
 };
 
 export const FeedTracker = () => {
+  const { feedInventory: cachedInventory, isLoading: inventoryLoading, updateFeedInventory } = useFeedInventory();
+  const { flockProfile: cachedProfile, isLoading: profileLoading } = useFlockProfile();
+  const { data } = useAppData();
+  
   const [feedInventory, setFeedInventory] = useState<FeedEntry[]>([]);
   const [flockProfile, setFlockProfile] = useState<FlockProfile | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -32,27 +37,21 @@ export const FeedTracker = () => {
   const [quantity, setQuantity] = useState('');
   const [unit, setUnit] = useState<'kg' | 'lbs'>('kg');
   const [openedDate, setOpenedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [batchNumber, setBatchNumber] = useState('');  const [pricePerUnit, setPricePerUnit] = useState('');useEffect(() => {
-    // Load from database
-    const loadFeedInventory = async () => {
-      try {
-        const dbData = await fetchData();
-        const inventory = dbData.feedInventory;
-        const profile = dbData.flockProfile;
-        
-        if (inventory && Array.isArray(inventory)) {
-          setFeedInventory(inventory);
-        }
-        if (profile) {
-          setFlockProfile(profile);
-        }
-      } catch (error) {
-        console.log('Failed to load feed inventory from database:', error);
-      }
-    };
-    
-    loadFeedInventory();
-  }, []);
+  const [batchNumber, setBatchNumber] = useState('');  
+  const [pricePerUnit, setPricePerUnit] = useState('');
+
+  useEffect(() => {
+    if (!inventoryLoading) {
+      setFeedInventory(cachedInventory);
+    }
+  }, [cachedInventory, inventoryLoading]);
+
+  useEffect(() => {
+    if (!profileLoading) {
+      setFlockProfile(cachedProfile);
+    }
+  }, [cachedProfile, profileLoading]);
+
   const calculateDuration = (openedDate: string, depletedDate?: string) => {
     if (!depletedDate) return null;
     
@@ -158,6 +157,7 @@ export const FeedTracker = () => {
     };
     const updatedInventory = [...feedInventory, newFeed];
     setFeedInventory(updatedInventory);
+    updateFeedInventory(updatedInventory);
     try {
       await saveToDatabase(updatedInventory.map(feed => ({
         id: feed.id,
@@ -175,8 +175,7 @@ export const FeedTracker = () => {
 
     // Add expense entry via database
     try {
-      const dbData = await fetchData();
-      const expenses = dbData.expenses || [];
+      const expenses = data.expenses || [];
       const newExpense = {
         id: Date.now().toString(),
         date: openedDate,
@@ -210,12 +209,14 @@ export const FeedTracker = () => {
       return feed;
     });
     setFeedInventory(updatedInventory);
+    updateFeedInventory(updatedInventory);
     saveToDatabase(updatedInventory);
   };
 
   const handleDelete = (id: string) => {
     if (deleteConfirm === id) {      const updatedInventory = feedInventory.filter(feed => feed.id !== id);
       setFeedInventory(updatedInventory);
+      updateFeedInventory(updatedInventory);
       saveToDatabase(updatedInventory);
       setDeleteConfirm(null);
     } else {

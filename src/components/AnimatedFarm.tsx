@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { getTallAnimationClasses } from '../utils/animationUtils';
 
 /**
  * AnimatedFarm - A welcome animation component featuring a characteristic rooster,
@@ -9,7 +10,7 @@ import { motion } from 'framer-motion';
 const AnimatedFarm: React.FC = () => {
   return (
     <motion.div 
-      className="relative w-full h-64 overflow-hidden bg-gradient-to-b from-blue-100 to-green-100 rounded-2xl border-2 border-gray-200 shadow-lg"
+      className={getTallAnimationClasses()}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.8, type: "spring" }}

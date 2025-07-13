@@ -1,86 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import type { FlockProfile } from '../types';
-import { fetchData } from '../utils/authApiUtils';
+import { useAppData } from '../contexts/DataContext';
 import { StatCard } from './testCom';
-
-interface SavingsData {
-  eggPrice: number;
-  startingCost: number;
-  totalEggs: number;
-  totalExpenses: number;
-  netSavings: number;
-}
+import { LoadingSpinner } from './LoadingSpinner';
 
 type TimePeriod = 'all' | 'month' | 'quarter' | 'year';
 
 export const Savings = () => {
+  const { data, isLoading } = useAppData();
   const [eggPrice, setEggPrice] = useState('0.50'); // Default price per egg
   const [startingCost, setStartingCost] = useState('0.00'); // Default starting cost
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
-  const [savingsData, setSavingsData] = useState<SavingsData>({
-    eggPrice: 0.50,
-    startingCost: 0.00,
-    totalEggs: 0,
-    totalExpenses: 0,
-    netSavings: 0
-  });
-  const [flockProfile, setFlockProfile] = useState<FlockProfile | null>(null);
-  const [productivityStats, setProductivityStats] = useState({
-    eggsPerHen: 0,
-    dailyLayRate: 0,
-    revenuePerHen: 0
-  });
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const dbData = await fetchData();
-        if (dbData.flockProfile) {
-          setFlockProfile(dbData.flockProfile);
-        }
-      } catch (error) {
-        console.log('Failed to load profile from database:', error);
-      }
-    };
-    
-    loadData();
-    calculateSavings();
-  }, [eggPrice, startingCost, timePeriod]);  useEffect(() => {
-    const calculateProductivityStats = async () => {
-      if (flockProfile && flockProfile.hens > 0) {
-        try {
-          const dbData = await fetchData();
-          const eggEntries = dbData.eggEntries || [];
-          const totalEggs = eggEntries.reduce((sum: number, entry: { count: number }) => 
-            sum + entry.count, 0);
 
-          // Calculate eggs per hen
-          const eggsPerHen = totalEggs / flockProfile.hens;
-
-          // Calculate daily lay rate (last 7 days)
-          const last7DaysEggs = eggEntries
-            .slice(-7)
-            .reduce((sum: number, entry: { count: number }) => sum + entry.count, 0);
-          const dailyLayRate = (last7DaysEggs / (7 * flockProfile.hens)) * 100;
-
-          // Calculate revenue per hen
-          const revenuePerHen = eggsPerHen * parseFloat(eggPrice);
-
-          setProductivityStats({
-            eggsPerHen,
-            dailyLayRate,
-            revenuePerHen
-          });
-        } catch (error) {
-          console.log('Failed to load egg data for productivity stats:', error);
-        }
-      }
-    };
-    
-    calculateProductivityStats();
-  }, [flockProfile, eggPrice, savingsData.totalEggs]);
-
-  const getFilteredData = (date: string) => {
+  // Memoized filter function
+  const getFilteredData = useCallback((date: string) => {
     const now = new Date();
     const entryDate = new Date(date);
     
@@ -97,41 +30,65 @@ export const Savings = () => {
       default:
         return true;
     }
-  };
-  const calculateSavings = async () => {
-    try {
-      const dbData = await fetchData();
-      
-      // Get egg data from database
-      const eggEntries = dbData.eggEntries || [];
-      const totalEggs = eggEntries
-        .filter((entry: any) => getFilteredData(entry.date))
-        .reduce((sum: number, entry: { count: number }) => sum + entry.count, 0);
+  }, [timePeriod]);
 
-      // Get expenses data from database
-      const expenses = dbData.expenses || [];
-      const operatingExpenses = expenses
-        .filter((expense: any) => getFilteredData(expense.date))
-        .reduce((sum: number, expense: { amount: number }) => sum + expense.amount, 0);
-
-      // Calculate total startup costs
-      const totalStartupCosts = parseFloat(startingCost);
-
-      // Calculate total egg value and net savings (including startup costs)
-      const totalEggValue = totalEggs * parseFloat(eggPrice);
-      const netSavings = totalEggValue - operatingExpenses - totalStartupCosts;
-
-      setSavingsData({
+  // Memoized savings calculations
+  const savingsData = useMemo(() => {
+    if (isLoading) {
+      return {
         eggPrice: parseFloat(eggPrice),
         startingCost: parseFloat(startingCost),
-        totalEggs,
-        totalExpenses: operatingExpenses + totalStartupCosts,
-        netSavings
-      });
-    } catch (error) {
-      console.log('Failed to load data for savings calculation:', error);
+        totalEggs: 0,
+        totalExpenses: 0,
+        netSavings: 0
+      };
     }
-  };
+
+    // Calculate filtered totals
+    const totalEggs = data.eggEntries
+      .filter((entry: any) => getFilteredData(entry.date))
+      .reduce((sum: number, entry: { count: number }) => sum + entry.count, 0);
+
+    const operatingExpenses = data.expenses
+      .filter((expense: any) => getFilteredData(expense.date))
+      .reduce((sum: number, expense: { amount: number }) => sum + expense.amount, 0);
+
+    const totalStartupCosts = parseFloat(startingCost);
+    const totalEggValue = totalEggs * parseFloat(eggPrice);
+    const netSavings = totalEggValue - operatingExpenses - totalStartupCosts;
+
+    return {
+      eggPrice: parseFloat(eggPrice),
+      startingCost: totalStartupCosts,
+      totalEggs,
+      totalExpenses: operatingExpenses + totalStartupCosts,
+      netSavings
+    };
+  }, [data, eggPrice, startingCost, getFilteredData, isLoading]);
+
+  // Memoized productivity calculations
+  const productivityStats = useMemo(() => {
+    if (isLoading || !data.flockProfile || data.flockProfile.hens === 0) {
+      return { eggsPerHen: 0, dailyLayRate: 0, revenuePerHen: 0 };
+    }
+
+    const totalEggs = data.eggEntries.reduce((sum: number, entry: { count: number }) => 
+      sum + entry.count, 0);
+
+    // Calculate eggs per hen
+    const eggsPerHen = totalEggs / data.flockProfile.hens;
+
+    // Calculate daily lay rate (last 7 days)
+    const last7DaysEggs = data.eggEntries
+      .slice(-7)
+      .reduce((sum: number, entry: { count: number }) => sum + entry.count, 0);
+    const dailyLayRate = (last7DaysEggs / (7 * data.flockProfile.hens)) * 100;
+
+    // Calculate revenue per hen
+    const revenuePerHen = eggsPerHen * parseFloat(eggPrice);
+
+    return { eggsPerHen, dailyLayRate, revenuePerHen };
+  }, [data, eggPrice, isLoading]);
 
   const handleEggPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEggPrice(e.target.value);
@@ -156,7 +113,13 @@ export const Savings = () => {
       className="space-y-8 max-w-7xl mx-auto p-6"
       style={{ margin: '0px auto', opacity: 1 }}
     >
-      <div>
+      {isLoading ? (
+        <div className="flex justify-center items-center min-h-[400px]">
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <>
+          <div>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Price Settings</h2>
           <div className="flex gap-2">
@@ -294,11 +257,11 @@ export const Savings = () => {
 
           <div className="mt-12">
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Flock Composition</h3>
-            {flockProfile ? (
+            {data.flockProfile ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard title="🐔 Productive Hens" total={flockProfile.hens} label="hens" />
-                <StatCard title="🐓 Roosters" total={flockProfile.roosters} label="roosters" />
-                <StatCard title="🐥 Growing Chicks" total={flockProfile.chicks} label="chicks" />
+                <StatCard title="🐔 Productive Hens" total={data.flockProfile.hens} label="hens" />
+                <StatCard title="🐓 Roosters" total={data.flockProfile.roosters} label="roosters" />
+                <StatCard title="🐥 Growing Chicks" total={data.flockProfile.chicks} label="chicks" />
               </div>
             ) : (
               <div className="text-gray-500 text-center py-6">
@@ -368,6 +331,8 @@ export const Savings = () => {
           </div>
         </motion.div>
       </div>
+        </>
+      )}
     </motion.div>
   );
 };

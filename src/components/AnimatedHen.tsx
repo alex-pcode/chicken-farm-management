@@ -1,12 +1,14 @@
 import { motion } from 'framer-motion';
+import { getStandardAnimationClasses } from '../utils/animationUtils';
 
 /**
  * AnimatedHen - A welcome animation component featuring a hen sitting on a pyramid of eggs
  * Used to welcome new users to the egg tracking application
+ * Enhanced with realistic hen animations: wing flapping, head bobbing, breathing, and blinking
  */
 export const AnimatedHen = () => (
   <motion.div 
-    className="relative w-full h-48 overflow-hidden bg-gradient-to-b from-blue-100 to-green-100 rounded-2xl border-2 border-gray-200 shadow-lg"
+    className={getStandardAnimationClasses()}
     initial={{ opacity: 0, scale: 0.8 }}
     animate={{ opacity: 1, scale: 1 }}
     transition={{ duration: 0.8, type: "spring" }}
@@ -101,31 +103,129 @@ export const AnimatedHen = () => (
     >
       {/* Hen body */}
       <div className="relative">
-        {/* Main body */}
-        <div className="w-16 h-12 bg-gradient-to-br from-amber-800 to-amber-900 rounded-full shadow-lg"></div>
+        {/* Main body with breathing animation */}
+        <motion.div 
+          className="w-16 h-12 bg-gradient-to-br from-amber-800 to-amber-900 rounded-full shadow-lg"
+          animate={{
+            scale: [1, 1.02, 1],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        ></motion.div>
         
-        {/* Head */}
-        <div className="absolute -top-4 left-2 w-8 h-8 bg-gradient-to-br from-amber-700 to-amber-800 rounded-full shadow-md"></div>
+        {/* Head with bobbing animation */}
+        <motion.div 
+          className="absolute -top-4 left-2 w-8 h-8 bg-gradient-to-br from-amber-700 to-amber-800 rounded-full shadow-md"
+          animate={{
+            rotate: [-2, 2, -2],
+            y: [0, -1, 0],
+          }}
+          transition={{
+            duration: 1.8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        ></motion.div>
         
         {/* Comb */}
-        <div className="absolute -top-6 left-3 w-6 h-3 bg-gradient-to-t from-red-500 to-red-400 rounded-t-full shadow-sm"></div>
+        <motion.div 
+          className="absolute -top-6 left-3 w-6 h-3 bg-gradient-to-t from-red-500 to-red-400 rounded-t-full shadow-sm"
+          animate={{
+            rotate: [-1, 1, -1],
+          }}
+          transition={{
+            duration: 1.8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        ></motion.div>
         
         {/* Beak */}
-        <div className="absolute -top-2 left-1 w-2 h-1 bg-yellow-400 rounded-full"></div>
+        <motion.div 
+          className="absolute -top-2 left-1 w-2 h-1 bg-yellow-400 rounded-full"
+          animate={{
+            rotate: [-2, 2, -2],
+            y: [0, -1, 0],
+          }}
+          transition={{
+            duration: 1.8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        ></motion.div>
         
-        {/* Eye */}
-        <div className="absolute -top-3 left-4 w-1.5 h-1.5 bg-white rounded-full">
-          <div className="absolute top-0.5 left-0.5 w-0.5 h-0.5 bg-black rounded-full"></div>
-        </div>
+        {/* Eye with blinking */}
+        <motion.div 
+          className="absolute -top-3 left-4 w-1.5 h-1.5 bg-white rounded-full"
+          animate={{
+            rotate: [-2, 2, -2],
+            y: [0, -1, 0],
+          }}
+          transition={{
+            duration: 1.8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        >
+          <motion.div 
+            className="absolute top-0.5 left-0.5 w-0.5 h-0.5 bg-black rounded-full"
+            animate={{
+              scaleY: [1, 0.1, 1],
+            }}
+            transition={{
+              duration: 0.2,
+              repeat: Infinity,
+              repeatDelay: 3,
+              ease: "easeInOut"
+            }}
+          ></motion.div>
+        </motion.div>
         
         {/* Wattle */}
-        <div className="absolute -top-1 left-0.5 w-2 h-2 bg-gradient-to-b from-red-400 to-red-500 rounded-full"></div>
+        <motion.div 
+          className="absolute -top-1 left-0.5 w-2 h-2 bg-gradient-to-b from-red-400 to-red-500 rounded-full"
+          animate={{
+            rotate: [-3, 3, -3],
+            y: [0, -1, 0],
+          }}
+          transition={{
+            duration: 1.8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        ></motion.div>
         
-        {/* Wing */}
-        <div className="absolute top-2 left-8 w-6 h-8 bg-gradient-to-br from-amber-600 to-amber-700 rounded-full transform rotate-12 shadow-md"></div>
+        {/* Wing with flapping animation */}
+        <motion.div 
+          className="absolute top-2 left-8 w-6 h-8 bg-gradient-to-br from-amber-600 to-amber-700 rounded-full shadow-md"
+          style={{ transformOrigin: "20% 30%" }}
+          animate={{
+            rotate: [12, 25, 12],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{
+            duration: 0.8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        ></motion.div>
         
-        {/* Tail feathers */}
-        <div className="absolute top-0 left-12 w-4 h-6 bg-gradient-to-t from-amber-700 to-amber-600 rounded-t-full transform rotate-45 shadow-sm"></div>
+        {/* Tail feathers with swaying */}
+        <motion.div 
+          className="absolute top-0 left-12 w-4 h-6 bg-gradient-to-t from-amber-700 to-amber-600 rounded-t-full shadow-sm"
+          style={{ transformOrigin: "50% 100%" }}
+          animate={{
+            rotate: [45, 55, 45],
+          }}
+          transition={{
+            duration: 2.2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        ></motion.div>
         
         {/* Feet dangling down */}
         <motion.div

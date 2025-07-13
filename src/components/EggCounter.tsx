@@ -2,9 +2,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSpinner } from './LoadingSpinner';
-import { useKeyboardShortcut } from '../utils/useKeyboardShortcut';
-import { saveEggEntries, fetchData } from '../utils/authApiUtils';
-import { exportToCSV } from '../utils/exportUtils';
+import { saveEggEntries } from '../utils/authApiUtils';
+import { useEggEntries } from '../contexts/DataContext';
 import type { EggEntry } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { StatCard } from './testCom';
@@ -30,39 +29,30 @@ const saveToDatabase = async (updatedEntries: EggEntry[]) => {
 };
 
 export const EggCounter = () => {
+  const { eggEntries: cachedEntries, isLoading: dataLoading, updateEggEntries } = useEggEntries();
   const [eggEntries, setEggEntries] = useState<EggEntry[]>([]);
   const [count, setCount] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showShortcuts, setShowShortcuts] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const entriesPerPage = 10;
+  
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {        
-        // Try to fetch data from database first
-        const dbData = await fetchData();
-        const entries: EggEntry[] = dbData.eggEntries || [];
-        
-        // Ensure all entries have IDs
-        const entriesWithIds = entries.map(entry => ({
-          ...entry,
-          id: entry.id || uuidv4() // Assign UUID if missing
-        }));
-        
-        setEggEntries(entriesWithIds.sort((a: EggEntry, b: EggEntry) => 
-          new Date(b.date).getTime() - new Date(a.date).getTime()
-        ));      } catch (error) {
-        console.error('Failed to load from database:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadData();
-  }, []);
+    if (!dataLoading) {
+      // Ensure all entries have IDs
+      const entriesWithIds = cachedEntries.map(entry => ({
+        ...entry,
+        id: entry.id || uuidv4() // Assign UUID if missing
+      }));
+      
+      setEggEntries(entriesWithIds.sort((a: EggEntry, b: EggEntry) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      ));
+      setIsLoading(false);
+    }
+  }, [cachedEntries, dataLoading]);
 
   const validateForm = (): boolean => {
     const newErrors: ValidationError[] = [];
@@ -113,8 +103,9 @@ export const EggCounter = () => {
       // Save to database
       await saveToDatabase(updatedEntries);
       
-      // Update local state only after successful save
+      // Update local state and cache after successful save
       setEggEntries(updatedEntries);
+      updateEggEntries(updatedEntries);
       setCount('');
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
@@ -185,36 +176,6 @@ export const EggCounter = () => {
 
   const summary = calculateSummary();
 
-  const handleExport = () => {
-    const exportData = eggEntries.map(entry => ({
-      Date: entry.date,
-      'Egg Count': entry.count,
-    }));
-    exportToCSV(exportData, `egg-production-${new Date().toISOString().split('T')[0]}.csv`);
-  };
-
-  useKeyboardShortcut([
-    {
-      key: 'n',
-      ctrlKey: true,
-      callback: () => {
-        const input = document.getElementById('eggCount');
-        if (input) {
-          input.focus();
-        }
-      }
-    },
-    {
-      key: 'e',
-      ctrlKey: true,
-      callback: handleExport
-    },
-    {
-      key: '?',
-      callback: () => setShowShortcuts(prev => !prev)
-    }
-  ]);
-
   // Calculate pagination values
   const indexOfLastEntry = currentPage * entriesPerPage;
   const indexOfFirstEntry = indexOfLastEntry - entriesPerPage;
@@ -240,37 +201,6 @@ export const EggCounter = () => {
       >
         <AnimatedHen />
       </motion.div>
-
-      {showShortcuts && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
-          onClick={() => setShowShortcuts(false)}
-        >
-          <motion.div
-            className="glass-card max-w-md w-full"
-            onClick={e => e.stopPropagation()}
-          >
-            <h3 className="text-xl font-bold mb-6 text-gray-900">Keyboard Shortcuts</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Focus egg count input</span>
-                <kbd className="px-3 py-1.5 bg-gray-100 rounded-lg text-sm font-mono">Ctrl + N</kbd>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Export data</span>
-                <kbd className="px-3 py-1.5 bg-gray-100 rounded-lg text-sm font-mono">Ctrl + E</kbd>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Show/hide shortcuts</span>
-                <kbd className="px-3 py-1.5 bg-gray-100 rounded-lg text-sm font-mono">?</kbd>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

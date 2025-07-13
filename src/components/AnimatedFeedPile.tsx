@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { getFeedTrackerAnimationClasses } from '../utils/animationUtils';
 
 /**
  * AnimatedFeedPile - A welcome animation component featuring a pile of grains that gets smaller
@@ -9,7 +10,7 @@ import { motion } from 'framer-motion';
 const AnimatedFeedPile: React.FC = () => {
   return (
     <motion.div 
-      className="relative w-full h-48 overflow-hidden bg-gradient-to-b from-blue-100 to-green-100 rounded-2xl border-2 border-gray-200 shadow-lg"
+      className={getFeedTrackerAnimationClasses()}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.8, type: "spring" }}
@@ -38,7 +39,7 @@ const AnimatedFeedPile: React.FC = () => {
       {/* Ground/Grass */}
       <div className="absolute bottom-0 w-full h-8 bg-gradient-to-t from-green-400 to-green-300 rounded-b-2xl"></div>
       
-      {/* Feed Pile - Center, gets progressively smaller - Made much more visible */}
+      {/* Feed Pile - Center, gets progressively smaller - SVG Mound Shape */}
       <motion.div 
         className="absolute bottom-10 left-1/2 transform -translate-x-1/2 z-10"
         initial={{ opacity: 0, scale: 0 }}
@@ -48,52 +49,44 @@ const AnimatedFeedPile: React.FC = () => {
         {/* Ground patch under pile for contrast */}
         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-40 h-6 bg-gradient-to-t from-yellow-200 to-yellow-100 rounded-full opacity-60"></div>
         
-        {/* Extra large pile base - starts huge with better colors - flattened and more natural */}
-        <motion.div
-          className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-36 h-12 bg-gradient-to-t from-yellow-800 via-yellow-600 to-yellow-400 border-2 border-yellow-900 shadow-lg"
-          style={{ borderRadius: '50% 50% 50% 50% / 20% 20% 80% 80%' }}
-          initial={{ opacity: 1, scale: 1 }}
-          animate={{ opacity: 0, scale: 0 }}
-          transition={{ delay: 2, duration: 1.5 }}
-        />
+        {/* SVG Feed Pile */}
+        <motion.svg
+          width="200"
+          height="100"
+          viewBox="0 0 200 100"
+          className="absolute bottom-[-2.5rem] left-1/2 transform -translate-x-1/2"
+          style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))' }}
+        >
+          <defs>
+            <linearGradient id="feedGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#FBBF24" /> {/* yellow-400 */}
+              <stop offset="50%" stopColor="#F59E0B" /> {/* amber-500 */}
+              <stop offset="100%" stopColor="#D97706" /> {/* amber-600 */}
+            </linearGradient>
+          </defs>
+          <motion.path
+            fill="url(#feedGradient)"
+            stroke="#B45309" /* amber-700 */
+            strokeWidth="1.5"
+            animate={{ 
+              d: [
+                "M10,95 C40,95 30,20 100,20 C170,20 160,95 190,95 Z", // Initial large pile
+                "M25,95 C50,95 50,45 100,45 C150,45 150,95 175,95 Z", // smaller
+                "M45,95 C65,95 70,65 100,65 C130,65 135,95 155,95 Z", // even smaller
+                "M65,95 C75,95 80,80 100,80 C120,80 125,95 135,95 Z", // tiny
+                "M85,95 C90,95 95,92 100,92 C105,92 110,95 115,95 Z"  // almost gone
+              ]
+            }}
+            transition={{ 
+              delay: 2, 
+              duration: 7.5, // Total duration for the shrink animation
+              times: [0, 0.2, 0.5, 0.8, 1], // Corresponds to the delays of the chickens appearing
+              ease: "easeInOut"
+            }}
+          />
+        </motion.svg>
         
-        {/* Large pile base - disappears second - more mounded shape */}
-        <motion.div
-          className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-28 h-10 bg-gradient-to-t from-yellow-700 via-yellow-500 to-yellow-300 border-2 border-yellow-800 shadow-lg"
-          style={{ borderRadius: '50% 50% 50% 50% / 25% 25% 75% 75%' }}
-          initial={{ opacity: 1, scale: 1 }}
-          animate={{ opacity: 0, scale: 0 }}
-          transition={{ delay: 3.5, duration: 1.5 }}
-        />
-        
-        {/* Medium pile - lower and wider */}
-        <motion.div
-          className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-20 h-8 bg-gradient-to-t from-yellow-600 via-yellow-400 to-yellow-200 border-2 border-yellow-700 shadow-lg"
-          style={{ borderRadius: '50% 50% 50% 50% / 30% 30% 70% 70%' }}
-          initial={{ opacity: 1, scale: 1 }}
-          animate={{ opacity: 0, scale: 0 }}
-          transition={{ delay: 5.5, duration: 1.5 }}
-        />
-        
-        {/* Small pile - even flatter */}
-        <motion.div
-          className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-12 h-6 bg-gradient-to-t from-yellow-500 via-yellow-300 to-yellow-100 border-2 border-yellow-600 shadow-lg"
-          style={{ borderRadius: '50% 50% 50% 50% / 35% 35% 65% 65%' }}
-          initial={{ opacity: 1, scale: 1 }}
-          animate={{ opacity: 0, scale: 0 }}
-          transition={{ delay: 7.5, duration: 1.5 }}
-        />
-        
-        {/* Tiny final pile - very flat */}
-        <motion.div
-          className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-8 h-4 bg-gradient-to-t from-yellow-400 via-yellow-200 to-yellow-50 border-2 border-yellow-500 shadow-lg"
-          style={{ borderRadius: '50% 50% 50% 50% / 40% 40% 60% 60%' }}
-          initial={{ opacity: 1, scale: 1 }}
-          animate={{ opacity: 0, scale: 0 }}
-          transition={{ delay: 9, duration: 1.5 }}
-        />
-        
-        {/* Individual grain details scattered on the pile - much more visible */}
+        {/* Individual grain details scattered on the mound - adjusted for SVG */}
         <motion.div
           className="absolute bottom-6 left-[48%] w-2 h-2 bg-orange-600 rounded-full border border-orange-800 shadow-sm"
           initial={{ opacity: 1 }}
@@ -123,6 +116,18 @@ const AnimatedFeedPile: React.FC = () => {
           initial={{ opacity: 1 }}
           animate={{ opacity: 0 }}
           transition={{ delay: 5, duration: 0.5 }}
+        />
+        <motion.div
+          className="absolute bottom-10 left-[49%] w-1.5 h-1.5 bg-orange-400 rounded-full border border-orange-600 shadow-sm"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 0 }}
+          transition={{ delay: 7, duration: 0.5 }}
+        />
+        <motion.div
+          className="absolute bottom-11 left-[51%] w-1 h-1 bg-yellow-500 rounded-full border border-yellow-700 shadow-sm"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 0 }}
+          transition={{ delay: 8.5, duration: 0.5 }}
         />
       </motion.div>
       
