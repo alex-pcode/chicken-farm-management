@@ -5,6 +5,7 @@ import { Expenses } from './components/Expenses'
 import { FeedTracker } from './components/FeedTracker'
 import { Savings } from './components/Savings'
 import { Profile } from './components/Profile'
+import { CRM } from './components/CRM'
 import { motion } from 'framer-motion'
 import { StatCard } from './components/testCom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
@@ -17,6 +18,7 @@ const navigation = [
   { name: 'Dashboard', emoji: '🏠', href: '/' },
   { name: 'Profile', emoji: '🐔', href: '/profile' },
   { name: 'Production', emoji: '🥚', href: '/egg-counter' },
+  { name: 'CRM', emoji: '💼', href: '/crm' },
   { name: 'Expenses', emoji: '💰', href: '/expenses' },
   { name: 'Feed Management', emoji: '🌾', href: '/feed-tracker' },
   { name: 'Analytics', emoji: '📊', href: '/savings' }
@@ -262,6 +264,7 @@ const MainApp = () => {
           <Route path="/" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/egg-counter" element={<EggCounter />} />
+          <Route path="/crm" element={<CRM />} />
           <Route path="/expenses" element={<Expenses />} />
           <Route path="/feed-tracker" element={<FeedTracker />} />
           <Route path="/savings" element={<Savings />} />

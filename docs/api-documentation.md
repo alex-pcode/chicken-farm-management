@@ -304,5 +304,207 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 ---
 
+## Customer Relationship Management (CRM)
+
+### GET /api/customers
+Retrieves all customers for the authenticated user.
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Response:**
+```json
+{
+  "message": "Customers fetched successfully",
+  "data": [
+    {
+      "id": "uuid",
+      "user_id": "uuid",
+      "name": "Customer Name",
+      "phone": "123-456-7890",
+      "notes": "Customer notes",
+      "is_active": true,
+      "created_at": "2025-07-15T10:00:00Z"
+    }
+  ],
+  "timestamp": "2025-07-15T10:00:00Z"
+}
+```
+
+### POST /api/customers
+Creates a new customer for the authenticated user.
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "name": "Customer Name",
+  "phone": "123-456-7890",
+  "notes": "Optional customer notes"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Customer created successfully",
+  "customer": {
+    "id": "uuid",
+    "user_id": "uuid",
+    "name": "Customer Name",
+    "phone": "123-456-7890",
+    "notes": "Optional customer notes",
+    "is_active": true,
+    "created_at": "2025-07-15T10:00:00Z"
+  },
+  "timestamp": "2025-07-15T10:00:00Z"
+}
+```
+
+### PUT /api/customers
+Updates an existing customer for the authenticated user.
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "id": "uuid",
+  "name": "Updated Customer Name",
+  "phone": "987-654-3210",
+  "notes": "Updated notes",
+  "is_active": false
+}
+```
+
+### GET /api/sales
+Retrieves all sales with customer information for the authenticated user.
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Response:**
+```json
+{
+  "message": "Sales data fetched successfully",
+  "data": [
+    {
+      "id": "uuid",
+      "user_id": "uuid",
+      "customer_id": "uuid",
+      "customer_name": "Customer Name",
+      "sale_date": "2025-07-15",
+      "dozen_count": 2,
+      "individual_count": 6,
+      "total_amount": 15.00,
+      "notes": "Sale notes",
+      "created_at": "2025-07-15T10:00:00Z"
+    }
+  ],
+  "timestamp": "2025-07-15T10:00:00Z"
+}
+```
+
+### POST /api/sales
+Records a new sale for the authenticated user.
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "customer_id": "uuid",
+  "sale_date": "2025-07-15",
+  "dozen_count": 2,
+  "individual_count": 6,
+  "total_amount": 15.00,
+  "notes": "Optional sale notes"
+}
+```
+
+**Notes:**
+- Frontend uses simplified egg count input but converts to dozens/individual for API
+- Supports $0.00 sales for free egg distribution
+- Backend stores dozens and individual counts for compatibility
+
+### PUT /api/sales
+Updates an existing sale for the authenticated user.
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "id": "uuid",
+  "customer_id": "uuid",
+  "sale_date": "2025-07-15",
+  "dozen_count": 3,
+  "individual_count": 0,
+  "total_amount": 18.00,
+  "notes": "Updated sale notes"
+}
+```
+
+### GET /api/salesReports
+Generates analytics and reports for the authenticated user's sales data.
+
+**Query Parameters:**
+- `type`: `summary` | `monthly`
+- `period`: Optional time period filter
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Summary Response (type=summary):**
+```json
+{
+  "total_sales": 25,
+  "total_revenue": 450.00,
+  "total_eggs_sold": 348,
+  "free_eggs_given": 24,
+  "customer_count": 8,
+  "top_customer": "Best Customer Name"
+}
+```
+
+**Monthly Response (type=monthly):**
+```json
+{
+  "2025-07": {
+    "total_sales": 12,
+    "total_revenue": 180.00,
+    "total_eggs": 156
+  }
+}
+```
+
+---
+
 **Last Updated**: January 2025
 **API Version**: 1.0 with Authentication

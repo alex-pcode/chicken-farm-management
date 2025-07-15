@@ -27,6 +27,8 @@ ALTER TABLE egg_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE feed_inventory ENABLE ROW LEVEL SECURITY;
 ALTER TABLE flock_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for each table
 CREATE POLICY "Users can only access their own flock profiles" ON flock_profiles
@@ -42,6 +44,12 @@ CREATE POLICY "Users can only access their own feed inventory" ON feed_inventory
   FOR ALL USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can only access their own flock events" ON flock_events
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only access their own customers" ON customers
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only access their own sales" ON sales
   FOR ALL USING (auth.uid() = user_id);
 ```
 
@@ -167,6 +175,74 @@ CREATE POLICY "Users can only access their own flock events" ON flock_events
 **Expense Categories**:
 - Common categories include: feed, medical, equipment, housing, utilities, other
 
+## Customer Relationship Management (CRM) Tables
+
+### customers
+Stores customer information for egg sales with user isolation.
+
+**Columns:**
+- `id` (UUID, Primary Key) - Unique customer identifier
+- `user_id` (UUID, Foreign Key, NOT NULL) - References auth.users for data isolation
+- `name` (TEXT, NOT NULL) - Customer name
+- `phone` (TEXT) - Customer phone number
+- `notes` (TEXT) - Additional customer notes
+- `is_active` (BOOLEAN, DEFAULT true) - Soft delete flag
+- `created_at` (TIMESTAMPTZ, DEFAULT now()) - Creation timestamp
+
+**Indexes:**
+- Primary key on `id`
+- Index on `user_id` for efficient user data queries
+- Index on `is_active` for filtering active customers
+
+**RLS Policy:**
+```sql
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can only access their own customers" ON customers
+  FOR ALL USING (auth.uid() = user_id);
+```
+
+### sales
+Records egg sales transactions with customer relationships and user isolation.
+
+**Columns:**
+- `id` (UUID, Primary Key) - Unique sale identifier
+- `user_id` (UUID, Foreign Key, NOT NULL) - References auth.users for data isolation
+- `customer_id` (UUID, Foreign Key, NOT NULL) - References customers.id
+- `sale_date` (DATE, NOT NULL) - Date of sale
+- `dozen_count` (INTEGER, DEFAULT 0) - Number of dozens sold
+- `individual_count` (INTEGER, DEFAULT 0) - Number of individual eggs sold
+- `total_amount` (DECIMAL(10,2), NOT NULL) - Sale amount (supports $0.00 for free eggs)
+- `notes` (TEXT) - Sale notes
+- `created_at` (TIMESTAMPTZ, DEFAULT now()) - Creation timestamp
+
+**Constraints:**
+- `total_amount >= 0` - Allows free egg distribution ($0.00 sales)
+- `dozen_count >= 0 AND individual_count >= 0` - Non-negative quantities
+- Foreign key: `customer_id` references `customers(id)` with user boundary respect
+
+**Indexes:**
+- Primary key on `id`
+- Index on `user_id` for efficient user data queries
+- Index on `customer_id` for customer sales lookup
+- Index on `sale_date` for chronological queries
+
+**RLS Policy:**
+```sql
+ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can only access their own sales" ON sales
+  FOR ALL USING (auth.uid() = user_id);
+```
+
+**Relationships:**
+- `sales.customer_id` → `customers.id` (Many sales per customer)
+- Both tables enforce user boundary through `user_id` column
+
+**Design Notes:**
+- Frontend uses simplified total egg count input
+- Backend stores `dozen_count` and `individual_count` for compatibility
+- Supports $0.00 sales for free egg distribution tracking
+- No payment status tracking (simplified model: record only when paid)
+
 ## Data Relationships
 
 ### Primary Relationships
@@ -179,12 +255,16 @@ CREATE POLICY "Users can only access their own flock events" ON flock_events
 - **egg_entries**: Standalone daily production tracking
 - **feed_inventory**: Standalone feed management
 - **expenses**: Standalone financial tracking
+- **customers**: Standalone customer management
+- **sales**: Standalone sales tracking
 
 ### Data Flow
 1. **Profile Setup**: User creates flock_profiles entry with basic farm information
 2. **Timeline Events**: flock_events are created to track important milestones
 3. **Daily Operations**: egg_entries track daily production independently
 4. **Resource Management**: feed_inventory and expenses track costs and resources
+5. **Customer Management**: customers table stores customer information for sales
+6. **Sales Tracking**: sales table records egg sales transactions
 
 ## Data Validation Rules
 
@@ -217,6 +297,23 @@ CREATE POLICY "Users can only access their own flock events" ON flock_events
 - `date`: Required, valid date format
 - `category` and `description`: Required, non-empty strings
 
+### customers
+- `user_id`: Must reference existing auth.users
+- `name`: Required, non-empty string
+- `phone`: Optional, valid phone number format
+- `notes`: Optional, no specific format
+- `is_active`: Boolean value, defaults to true
+- `created_at`: Timestamp with time zone, defaults to current time
+
+### sales
+- `user_id`: Must reference existing auth.users
+- `customer_id`: Must reference existing customers.id
+- `sale_date`: Required, valid date format
+- `dozen_count`, `individual_count`: Non-negative integers
+- `total_amount`: Required, non-negative decimal number
+- `notes`: Optional, no specific format
+- `created_at`: Timestamp with time zone, defaults to current time
+
 ## Database Indexes and Performance
 
 ### Primary Keys (Automatic Indexes)
@@ -225,16 +322,18 @@ CREATE POLICY "Users can only access their own flock events" ON flock_events
 
 ### Foreign Key Indexes
 - `flock_events.flock_profile_id` → `flock_profiles.id`
+- `sales.customer_id` → `customers.id`
 
 ### Query Optimization
 - Events are ordered by date for timeline display
 - Egg entries ordered by date descending for recent-first display
 - Expenses ordered by date descending for financial analysis
+- Sales can be queried by customer and date for reporting
 
 ## API Endpoints and Operations
 
 ### Data Fetching
-- **GET /api/getData**: Returns all data (profiles, events, eggs, feed, expenses)
+- **GET /api/getData**: Returns all data (profiles, events, eggs, feed, expenses, customers, sales)
 - Normalizes database field names to frontend expectations
 - Handles missing or null data gracefully
 
@@ -246,6 +345,8 @@ CREATE POLICY "Users can only access their own flock events" ON flock_events
 - **POST /api/saveEggEntries**: Upsert egg production data
 - **POST /api/saveFeedInventory**: Manage feed inventory
 - **POST /api/saveExpenses**: Track financial expenses
+- **POST /api/saveCustomer**: Upsert customer data
+- **POST /api/saveSale**: Record new egg sale
 
 ### Error Handling
 - UUID validation for foreign key relationships
@@ -260,6 +361,9 @@ CREATE POLICY "Users can only access their own flock events" ON flock_events
 3. **Bird Count Columns**: Added dedicated columns for hens, roosters, chicks, brooding
 4. **Profile Data Normalization**: Mapped database fields to frontend expectations
 5. **API Endpoint Updates**: Created comprehensive CRUD operations for events
+6. **customers Table Creation**: Added table for customer data with user isolation
+7. **sales Table Creation**: Added table for sales transactions with customer relationships
+8. **CRM Data Migration**: Migrated existing customer and sales data to new tables
 
 ### Data Migration Notes
 - Legacy events stored in profile notes were migrated to flock_events table

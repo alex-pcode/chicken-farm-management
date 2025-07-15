@@ -44,6 +44,14 @@ A comprehensive web application for managing your chicken flock, tracking egg pr
 - **Real-time updates** across all components
 - **Instant navigation** with cached data
 
+### 💼 **Customer Relationship Management (CRM)**
+- **Customer management** - track your egg customers with contact info
+- **Simplified sales recording** - quick egg sales with EggCounter-style design
+- **Free egg tracking** - record $0.00 sales for community giving
+- **Sales analytics** - revenue tracking and customer insights
+- **Payment-free model** - record sales only when payment is received
+- **Consistent UI design** - matches existing component styling
+
 ### ⚡ **Performance Features**
 - **Intelligent Data Caching** - 5-minute cache with smart invalidation
 - **85% reduction** in API calls for blazing-fast performance

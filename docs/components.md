@@ -473,3 +473,93 @@ import AnimatedFeedPile from './AnimatedFeedPile';
 Document any changes to component behavior or props here.
 
 Note: Update this documentation when making changes to components or adding new features.
+
+---
+
+## CRM (Customer Relationship Management) Components
+
+### CRM.tsx
+**Purpose**: Main CRM interface with tabbed navigation for customer and sales management
+
+**Features**:
+- Tabbed interface (Customers, Sales, Quick Sale, Reports)
+- Real-time summary statistics dashboard
+- Integrated data fetching and state management
+- Responsive design with loading states
+
+**Props**: None (self-contained component)
+
+**Usage**:
+```tsx
+import { CRM } from './CRM';
+<CRM />
+```
+
+### QuickSale.tsx
+**Purpose**: Streamlined interface for recording egg sales quickly
+
+**Features**:
+- **Simplified Design**: Single egg count input (EggCounter styling)
+- Price per egg configuration
+- Quick quantity buttons (+1, +6, +12, +24)
+- Automatic total calculation
+- Support for $0.00 sales (free egg distribution)
+- Form validation with error handling
+
+**Props**:
+```tsx
+interface QuickSaleProps {
+  customers: Customer[];
+  onDataChange: () => void;
+}
+```
+
+### CustomerList.tsx
+**Purpose**: Customer management interface for adding, editing, and deactivating customers
+
+**Features**:
+- Add new customers with name, phone, notes
+- Edit existing customer information
+- Soft delete (deactivate) customers
+- Search and filter capabilities
+- Customer statistics display
+
+**Props**:
+```tsx
+interface CustomerListProps {
+  customers: Customer[];
+  onDataChange: () => void;
+}
+```
+
+### SalesList.tsx
+**Purpose**: Display and manage sales history with editing capabilities
+
+**Features**:
+- View all sales with customer information
+- Edit existing sales (simplified egg count format)
+- Free egg indicators with green badges
+- Responsive table design
+- EggCounter-style form inputs
+
+**Props**:
+```tsx
+interface SalesListProps {
+  sales: SaleWithCustomer[];
+  customers: Customer[];
+  onDataChange: () => void;
+}
+```
+
+### SalesReports.tsx
+**Purpose**: Analytics and reporting dashboard for sales insights
+
+**Features**:
+- Overall sales summary with free egg tracking
+- Monthly breakdown charts
+- Key performance metrics
+- Free eggs statistics (replaces payment tracking)
+- Flexible time period filtering
+- Top customer identification
+
+**Props**: None (self-contained with data fetching)

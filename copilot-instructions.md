@@ -43,6 +43,12 @@ This documentation outlines standards and instructions for the Chicken Manager p
   - `Profile.tsx` for flock profile management and timeline events (user-specific data)
   - `Savings.tsx` for analytics and profitability analysis (user-specific data)
   - `ReportGenerator.tsx` for data analysis and reporting (user-specific data)
+- **CRM Components** (Customer Relationship Management):
+  - `CRM.tsx` for main tabbed interface with summary stats (user-specific customer data)
+  - `QuickSale.tsx` for streamlined egg sales recording with EggCounter styling (user-specific sales)
+  - `CustomerList.tsx` for customer management with CRUD operations (user-specific customers)
+  - `SalesList.tsx` for sales history and editing with simplified egg format (user-specific sales)
+  - `SalesReports.tsx` for sales analytics and free egg tracking (user-specific reporting)
 - **Authentication Components**:
   - `AuthContext.tsx` for user session management and authentication state
   - `Auth.tsx` for login/signup interface using Supabase Auth UI
@@ -58,6 +64,9 @@ This documentation outlines standards and instructions for the Chicken Manager p
   - `egg_entries` - Tracks daily egg production **+ user_id for data isolation**
   - `expenses` - Records all financial transactions **+ user_id for data isolation**
   - `feed_inventory` - Manages feed stock and consumption **+ user_id for data isolation**
+- **CRM Tables** (Customer Relationship Management):
+  - `customers` - Stores customer information (name, phone, notes) **+ user_id for data isolation**
+  - `sales` - Records egg sales transactions with customer relationships **+ user_id for data isolation**
 - **Security Requirements**:
   - All tables must have `user_id` column (UUID, NOT NULL)
   - Row Level Security (RLS) policies enabled on all tables
@@ -75,6 +84,14 @@ This documentation outlines standards and instructions for the Chicken Manager p
 - Production tracking: `POST /api/saveEggEntries` - Track user's daily egg production
 - Inventory management: `POST /api/saveFeedInventory` - Manage user's feed inventory
 - Financial tracking: `POST /api/saveExpenses` - Record user's expenses
+- **CRM Endpoints** (Customer Relationship Management):
+  - `GET /api/customers` - Retrieve user's customers with authentication
+  - `POST /api/customers` - Create new customers for authenticated user
+  - `PUT /api/customers` - Update user's existing customers
+  - `GET /api/sales` - Retrieve user's sales with customer information
+  - `POST /api/sales` - Record new sales for authenticated user
+  - `PUT /api/sales` - Update user's existing sales
+  - `GET /api/salesReports` - Generate analytics and reports for user's sales data
 - **Migration Support**: `GET /api/getUserMigrationScript` - Generate SQL to migrate orphaned data to current user
 
 ### Data Import Process
@@ -180,5 +197,19 @@ This documentation outlines standards and instructions for the Chicken Manager p
 - Explain user data isolation at the database level
 - Document migration procedures for existing data to authenticated users
 - Detail logout procedures and session cleanup
+
+### Customer Relationship Management (CRM)
+- **Simplified Design**: Document single egg count input system (no dozens/individual complexity)
+- **EggCounter Styling**: Use consistent `neu-input`, `neu-button`, `neu-form` classes throughout CRM
+- **Customer Management**: Document CRUD operations for customer data with user isolation
+- **Sales Recording**: Document streamlined sales process with automatic pricing calculation
+- **Free Egg Tracking**: Document $0.00 sales system for community giving and promotional distribution
+- **Payment-Free Model**: Document simplified approach (record sales only when payment received)
+- **Analytics Integration**: Document sales revenue integration with existing `Savings.tsx` component
+- **Database Compatibility**: Document UI simplification while maintaining backend dozens/individual format
+- **Security Requirements**: All CRM endpoints require authentication and enforce user data isolation
+- **Quick Sale Features**: Document price per egg calculation, quick quantity buttons (+1, +6, +12, +24)
+- **Sales History**: Document editing capabilities with total egg count conversion from dozens/individual
+- **Reports & Analytics**: Document free egg statistics replacing payment tracking systems
 
 This documentation emphasizes maintaining accuracy across all chicken management features, avoiding duplication, and ensuring that all references to code and file paths remain current as the project evolves. It serves as a comprehensive guide for maintaining and extending the Chicken Manager application with full user authentication, data privacy, and multi-user support. **Security and user data isolation are now fundamental requirements for all features and components.**

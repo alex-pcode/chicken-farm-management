@@ -77,3 +77,6 @@ export interface TestData {
   flockProfile: FlockProfile;
   feedInventory: FeedEntry[];
 }
+
+// Re-export CRM types for convenience
+export * from './crm';
