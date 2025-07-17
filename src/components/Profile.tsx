@@ -4,7 +4,7 @@ import type { FlockProfile, FlockEvent } from '../types';
 import { saveFlockProfile, deleteFlockEvent, saveFlockEvent } from '../utils/authApiUtils';
 import { useFlockProfile } from '../contexts/DataContext';
 import { StatCard } from './testCom';
-import AnimatedFarm from './AnimatedFarm';
+import AnimatedFarmPNG from './AnimatedFarmPNG';
 
 const EVENT_TYPES = {
   acquisition: '🐣 New Birds Acquired',
@@ -359,7 +359,7 @@ export const Profile = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <AnimatedFarm />
+        <AnimatedFarmPNG />
       </motion.div>
 
       {/* Profile Stats */}

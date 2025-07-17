@@ -1,21 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { getAuthHeaders } from '../utils/authApiUtils';
-import { Customer, Sale, SaleWithCustomer, CustomerWithStats, SalesSummary } from '../types/crm';
 import { CustomerList } from './CustomerList';
 import { SalesList } from './SalesList';
 import { QuickSale } from './QuickSale';
 import { SalesReports } from './SalesReports';
+import AnimatedCRMPNG from './AnimatedCRMPNG';
+import { useAppData } from '../contexts/DataContext';
 
 type CRMTab = 'customers' | 'sales' | 'quick-sale' | 'reports';
 
 export const CRM = () => {
   const [activeTab, setActiveTab] = useState<CRMTab>('customers');
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [sales, setSales] = useState<SaleWithCustomer[]>([]);
-  const [summary, setSummary] = useState<SalesSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading, error, refreshData } = useAppData();
 
   const tabs = [
     { id: 'customers' as CRMTab, label: 'Customers', emoji: '👥' },
@@ -24,48 +20,9 @@ export const CRM = () => {
     { id: 'reports' as CRMTab, label: 'Reports', emoji: '📊' }
   ];
 
-  const fetchData = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      const headers = await getAuthHeaders();
-
-      // Fetch customers, sales, and summary in parallel
-      const [customersRes, salesRes, summaryRes] = await Promise.all([
-        fetch('/api/customers', { headers }),
-        fetch('/api/sales', { headers }),
-        fetch('/api/salesReports?type=summary', { headers })
-      ]);
-
-      if (!customersRes.ok || !salesRes.ok || !summaryRes.ok) {
-        throw new Error('Failed to fetch CRM data');
-      }
-
-      const [customersData, salesData, summaryData] = await Promise.all([
-        customersRes.json(),
-        salesRes.json(),
-        summaryRes.json()
-      ]);
-
-      setCustomers(customersData);
-      setSales(salesData);
-      setSummary(summaryData);
-    } catch (err) {
-      console.error('Error fetching CRM data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load CRM data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
+  // Use refreshData from context for mutations
   const handleDataChange = () => {
-    // Refresh data when changes are made
-    fetchData();
+    refreshData();
   };
 
   if (isLoading) {
@@ -86,7 +43,7 @@ export const CRM = () => {
           <h3 className="text-lg font-semibold text-red-800 mb-2">Error Loading CRM</h3>
           <p className="text-red-600 mb-4">{error}</p>
           <button
-            onClick={fetchData}
+            onClick={refreshData}
             className="neu-button bg-red-100 text-red-700 hover:bg-red-200"
           >
             Try Again
@@ -98,6 +55,16 @@ export const CRM = () => {
 
   return (
     <div className="container">
+      {/* Animated CRM Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="w-full mb-8"
+      >
+        <AnimatedCRMPNG />
+      </motion.div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -112,30 +79,30 @@ export const CRM = () => {
         </p>
 
         {/* Summary Stats */}
-        {summary && (
+        {data.summary && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-6">
             <div className="neu-card p-4 text-center">
-              <div className="text-2xl font-bold text-indigo-600">{summary.customer_count}</div>
+              <div className="text-2xl font-bold text-indigo-600">{data.summary.customer_count}</div>
               <div className="text-sm text-gray-600">Customers</div>
             </div>
             <div className="neu-card p-4 text-center">
-              <div className="text-2xl font-bold text-green-600">{summary.total_sales}</div>
+              <div className="text-2xl font-bold text-green-600">{data.summary.total_sales}</div>
               <div className="text-sm text-gray-600">Total Sales</div>
             </div>
             <div className="neu-card p-4 text-center">
-              <div className="text-2xl font-bold text-blue-600">${summary.total_revenue.toFixed(2)}</div>
+              <div className="text-2xl font-bold text-blue-600">${data.summary.total_revenue.toFixed(2)}</div>
               <div className="text-sm text-gray-600">Revenue</div>
             </div>
             <div className="neu-card p-4 text-center">
-              <div className="text-2xl font-bold text-yellow-600">{summary.total_eggs_sold}</div>
+              <div className="text-2xl font-bold text-yellow-600">{data.summary.total_eggs_sold}</div>
               <div className="text-sm text-gray-600">Eggs Sold</div>
             </div>
             <div className="neu-card p-4 text-center">
-              <div className="text-2xl font-bold text-green-600">{summary.free_eggs_given || 0}</div>
+              <div className="text-2xl font-bold text-green-600">{data.summary.free_eggs_given || 0}</div>
               <div className="text-sm text-gray-600">Free Eggs</div>
             </div>
             <div className="neu-card p-4 text-center">
-              <div className="text-lg font-bold text-purple-600 truncate">{summary.top_customer || 'None'}</div>
+              <div className="text-lg font-bold text-purple-600 truncate">{data.summary.top_customer || 'None'}</div>
               <div className="text-sm text-gray-600">Top Customer</div>
             </div>
           </div>
@@ -169,22 +136,22 @@ export const CRM = () => {
       >
         {activeTab === 'customers' && (
           <CustomerList 
-            customers={customers} 
+            customers={data.customers || []} 
             onDataChange={handleDataChange}
           />
         )}
         
         {activeTab === 'sales' && (
           <SalesList 
-            sales={sales} 
-            customers={customers}
+            sales={data.sales || []} 
+            customers={data.customers || []}
             onDataChange={handleDataChange}
           />
         )}
         
         {activeTab === 'quick-sale' && (
           <QuickSale 
-            customers={customers} 
+            customers={data.customers || []} 
             onDataChange={handleDataChange}
           />
         )}

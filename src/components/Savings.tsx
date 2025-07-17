@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useAppData } from '../contexts/DataContext';
 import { StatCard } from './testCom';
 import { LoadingSpinner } from './LoadingSpinner';
+import AnimatedSavingsPNG from './AnimatedSavingsPNG';
 
 type TimePeriod = 'all' | 'month' | 'quarter' | 'year';
 
@@ -113,6 +114,16 @@ export const Savings = () => {
       className="space-y-8 max-w-7xl mx-auto p-6"
       style={{ margin: '0px auto', opacity: 1 }}
     >
+      {/* Animated Savings Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="w-full"
+      >
+        <AnimatedSavingsPNG />
+      </motion.div>
+
       {isLoading ? (
         <div className="flex justify-center items-center min-h-[400px]">
           <LoadingSpinner />

@@ -158,6 +158,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       throw expensesError;
     }
 
+    // Fetch customers
+    const { data: customers, error: customersError } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: true });
+    if (customersError) {
+      console.error('Supabase customers error:', customersError);
+      throw customersError;
+    }
+
+    // Fetch sales
+    const { data: sales, error: salesError } = await supabase
+      .from('sales')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('sale_date', { ascending: false });
+    if (salesError) {
+      console.error('Supabase sales error:', salesError);
+      throw salesError;
+    }
+
+    // Build summary (simple example)
+    const summary = {
+      customer_count: customers?.length || 0,
+      total_sales: sales?.length || 0,
+      total_revenue: sales?.reduce((sum, s) => sum + (s.total_amount || 0), 0),
+      total_eggs_sold: sales?.reduce((sum, s) => sum + ((s.dozen_count || 0) * 12 + (s.individual_count || 0)), 0),
+      free_eggs_given: sales?.filter(s => s.total_amount === 0).reduce((sum, s) => sum + ((s.dozen_count || 0) * 12 + (s.individual_count || 0)), 0),
+      top_customer: (() => {
+        if (!sales || !customers) return undefined;
+        const counts: Record<string, number> = {};
+        sales.forEach(s => {
+          counts[s.customer_id] = (counts[s.customer_id] || 0) + ((s.dozen_count || 0) * 12 + (s.individual_count || 0));
+        });
+        const topId = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
+        return customers.find(c => c.id === topId)?.name || undefined;
+      })()
+    };
+
     const response = {
       message: 'Data fetched successfully',
       data: {
@@ -180,7 +220,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           createdAt: feed.created_at,
           updatedAt: feed.updated_at
         })) || [],
-        expenses: expenses || []
+        expenses: expenses || [],
+        customers: customers || [],
+        sales: sales || [],
+        summary
       },
       timestamp: new Date().toISOString()
     };

@@ -2,12 +2,17 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import { fetchData } from '../utils/authApiUtils';
 import type { EggEntry, Expense, FeedEntry, FlockProfile, FlockEvent } from '../types';
 
+import type { Customer, SaleWithCustomer, SalesSummary } from '../types/crm';
+
 interface AppData {
   eggEntries: EggEntry[];
   expenses: Expense[];
   feedInventory: FeedEntry[];
   flockProfile: FlockProfile | null;
   flockEvents: FlockEvent[];
+  customers?: Customer[];
+  sales?: SaleWithCustomer[];
+  summary?: SalesSummary;
 }
 
 interface DataContextType {
@@ -37,7 +42,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     expenses: [],
     feedInventory: [],
     flockProfile: null,
-    flockEvents: []
+    flockEvents: [],
+    customers: [],
+    sales: [],
+    summary: undefined
   });
   
   const [isLoading, setIsLoading] = useState(true);
@@ -56,7 +64,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         expenses: dbData.expenses || [],
         feedInventory: dbData.feedInventory || [],
         flockProfile: dbData.flockProfile || null,
-        flockEvents: dbData.flockEvents || []
+        flockEvents: dbData.flockEvents || [],
+        customers: dbData.customers || [],
+        sales: dbData.sales || [],
+        summary: dbData.summary || undefined
       });
       
       setLastFetched(new Date());

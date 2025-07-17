@@ -6,7 +6,7 @@ import { LoadingSpinner } from './LoadingSpinner';
 import type { Expense } from '../types';
 import { saveExpenses } from '../utils/authApiUtils';
 import { useExpenses } from '../contexts/DataContext';
-import { AnimatedCoin } from './AnimatedCoin';
+import { AnimatedCoinPNG } from './AnimatedCoinPNG';
 
 interface ValidationError {
   field: string;
@@ -176,7 +176,7 @@ export const Expenses = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="space-y-8 max-w-7xl mx-auto"
+      className="space-y-8 max-w-7xl mx-auto pt-20"
       style={{ margin: '0px auto', opacity: 1 }}
     >
       {/* Animated Piggy Bank Section - Testing (will be for new users) */}
@@ -186,7 +186,7 @@ export const Expenses = () => {
         transition={{ delay: 0.1 }}
         className="w-full"
       >
-        <AnimatedCoin />
+        <AnimatedCoinPNG />
       </motion.div>
 
       <div className="flex justify-between items-center">

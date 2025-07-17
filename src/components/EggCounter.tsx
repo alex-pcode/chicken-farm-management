@@ -7,7 +7,7 @@ import { useEggEntries } from '../contexts/DataContext';
 import type { EggEntry } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { StatCard } from './testCom';
-import { AnimatedHen } from './AnimatedHen';
+import AnimatedEggCounterPNG from './AnimatedEggCounterPNG';
 
 interface ValidationError {
   field: string;
@@ -199,7 +199,7 @@ export const EggCounter = () => {
         transition={{ delay: 0.1 }}
         className="w-full"
       >
-        <AnimatedHen />
+        <AnimatedEggCounterPNG />
       </motion.div>
 
       <motion.div

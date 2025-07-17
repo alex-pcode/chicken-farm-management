@@ -4,7 +4,7 @@ import type { FeedEntry, FlockProfile } from '../types';
 import { saveFeedInventory, saveExpenses } from '../utils/authApiUtils';
 import { useFeedInventory, useFlockProfile, useAppData } from '../contexts/DataContext';
 import { v4 as uuidv4 } from 'uuid';
-import AnimatedFeedPile from './AnimatedFeedPile';
+import AnimatedFeedPNG from './AnimatedFeedPNG';
 
 const FEED_TYPES = [
   'Baby chicks',
@@ -239,7 +239,7 @@ export const FeedTracker = () => {
         transition={{ delay: 0.1 }}
         className="w-full"
       >
-        <AnimatedFeedPile />
+        <AnimatedFeedPNG />
       </motion.div>
 
       <div className="flex justify-between items-center">

@@ -408,71 +408,20 @@ const productivityStats = useMemo(() => {
 
 ## Animation Components
 
-### AnimatedFarm.tsx
-**Purpose**: Welcome animation component featuring a characteristic rooster, hens, and chicks
+### General Animation Update (2025)
+**Note:** All major welcome animations have been updated from SVG/CSS-based to PNG-based components using Framer Motion. Each animation now features a gentle left-right rotation effect and uses a themed PNG mascot image for a more modern, consistent look.
 
-**Features**:
-- Wide, detailed rooster with elaborate tail feathers and comb
-- Four animated hens with different colors and bobbing animations  
-- Three animated chicks that appear progressively
-- Farm setting with fence, clouds, sun, and scattered feed
-- Welcome message bubble and info badge
-- Smooth entrance animations with Framer Motion
+- **EggCounter Animation:** Now uses `AnimatedEggCounterPNG` with `hen-on-eggs.png` and gentle rotation.
+- **Expenses Animation:** Now uses `AnimatedCoinPNG` with `chicken-coin.png` and gentle rotation.
+- **Profile Animation:** Now uses `AnimatedFarmPNG` with `chickens-on-a-farm.png` and gentle rotation.
+- **FeedTracker Animation:** Now uses `AnimatedFeedPNG` with `cute-chicken-having-dinner.png` and gentle rotation.
+- **Savings Animation:** Now uses `AnimatedSavingsPNG` with `cute-chicken-pecking-a-calculator.png` and gentle rotation.
+- **CRM Animation:** Now uses `AnimatedCRMPNG` with `cute-chicken-business.png` and gentle rotation.
 
-**Usage**:
-```tsx
-import AnimatedFarm from './AnimatedFarm';
-
-// Used at the top of Profile page
-<AnimatedFarm />
-```
-
-**Design Details**:
-- Rooster: Wider body, prominent white breast, red comb and wattles
-- Hens: Varied colors (amber, red, white, black) with individual animations
-- Chicks: Small yellow birds with cute bobbing motion
-- Background: Sky gradient, clouds, sun, fence structure
-
-### AnimatedFeedPile.tsx
-**Purpose**: Welcome animation component showing chickens consuming a pile of feed
-
-**Features**:
-- Large, highly visible feed pile that shrinks in stages
-- Five chickens appear progressively as pile shrinks
-- Each chicken has unique pecking/bobbing animation
-- Scattered grain details for realism
-- Welcome message bubble and info badge
-- Multi-stage timing synchronized with chicken arrivals
-
-**Usage**:
-```tsx
-import AnimatedFeedPile from './AnimatedFeedPile';
-
-// Used at the top of FeedTracker page
-<AnimatedFeedPile />
-```
-
-**Design Details**:
-- Feed pile: Yellow gradients with borders and shadow for visibility
-- Ground patch underneath for contrast
-- Five shrinking stages timed to chicken arrivals
-- Varied chicken colors and animation speeds
-- Sky background with sun and clouds
-
-**Animation Timing**:
-- Stage 1: Initial pile appears (0.8s)
-- Stages 2-6: Progressive shrinking as chickens arrive (1.2s - 4.5s)
-- Each chicken has unique bobbing animation cycle
-
----
-
-**Last Updated**: January 2025  
-**Version**: 2.0 with Multi-User Authentication
-
-## Component Updates
-Document any changes to component behavior or props here.
-
-Note: Update this documentation when making changes to components or adding new features.
+**Animation Details:**
+- All PNG mascot images animate with a smooth entrance and then continuously rotate left and right (Framer Motion, 6s duration, infinite loop).
+- Themed welcome message and info badge included in each animation.
+- All previous SVG/CSS-based mascot animations have been replaced for consistency and performance.
 
 ---
 
