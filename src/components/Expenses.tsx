@@ -189,12 +189,6 @@ export const Expenses = () => {
         <AnimatedCoinPNG />
       </motion.div>
 
-      <div className="flex justify-between items-center">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
-          Expenses
-        </h1>
-      </div>
-
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

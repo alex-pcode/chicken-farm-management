@@ -163,7 +163,8 @@ function App() {
 
 const MainApp = () => {
   const { user, signOut } = useAuth();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const location = useLocation();
 
   return (
     <div className="flex min-h-screen">
@@ -200,66 +201,70 @@ const MainApp = () => {
             <span className="text-xl" role="img" aria-label="brand">🐔</span>
             <h1 className="text-lg font-semibold">Chicken Manager</h1>
           </div>
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-lg hover:bg-gray-100"
-          >
-            <span className="text-xl" role="img" aria-label="menu">
-              {isMobileMenuOpen ? '✕' : '☰'}
-            </span>
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="p-2 rounded-lg hover:bg-gray-100"
+            >
+              <span className="text-xl" role="img" aria-label="user menu">👤</span>
+            </button>
+            {showUserMenu && (
+              <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                <div className="p-4">
+                  <UserProfile />
+                  <button
+                    onClick={() => {
+                      signOut();
+                      setShowUserMenu(false);
+                    }}
+                    className="neu-button w-full bg-red-100 text-red-600 hover:bg-red-200 mt-4"
+                  >
+                    Logout ({user?.email?.split('@')[0]})
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-50" onClick={() => setIsMobileMenuOpen(false)}>
-          <div className="fixed right-0 top-0 h-full w-80 max-w-[80vw] bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="p-4 border-b">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl" role="img" aria-label="brand">🐔</span>
-                  <h2 className="text-lg font-semibold">Menu</h2>
-                </div>
-                <button
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 rounded-lg hover:bg-gray-100"
-                >
-                  <span className="text-lg" role="img" aria-label="close">✕</span>
-                </button>
-              </div>
-            </div>
-            <nav className="p-4 space-y-2">
-              {navigation.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className="mobile-nav-link"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <span className="text-lg" role="img" aria-label={item.name}>{item.emoji}</span>
-                  {item.name}
-                </Link>
-              ))}
-              <div className="pt-4 mt-4 border-t">
-                <UserProfile />
-                <button
-                  onClick={() => {
-                    signOut();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="neu-button w-full bg-red-100 text-red-600 hover:bg-red-200 mt-4"
-                >
-                  Logout ({user?.email?.split('@')[0]})
-                </button>
-              </div>
-            </nav>
-          </div>
+      {/* Mobile Bottom Dock */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 px-2 py-2">
+        <div className="flex justify-around items-center max-w-screen-xl mx-auto">
+          {navigation.map((item) => {
+            const isActive = location.pathname === item.href;
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`flex flex-col items-center justify-center px-2 py-2 rounded-lg transition-all duration-200 min-w-0 flex-1 ${
+                  isActive 
+                    ? 'bg-indigo-50 text-indigo-600' 
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <span className="text-lg mb-1" role="img" aria-label={item.name}>
+                  {item.emoji}
+                </span>
+                <span className="text-xs font-medium text-center leading-tight truncate w-full">
+                  {item.name === 'Feed Management' ? 'Feed' : item.name}
+                </span>
+              </Link>
+            );
+          })}
         </div>
+      </nav>
+
+      {/* Overlay to close user menu when clicking outside */}
+      {showUserMenu && (
+        <div 
+          className="lg:hidden fixed inset-0 z-30" 
+          onClick={() => setShowUserMenu(false)}
+        />
       )}
 
       {/* Main Content */}
-      <main className="main-content">
+      <main className="main-content pb-20 lg:pb-0">
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />

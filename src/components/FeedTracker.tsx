@@ -237,21 +237,10 @@ export const FeedTracker = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="w-full"
+        className="w-full mt-10 lg:mt-0 mb-8"
       >
         <AnimatedFeedPNG />
       </motion.div>
-
-      <div className="flex justify-between items-center">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
-          Feed Management
-        </h1>        <button
-          onClick={() => setShowEstimator(!showEstimator)}
-          className="neu-button"
-        >
-          {showEstimator ? 'Hide Analysis' : 'Show Feed Analysis'}
-        </button>
-      </div>
 
       <motion.div 
         id="addFeedForm"
@@ -545,6 +534,12 @@ export const FeedTracker = () => {
       >
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Feed Inventory</h2>
+          <button
+            onClick={() => setShowEstimator(!showEstimator)}
+            className="neu-button"
+          >
+            {showEstimator ? 'Hide Analysis' : 'Show Feed Analysis'}
+          </button>
         </div>
 
         <div className="overflow-x-auto">

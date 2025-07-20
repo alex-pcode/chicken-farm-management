@@ -21,7 +21,7 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
   const [success, setSuccess] = useState<string | null>(null);
 
   // Price per egg for quick calculation
-  const [pricePerEgg, setPricePerEgg] = useState(0.50);
+  const [pricePerEgg, setPricePerEgg] = useState(0.30);
 
   const updateTotalAmount = (eggCount: number) => {
     const newTotal = eggCount * pricePerEgg;

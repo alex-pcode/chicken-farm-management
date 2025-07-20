@@ -60,7 +60,7 @@ export const CRM = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="w-full mb-8"
+        className="w-full mb-8 mt-10 lg:mt-0"
       >
         <AnimatedCRMPNG />
       </motion.div>
@@ -68,7 +68,7 @@ export const CRM = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="page-header"
+        className="page-header mt-8 lg:mt-0"
       >
         <h1 className="page-title">
           <span className="text-4xl mr-3" role="img" aria-label="CRM">💼</span>
@@ -81,48 +81,54 @@ export const CRM = () => {
         {/* Summary Stats */}
         {data.summary && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-6">
-            <div className="neu-card p-4 text-center">
-              <div className="text-2xl font-bold text-indigo-600">{data.summary.customer_count}</div>
-              <div className="text-sm text-gray-600">Customers</div>
+            <div className="neu-stat">
+              <h3 className="text-lg font-medium text-gray-600">Customers</h3>
+              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">{data.summary.customer_count}</p>
+              <p className="text-sm text-gray-500 mt-1">total customers</p>
             </div>
-            <div className="neu-card p-4 text-center">
-              <div className="text-2xl font-bold text-green-600">{data.summary.total_sales}</div>
-              <div className="text-sm text-gray-600">Total Sales</div>
+            <div className="neu-stat">
+              <h3 className="text-lg font-medium text-gray-600">Sales</h3>
+              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">{data.summary.total_sales}</p>
+              <p className="text-sm text-gray-500 mt-1">total sales</p>
             </div>
-            <div className="neu-card p-4 text-center">
-              <div className="text-2xl font-bold text-blue-600">${data.summary.total_revenue.toFixed(2)}</div>
-              <div className="text-sm text-gray-600">Revenue</div>
+            <div className="neu-stat">
+              <h3 className="text-lg font-medium text-gray-600">Revenue</h3>
+              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">${data.summary.total_revenue.toFixed(2)}</p>
+              <p className="text-sm text-gray-500 mt-1">total revenue</p>
             </div>
-            <div className="neu-card p-4 text-center">
-              <div className="text-2xl font-bold text-yellow-600">{data.summary.total_eggs_sold}</div>
-              <div className="text-sm text-gray-600">Eggs Sold</div>
+            <div className="neu-stat">
+              <h3 className="text-lg font-medium text-gray-600">Eggs Sold</h3>
+              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">{data.summary.total_eggs_sold}</p>
+              <p className="text-sm text-gray-500 mt-1">eggs sold</p>
             </div>
-            <div className="neu-card p-4 text-center">
-              <div className="text-2xl font-bold text-green-600">{data.summary.free_eggs_given || 0}</div>
-              <div className="text-sm text-gray-600">Free Eggs</div>
+            <div className="neu-stat">
+              <h3 className="text-lg font-medium text-gray-600">Free Eggs</h3>
+              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">{data.summary.free_eggs_given || 0}</p>
+              <p className="text-sm text-gray-500 mt-1">eggs given</p>
             </div>
-            <div className="neu-card p-4 text-center">
-              <div className="text-lg font-bold text-purple-600 truncate">{data.summary.top_customer || 'None'}</div>
-              <div className="text-sm text-gray-600">Top Customer</div>
+            <div className="neu-stat">
+              <h3 className="text-lg font-medium text-gray-600">Top Customer</h3>
+              <p className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent truncate">{data.summary.top_customer || 'None'}</p>
+              <p className="text-sm text-gray-500 mt-1">best customer</p>
             </div>
           </div>
         )}
       </motion.div>
 
       {/* Tab Navigation */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 mt-8">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`neu-button flex items-center gap-2 px-4 py-2 ${
+            className={`neu-button flex items-center justify-center gap-2 px-4 py-3 text-center ${
               activeTab === tab.id
                 ? 'bg-indigo-100 text-indigo-700'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
             <span role="img" aria-label={tab.label}>{tab.emoji}</span>
-            {tab.label}
+            <span className="font-medium">{tab.label}</span>
           </button>
         ))}
       </div>

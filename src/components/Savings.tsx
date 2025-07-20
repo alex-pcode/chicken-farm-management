@@ -9,7 +9,7 @@ type TimePeriod = 'all' | 'month' | 'quarter' | 'year';
 
 export const Savings = () => {
   const { data, isLoading } = useAppData();
-  const [eggPrice, setEggPrice] = useState('0.50'); // Default price per egg
+  const [eggPrice, setEggPrice] = useState('0.30'); // Default price per egg
   const [startingCost, setStartingCost] = useState('0.00'); // Default starting cost
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
 
