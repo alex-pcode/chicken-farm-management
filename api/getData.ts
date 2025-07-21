@@ -185,7 +185,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       customer_count: customers?.length || 0,
       total_sales: sales?.length || 0,
       total_revenue: sales?.reduce((sum, s) => sum + (s.total_amount || 0), 0),
-      total_eggs_sold: sales?.reduce((sum, s) => sum + ((s.dozen_count || 0) * 12 + (s.individual_count || 0)), 0),
+      total_eggs_sold: sales?.filter(s => s.total_amount > 0).reduce((sum, s) => sum + ((s.dozen_count || 0) * 12 + (s.individual_count || 0)), 0),
       free_eggs_given: sales?.filter(s => s.total_amount === 0).reduce((sum, s) => sum + ((s.dozen_count || 0) * 12 + (s.individual_count || 0)), 0),
       top_customer: (() => {
         if (!sales || !customers) return undefined;

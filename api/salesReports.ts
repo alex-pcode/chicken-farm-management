@@ -61,8 +61,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Calculate totals
         const totalSales = salesData.length;
         const totalRevenue = salesData.reduce((sum, sale) => sum + parseFloat(sale.total_amount), 0);
-        const totalEggsSold = salesData.reduce((sum, sale) => sum + (sale.dozen_count * 12) + sale.individual_count, 0);
         const freeSales = salesData.filter(sale => parseFloat(sale.total_amount) === 0);
+        const paidSales = salesData.filter(sale => parseFloat(sale.total_amount) > 0);
+        const totalEggsSold = paidSales.reduce((sum, sale) => sum + (sale.dozen_count * 12) + sale.individual_count, 0);
         const freeEggsGiven = freeSales.reduce((sum, sale) => sum + (sale.dozen_count * 12) + sale.individual_count, 0);
 
         // Get top customer
@@ -120,6 +121,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Group by month
         const monthlyTotals: Record<string, any> = monthlyData.reduce((acc, sale) => {
           const month = sale.sale_date.substring(0, 7); // YYYY-MM format
+          const isPaidSale = parseFloat(sale.total_amount) > 0;
+          
           if (!acc[month]) {
             acc[month] = {
               month,
@@ -130,7 +133,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
           acc[month].total_sales += 1;
           acc[month].total_revenue += parseFloat(sale.total_amount);
-          acc[month].total_eggs += (sale.dozen_count * 12) + sale.individual_count;
+          
+          // Only count eggs from paid sales
+          if (isPaidSale) {
+            acc[month].total_eggs += (sale.dozen_count * 12) + sale.individual_count;
+          }
+          
           return acc;
         }, {} as Record<string, any>);
 

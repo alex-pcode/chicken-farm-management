@@ -65,22 +65,14 @@ export const CRM = () => {
         <AnimatedCRMPNG />
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="page-header mt-8 lg:mt-0"
-      >
-        <h1 className="page-title">
-          <span className="text-4xl mr-3" role="img" aria-label="CRM">💼</span>
-          Customer & Sales Management
-        </h1>
-        <p className="page-subtitle">
-          Manage your egg customers and track sales
-        </p>
-
-        {/* Summary Stats */}
-        {data.summary && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mt-6">
+      {/* Summary Stats */}
+      {data.summary && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-6"
+        >
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <div className="neu-stat">
               <h3 className="text-lg font-medium text-gray-600">Customers</h3>
               <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">{data.summary.customer_count}</p>
@@ -112,8 +104,8 @@ export const CRM = () => {
               <p className="text-sm text-gray-500 mt-1">best customer</p>
             </div>
           </div>
-        )}
-      </motion.div>
+        </motion.div>
+      )}
 
       {/* Tab Navigation */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 mt-8">

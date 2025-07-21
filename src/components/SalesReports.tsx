@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { getAuthHeaders } from '../utils/authApiUtils';
 import { MonthlySales } from '../types/crm';
+import { useAppData } from '../contexts/DataContext';
 
 export const SalesReports = () => {
-  const [summary, setSummary] = useState<any>(null);
+  const { data, isLoading: dataLoading, error: dataError, refreshData } = useAppData();
   const [monthlyData, setMonthlyData] = useState<MonthlySales[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,22 +18,14 @@ export const SalesReports = () => {
       
       const headers = await getAuthHeaders();
 
-      // Fetch summary and monthly data in parallel
-      const [summaryRes, monthlyRes] = await Promise.all([
-        fetch('/api/salesReports?type=summary', { headers }),
-        fetch('/api/salesReports?type=monthly', { headers })
-      ]);
+      // Fetch only monthly data since summary comes from DataContext
+      const monthlyRes = await fetch('/api/salesReports?type=monthly', { headers });
 
-      if (!summaryRes.ok || !monthlyRes.ok) {
-        throw new Error('Failed to fetch reports data');
+      if (!monthlyRes.ok) {
+        throw new Error('Failed to fetch monthly reports data');
       }
 
-      const [summaryData, monthlyDataRes] = await Promise.all([
-        summaryRes.json(),
-        monthlyRes.json()
-      ]);
-
-      setSummary(summaryData);
+      const monthlyDataRes = await monthlyRes.json();
       setMonthlyData(monthlyDataRes);
     } catch (err) {
       console.error('Error fetching reports data:', err);
@@ -43,8 +36,10 @@ export const SalesReports = () => {
   };
 
   useEffect(() => {
-    fetchReportsData();
-  }, []);
+    if (!dataLoading) {
+      fetchReportsData();
+    }
+  }, [dataLoading]);
 
   const filterMonthlyData = () => {
     const now = new Date();
@@ -80,7 +75,7 @@ export const SalesReports = () => {
   const totalEggsSold = filteredData.reduce((sum, item) => sum + item.total_eggs, 0);
   const totalSales = filteredData.reduce((sum, item) => sum + item.total_sales, 0);
 
-  if (isLoading) {
+  if (dataLoading || isLoading) {
     return (
       <div className="text-center py-8">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto"></div>
@@ -89,13 +84,16 @@ export const SalesReports = () => {
     );
   }
 
-  if (error) {
+  if (dataError || error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
         <h3 className="text-lg font-semibold text-red-800 mb-2">Error Loading Reports</h3>
-        <p className="text-red-600 mb-4">{error}</p>
+        <p className="text-red-600 mb-4">{dataError || error}</p>
         <button
-          onClick={fetchReportsData}
+          onClick={() => {
+            refreshData();
+            fetchReportsData();
+          }}
           className="neu-button bg-red-100 text-red-700 hover:bg-red-200"
         >
           Try Again
@@ -107,8 +105,6 @@ export const SalesReports = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-gray-800">Sales Reports</h2>
-        
         <div className="flex gap-2">
           {([
             { key: '3months', label: '3M' },
@@ -129,68 +125,103 @@ export const SalesReports = () => {
             </button>
           ))}
         </div>
+        <button
+          onClick={() => {
+            refreshData();
+            fetchReportsData();
+          }}
+          className="neu-button-sm bg-blue-100 text-blue-700 hover:bg-blue-200"
+        >
+          🔄 Refresh Data
+        </button>
       </div>
 
       {/* Overall Summary */}
-      {summary && (
-        <div className="neu-card p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Overall Summary</h3>
+      {data.summary && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="glass-card"
+        >
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Overall Summary</h2>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">{summary.customer_count}</div>
-              <div className="text-sm text-gray-600">Total Customers</div>
+            <div className="neu-stat">
+              <h3 className="text-lg font-medium text-gray-600">Customers</h3>
+              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">{data.summary.customer_count}</p>
+              <p className="text-sm text-gray-500 mt-1">total customers</p>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{summary.total_sales}</div>
-              <div className="text-sm text-gray-600">Total Sales</div>
+            <div className="neu-stat">
+              <h3 className="text-lg font-medium text-gray-600">Sales</h3>
+              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">{data.summary.total_sales}</p>
+              <p className="text-sm text-gray-500 mt-1">total sales</p>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-indigo-600">${summary.total_revenue.toFixed(2)}</div>
-              <div className="text-sm text-gray-600">Total Revenue</div>
+            <div className="neu-stat">
+              <h3 className="text-lg font-medium text-gray-600">Revenue</h3>
+              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">${data.summary.total_revenue.toFixed(2)}</p>
+              <p className="text-sm text-gray-500 mt-1">total revenue</p>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-600">{summary.total_eggs_sold}</div>
-              <div className="text-sm text-gray-600">Total Eggs Sold</div>
+            <div className="neu-stat">
+              <h3 className="text-lg font-medium text-gray-600">Eggs Sold</h3>
+              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">{data.summary.total_eggs_sold}</p>
+              <p className="text-sm text-gray-500 mt-1">paid eggs only</p>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{summary.free_eggs_given || 0}</div>
-              <div className="text-sm text-gray-600">Free Eggs Given</div>
+            <div className="neu-stat">
+              <h3 className="text-lg font-medium text-gray-600">Free Eggs</h3>
+              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">{data.summary.free_eggs_given || 0}</p>
+              <p className="text-sm text-gray-500 mt-1">eggs given</p>
             </div>
           </div>
           
-          {summary.top_customer && (
+          {data.summary.top_customer && (
             <div className="mt-4 text-center">
-              <div className="text-lg font-semibold text-purple-600">🏆 Top Customer</div>
-              <div className="text-gray-700">{summary.top_customer}</div>
+              <div className="text-lg font-semibold text-gray-700">🏆 Top Customer</div>
+              <div className="text-gray-600">{data.summary.top_customer}</div>
             </div>
           )}
-        </div>
+        </motion.div>
       )}
 
       {/* Period Summary */}
-      <div className="neu-card p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
-          {selectedPeriod === 'all' ? 'All Time' : selectedPeriod.replace(/(\d+)(\w+)/, '$1 $2').toUpperCase()} Summary
-        </h3>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="glass-card"
+      >
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">
+            {selectedPeriod === 'all' ? 'All Time' : selectedPeriod.replace(/(\d+)(\w+)/, '$1 $2').toUpperCase()} Summary
+          </h2>
+        </div>
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{totalSales}</div>
+            <div className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">{totalSales}</div>
             <div className="text-sm text-gray-600">Sales</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">${totalRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">${totalRevenue.toFixed(2)}</div>
             <div className="text-sm text-gray-600">Revenue</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-yellow-600">{totalEggsSold}</div>
+            <div className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">{totalEggsSold}</div>
             <div className="text-sm text-gray-600">Eggs Sold</div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Monthly Breakdown */}
-      <div className="neu-card p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Monthly Breakdown</h3>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="glass-card"
+      >
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Monthly Breakdown</h2>
+        </div>
         
         {filteredData.length === 0 ? (
           <div className="text-center py-8">
@@ -221,23 +252,23 @@ export const SalesReports = () => {
                     
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-sm">
                       <div className="text-center">
-                        <div className="font-bold text-green-600">{item.total_sales}</div>
+                        <div className="font-bold text-gray-700">{item.total_sales}</div>
                         <div className="text-gray-600">Sales</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-bold text-blue-600">${item.total_revenue.toFixed(2)}</div>
+                        <div className="font-bold text-gray-700">${item.total_revenue.toFixed(2)}</div>
                         <div className="text-gray-600">Revenue</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-bold text-yellow-600">{item.total_eggs}</div>
+                        <div className="font-bold text-gray-700">{item.total_eggs}</div>
                         <div className="text-gray-600">Eggs</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-bold text-purple-600">${avgPerSale.toFixed(2)}</div>
+                        <div className="font-bold text-gray-700">${avgPerSale.toFixed(2)}</div>
                         <div className="text-gray-600">Avg/Sale</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-bold text-indigo-600">{eggsPerSale.toFixed(1)}</div>
+                        <div className="font-bold text-gray-700">{eggsPerSale.toFixed(1)}</div>
                         <div className="text-gray-600">Eggs/Sale</div>
                       </div>
                     </div>
@@ -247,60 +278,74 @@ export const SalesReports = () => {
             })}
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="neu-card p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Key Metrics</h3>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="glass-card"
+        >
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Key Metrics</h2>
+          </div>
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">Average Sale Value:</span>
-              <span className="font-semibold">
+              <span className="font-semibold text-gray-900">
                 ${totalSales > 0 ? (totalRevenue / totalSales).toFixed(2) : '0.00'}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Average Eggs per Sale:</span>
-              <span className="font-semibold">
+              <span className="font-semibold text-gray-900">
                 {totalSales > 0 ? (totalEggsSold / totalSales).toFixed(1) : '0.0'}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Revenue per Egg:</span>
-              <span className="font-semibold">
+              <span className="font-semibold text-gray-900">
                 ${totalEggsSold > 0 ? (totalRevenue / totalEggsSold).toFixed(2) : '0.00'}
               </span>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="neu-card p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Free Eggs Statistics</h3>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="glass-card"
+        >
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Free Eggs Statistics</h2>
+          </div>
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">Total Revenue:</span>
-              <span className="font-semibold text-green-600">
-                ${summary?.total_revenue.toFixed(2) || '0.00'}
+              <span className="font-semibold text-gray-900">
+                ${data.summary?.total_revenue.toFixed(2) || '0.00'}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Free Eggs Given:</span>
-              <span className="font-semibold text-green-600">
-                {summary?.free_eggs_given || 0} eggs
+              <span className="font-semibold text-gray-900">
+                {data.summary?.free_eggs_given || 0} eggs
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Revenue Percentage:</span>
-              <span className="font-semibold">
-                {summary && (summary.total_eggs_sold + (summary.free_eggs_given || 0)) > 0 
-                  ? ((summary.total_eggs_sold / (summary.total_eggs_sold + (summary.free_eggs_given || 0))) * 100).toFixed(1)
+              <span className="font-semibold text-gray-900">
+                {data.summary && (data.summary.total_eggs_sold + (data.summary.free_eggs_given || 0)) > 0 
+                  ? ((data.summary.total_eggs_sold / (data.summary.total_eggs_sold + (data.summary.free_eggs_given || 0))) * 100).toFixed(1)
                   : '0.0'
                 }% paid sales
               </span>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
