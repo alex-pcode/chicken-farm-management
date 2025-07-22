@@ -23,7 +23,7 @@ const saveToDatabase = async (inventory: FeedEntry[]) => {
 export const FeedTracker = () => {
   const { feedInventory: cachedInventory, isLoading: inventoryLoading, updateFeedInventory } = useFeedInventory();
   const { flockProfile: cachedProfile, isLoading: profileLoading } = useFlockProfile();
-  const { data } = useAppData();
+  const { data, updateExpenses } = useAppData();
   
   const [feedInventory, setFeedInventory] = useState<FeedEntry[]>([]);
   const [flockProfile, setFlockProfile] = useState<FlockProfile | null>(null);
@@ -145,6 +145,13 @@ export const FeedTracker = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    
+    // Validate required fields
+    if (!brand || !quantity || !pricePerUnit) {
+      setErrorMsg('Please fill in all required fields including price per unit.');
+      return;
+    }
+    
     const newFeed: FeedEntry = {
       id: uuidv4(),
       brand,
@@ -173,26 +180,22 @@ export const FeedTracker = () => {
       setErrorMsg('Failed to save feed inventory. Please try again.');
     }
 
-    // Add expense entry via database
+    // Add expense entry automatically when feed is purchased
     try {
-      const expenses = data.expenses || [];
       const newExpense = {
-        id: Date.now().toString(),
+        id: uuidv4(),
         date: openedDate,
         category: 'Feed',
         description: `${brand} ${type} (${quantity} ${unit})`,
         amount: parseFloat(quantity) * parseFloat(pricePerUnit)
       };
 
-      const updatedExpenses = [...expenses, newExpense];
+      const updatedExpenses = [...data.expenses, newExpense];
+      updateExpenses(updatedExpenses);
       await saveExpenses(updatedExpenses);
-
-      // Dispatch custom event to notify other components
-      window.dispatchEvent(new CustomEvent('dataUpdated', { 
-        detail: { type: 'expense', data: updatedExpenses } 
-      }));
     } catch (error) {
       console.error('Error saving expenses:', error);
+      setErrorMsg('Feed saved but failed to record expense. Please add manually.');
     }
     
     // Reset form

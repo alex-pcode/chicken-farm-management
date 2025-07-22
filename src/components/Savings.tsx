@@ -5,13 +5,15 @@ import { StatCard } from './testCom';
 import { LoadingSpinner } from './LoadingSpinner';
 import AnimatedSavingsPNG from './AnimatedSavingsPNG';
 
-type TimePeriod = 'all' | 'month' | 'quarter' | 'year';
+type TimePeriod = 'all' | 'month' | 'year' | 'custom';
 
 export const Savings = () => {
   const { data, isLoading } = useAppData();
   const [eggPrice, setEggPrice] = useState('0.30'); // Default price per egg
   const [startingCost, setStartingCost] = useState('0.00'); // Default starting cost
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
 
   // Memoized filter function
   const getFilteredData = useCallback((date: string) => {
@@ -22,16 +24,24 @@ export const Savings = () => {
       case 'month':
         return entryDate.getMonth() === now.getMonth() && 
                entryDate.getFullYear() === now.getFullYear();
-      case 'quarter':
-        const quarterStart = new Date(now);
-        quarterStart.setMonth(Math.floor(now.getMonth() / 3) * 3);
-        return entryDate >= quarterStart;
       case 'year':
         return entryDate.getFullYear() === now.getFullYear();
+      case 'custom':
+        if (customStartDate && customEndDate) {
+          const startDate = new Date(customStartDate);
+          const endDate = new Date(customEndDate);
+          endDate.setHours(23, 59, 59, 999); // Include the full end date
+          return entryDate >= startDate && entryDate <= endDate;
+        } else {
+          // Default to last 3 months if no custom dates are set
+          const threeMonthsAgo = new Date(now);
+          threeMonthsAgo.setMonth(now.getMonth() - 3);
+          return entryDate >= threeMonthsAgo;
+        }
       default:
         return true;
     }
-  }, [timePeriod]);
+  }, [timePeriod, customStartDate, customEndDate]);
 
   // Memoized savings calculations
   const savingsData = useMemo(() => {
@@ -54,7 +64,8 @@ export const Savings = () => {
       .filter((expense: any) => getFilteredData(expense.date))
       .reduce((sum: number, expense: { amount: number }) => sum + expense.amount, 0);
 
-    const totalStartupCosts = parseFloat(startingCost);
+    // Only include startup costs for "All Time" view, not for specific periods
+    const totalStartupCosts = timePeriod === 'all' ? parseFloat(startingCost) : 0;
     const totalEggValue = totalEggs * parseFloat(eggPrice);
     const netSavings = totalEggValue - operatingExpenses - totalStartupCosts;
 
@@ -65,7 +76,7 @@ export const Savings = () => {
       totalExpenses: operatingExpenses + totalStartupCosts,
       netSavings
     };
-  }, [data, eggPrice, startingCost, getFilteredData, isLoading]);
+  }, [data, eggPrice, startingCost, getFilteredData, isLoading, timePeriod]);
 
   // Memoized productivity calculations
   const productivityStats = useMemo(() => {
@@ -73,23 +84,33 @@ export const Savings = () => {
       return { eggsPerHen: 0, dailyLayRate: 0, revenuePerHen: 0 };
     }
 
-    const totalEggs = data.eggEntries.reduce((sum: number, entry: { count: number }) => 
-      sum + entry.count, 0);
-
-    // Calculate eggs per hen
-    const eggsPerHen = totalEggs / data.flockProfile.hens;
-
-    // Calculate daily lay rate (last 7 days)
-    const last7DaysEggs = data.eggEntries
-      .slice(-7)
+    // Use filtered eggs for the selected time period
+    const filteredEggs = data.eggEntries
+      .filter((entry: any) => getFilteredData(entry.date))
       .reduce((sum: number, entry: { count: number }) => sum + entry.count, 0);
-    const dailyLayRate = (last7DaysEggs / (7 * data.flockProfile.hens)) * 100;
 
-    // Calculate revenue per hen
+    // Calculate eggs per hen for the selected period
+    const eggsPerHen = filteredEggs / data.flockProfile.hens;
+
+    // Calculate daily lay rate for the selected period
+    let dailyLayRate = 0;
+    const filteredEntries = data.eggEntries.filter((entry: any) => getFilteredData(entry.date));
+    
+    if (filteredEntries.length > 0) {
+      // Get the date range of filtered entries
+      const dates = filteredEntries.map((entry: any) => new Date(entry.date));
+      const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
+      const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+      const daysDiff = Math.max(1, Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+      
+      dailyLayRate = (filteredEggs / (daysDiff * data.flockProfile.hens)) * 100;
+    }
+
+    // Calculate revenue per hen for the selected period
     const revenuePerHen = eggsPerHen * parseFloat(eggPrice);
 
     return { eggsPerHen, dailyLayRate, revenuePerHen };
-  }, [data, eggPrice, isLoading]);
+  }, [data, eggPrice, isLoading, getFilteredData]);
 
   const handleEggPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEggPrice(e.target.value);
@@ -131,21 +152,6 @@ export const Savings = () => {
       ) : (
         <>
           <div>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Price Settings</h2>
-          <div className="flex gap-2">
-            <select
-              value={timePeriod}
-              onChange={(e) => setTimePeriod(e.target.value as TimePeriod)}
-              className="neu-input px-4 py-2"
-            >
-              <option value="month">This Month</option>
-              <option value="quarter">This Quarter</option>
-              <option value="year">This Year</option>
-              <option value="all">All Time</option>
-            </select>
-          </div>
-        </div>
         <div className="neu-form">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
@@ -165,7 +171,10 @@ export const Savings = () => {
               </div>
             </div>
             <div>
-              <label className="block text-gray-600 text-sm mb-2">Total Starting Cost</label>
+              <label className="block text-gray-600 text-sm mb-2">
+                Total Starting Cost
+                {timePeriod !== 'all'}
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <span className="text-gray-500">$</span>
@@ -176,7 +185,8 @@ export const Savings = () => {
                   min="0"
                   value={startingCost}
                   onChange={handleStartingCostChange}
-                  className="neu-input pl-8"
+                  className={`neu-input pl-8 ${timePeriod !== 'all' ? 'opacity-60' : ''}`}
+                  title={timePeriod !== 'all' ? 'Starting costs are only included when viewing "All Time" data' : ''}
                 />
               </div>
             </div>
@@ -185,7 +195,60 @@ export const Savings = () => {
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold mb-6 text-gray-900">Financial Summary</h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">Financial Summary</h2>
+          <div className="flex gap-2">
+            <select
+              value={timePeriod}
+              onChange={(e) => {
+                const newPeriod = e.target.value as TimePeriod;
+                setTimePeriod(newPeriod);
+                
+                // Set default date range when switching to custom
+                if (newPeriod === 'custom' && !customStartDate && !customEndDate) {
+                  const today = new Date();
+                  const threeMonthsAgo = new Date(today);
+                  threeMonthsAgo.setMonth(today.getMonth() - 3);
+                  
+                  setCustomStartDate(threeMonthsAgo.toISOString().split('T')[0]);
+                  setCustomEndDate(today.toISOString().split('T')[0]);
+                }
+              }}
+              className="neu-input px-4 py-2"
+            >
+              <option value="month">This Month</option>
+              <option value="year">This Year</option>
+              <option value="custom">Custom Period</option>
+              <option value="all">All Time</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Custom Date Range Picker */}
+        {timePeriod === 'custom' && (
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                <input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                <input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+            </div>
+          </div>
+        )}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -212,7 +275,9 @@ export const Savings = () => {
               <p className="text-4xl font-bold mt-2">
                 {formatCurrency(savingsData.totalExpenses)}
               </p>
-              <p className="text-sm text-white/90 mt-1">including startup costs</p>
+              <p className="text-sm text-white/90 mt-1">
+                {timePeriod === 'all' ? 'including startup costs' : 'period expenses only'}
+              </p>
             </div>
 
             <div className="stat-card">
@@ -220,7 +285,9 @@ export const Savings = () => {
               <p className="text-4xl font-bold mt-2">
                 {formatCurrency(savingsData.netSavings)}
               </p>
-              <p className="text-sm text-white/90 mt-1">including startup costs</p>
+              <p className="text-sm text-white/90 mt-1">
+                {timePeriod === 'all' ? 'including startup costs' : 'period profit only'}
+              </p>
             </div>
           </div>
         </motion.div>
@@ -251,7 +318,7 @@ export const Savings = () => {
                 {productivityStats.dailyLayRate.toFixed(1)}%
               </p>
               <p className="text-sm text-gray-500 mt-1">
-                7-day average lay rate
+                average daily lay rate
               </p>
             </div>
 

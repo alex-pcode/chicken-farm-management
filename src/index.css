@@ -960,6 +960,32 @@ input, select, textarea, button {
     inset 0 0 0 1px rgba(243, 229, 215, 0.5);
 }
 
+.neu-button-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.05),
+    inset 0 0 0 1px rgba(243, 229, 215, 0.5);
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: var(--black);
+  min-height: 6rem;
+}
+
+.neu-button-action:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.1),
+    inset 0 0 0 1px rgba(243, 229, 215, 0.5);
+  text-decoration: none;
+  color: var(--black);
+}
+
 /* Neumorphic checkbox styles */
 .neu-checkbox {
   appearance: none;

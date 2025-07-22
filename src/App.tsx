@@ -21,7 +21,7 @@ const navigation = [
   { name: 'CRM', emoji: '💼', href: '/crm' },
   { name: 'Expenses', emoji: '💰', href: '/expenses' },
   { name: 'Feed Management', emoji: '🌾', href: '/feed-tracker' },
-  { name: 'Analytics', emoji: '📊', href: '/savings' }
+  { name: 'Savings', emoji: '📈', href: '/savings' }
 ];
 
 const NavLink = ({ item }: { item: typeof navigation[0] }) => {
