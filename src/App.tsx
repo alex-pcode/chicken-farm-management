@@ -12,6 +12,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { DataProvider, useAppData } from './contexts/DataContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { UserProfile } from './components/UserProfile'
+import { BarChart, Bar, Tooltip, ResponsiveContainer } from 'recharts'
+import type { SaleWithCustomer } from './types/crm'
 // import { Login } from './components/Login' // Temporarily disabled
 
 const navigation = [
@@ -41,28 +43,113 @@ const NavLink = ({ item }: { item: typeof navigation[0] }) => {
 
 const Dashboard = () => {
   const { data, isLoading } = useAppData();
-  const [eggCount, setEggCount] = useState(0);
-  const [expenses, setExpenses] = useState(0);
-  const [dailyAverage, setDailyAverage] = useState(0);
+  const [stats, setStats] = useState({
+    totalEggs: 0,
+    dailyAverage: 0,
+    thisMonthProduction: 0,
+    lastMonthProduction: 0,
+    eggValue: 0, // Renamed from totalSavings to match Savings component terminology
+    revenue: 0,
+    freeEggs: 0,
+    last30DaysData: [] as { date: string; count: number }[]
+  });
   
   useEffect(() => {
     if (!isLoading && data) {
       const eggEntries = data.eggEntries || [];
+      const sales = data.sales || [];
+      
+      // Total eggs collected
       const totalEggs = eggEntries.reduce((sum: number, entry: { count: number }) => 
         sum + entry.count, 0);
       
-      const expenseEntries = data.expenses || [];
-      const totalExpenses = expenseEntries.reduce((sum: number, expense: { amount: number }) => 
-        sum + expense.amount, 0);
-
       // Calculate daily average from last 7 days
-      const last7Days = eggEntries
-        .slice(-7)
-        .reduce((sum: number, entry: { count: number }) => sum + entry.count, 0) / 7;
+      const now = new Date();
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const last7DaysEntries = eggEntries.filter((entry: { date: string }) => 
+        new Date(entry.date) >= sevenDaysAgo
+      );
+      const last7DaysTotal = last7DaysEntries.reduce((sum: number, entry: { count: number }) => 
+        sum + entry.count, 0);
+      const dailyAverage = last7DaysEntries.length > 0 ? last7DaysTotal / 7 : 0;
       
-      setEggCount(totalEggs);
-      setExpenses(totalExpenses);
-      setDailyAverage(Math.round(last7Days * 10) / 10);
+      // This month's production
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      const thisMonthEntries = eggEntries.filter((entry: { date: string }) => {
+        const entryDate = new Date(entry.date);
+        return entryDate.getMonth() === currentMonth && entryDate.getFullYear() === currentYear;
+      });
+      const thisMonthProduction = thisMonthEntries.reduce((sum: number, entry: { count: number }) => 
+        sum + entry.count, 0);
+      
+      // Last month's production for comparison
+      const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+      const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+      const lastMonthEntries = eggEntries.filter((entry: { date: string }) => {
+        const entryDate = new Date(entry.date);
+        return entryDate.getMonth() === lastMonth && entryDate.getFullYear() === lastMonthYear;
+      });
+      const lastMonthProduction = lastMonthEntries.reduce((sum: number, entry: { count: number }) => 
+        sum + entry.count, 0);
+      
+      // Revenue from sales - THIS MONTH ONLY
+      const thisMonthSales = sales.filter((sale: SaleWithCustomer) => {
+        const saleDate = new Date(sale.sale_date);
+        return saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
+      });
+      const revenue = thisMonthSales.reduce((sum: number, sale: SaleWithCustomer) => 
+        sum + sale.total_amount, 0);
+      
+      // Free eggs given - THIS MONTH ONLY (sales with $0 total)
+      const freeEggsSales = thisMonthSales.filter((sale: SaleWithCustomer) => sale.total_amount === 0);
+      const freeEggs = freeEggsSales.reduce((sum: number, sale: SaleWithCustomer) => 
+        sum + (sale.dozen_count * 12 + sale.individual_count), 0);
+      
+      // Egg Value calculation: this month's production * default price (matching Financial Overview period)
+      const defaultEggPrice = 0.30; // Same default as Savings component
+      const eggValue = thisMonthProduction * defaultEggPrice; // This month only, not total
+      
+      console.log('Dashboard Debug:', {
+        thisMonthProduction,
+        defaultEggPrice,
+        eggValue,
+        eggEntries: eggEntries.length
+      });
+      
+      // Last 30 days data for graph
+      const last30DaysData = [];
+      
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+        const dateStr = date.toISOString().split('T')[0];
+        const dayEntry = eggEntries.find((entry: { date: string }) => 
+          entry.date === dateStr
+        );
+        last30DaysData.push({
+          date: dateStr,
+          count: dayEntry ? dayEntry.count : 0
+        });
+      }
+      
+      console.log('Graph Debug:', {
+        last30DaysDataLength: last30DaysData.length,
+        sampleData: last30DaysData.slice(0, 3),
+        totalEggEntries: eggEntries.length,
+        hasAnyData: last30DaysData.some(d => d.count > 0),
+        maxCount: last30DaysData.length > 0 ? Math.max(...last30DaysData.map(d => d.count)) : 0
+      });
+      
+      setStats({
+        totalEggs,
+        dailyAverage: Math.round(dailyAverage * 10) / 10,
+        thisMonthProduction,
+        lastMonthProduction,
+        eggValue: Math.round(eggValue * 100) / 100, // Round to 2 decimal places
+        revenue: Math.round(revenue * 100) / 100, // Round to 2 decimal places
+        freeEggs,
+        last30DaysData
+      });
     }
   }, [data, isLoading]);
 
@@ -90,12 +177,93 @@ const Dashboard = () => {
         animate={{ opacity: 1, y: 0 }}
         className="glass-card"
       >
-        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-4 lg:mb-6">Quick Stats</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-          <StatCard title="Production" total={eggCount} label="total eggs" />
-          <StatCard title="Expenses" total={expenses} label="running total" />
-          <StatCard title="Daily Avg" total={dailyAverage} label="eggs per day" />
-          <StatCard title="Efficiency" total={Number.isFinite(expenses / eggCount) ? parseFloat((expenses / eggCount).toFixed(2)) : 0} label="cost per egg" />
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-4 lg:mb-6">🥚 Production Metrics</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+          <StatCard title="Total Eggs" total={stats.totalEggs} label="collected" />
+          <StatCard title="Daily Average" total={stats.dailyAverage} label="eggs per day (7-day)" />
+          <StatCard 
+            title="This Month" 
+            total={stats.thisMonthProduction} 
+            label={
+              <span className="flex items-center gap-1 flex-wrap">
+                {stats.lastMonthProduction > 0 && (
+                  <>
+                    <span className={`text-xs px-1 py-0.5 rounded ${
+                      stats.thisMonthProduction > stats.lastMonthProduction 
+                        ? 'bg-green-100 text-green-600' 
+                        : stats.thisMonthProduction < stats.lastMonthProduction
+                        ? 'bg-red-100 text-red-600'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {stats.thisMonthProduction > stats.lastMonthProduction 
+                        ? '+' : ''}{Math.round(((stats.thisMonthProduction - stats.lastMonthProduction) / stats.lastMonthProduction) * 100)}%
+                    </span>
+                    <span className="text-xs text-gray-500">compared to previous month</span>
+                  </>
+                )}
+              </span>
+            } 
+          />
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="glass-card"
+      >
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-4 lg:mb-6">📊 30-Day Production Trend</h2>
+        <div className="h-[250px] sm:h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={stats.last30DaysData}
+              margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+            >
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                }}
+                formatter={(value: number) => [`${value} eggs`, 'Production']}
+                labelFormatter={(label, payload) => {
+                  // Get the date from the payload data instead of the label
+                  if (payload && payload.length > 0 && payload[0].payload) {
+                    const dateStr = payload[0].payload.date;
+                    const date = new Date(dateStr + 'T12:00:00');
+                    return date.toLocaleDateString();
+                  }
+                  return String(label);
+                }}
+              />
+              <Bar
+                dataKey="count"
+                fill="#6366f1"
+                radius={[4, 4, 0, 0]}
+                name="Production"
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="glass-card"
+      >
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-4 lg:mb-6">💰 Financial Overview (This Month)</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+          <StatCard 
+            title="Egg Value" 
+            total={`$${stats.eggValue}`} 
+            label="potential revenue"
+          />
+          <StatCard title="Revenue" total={`$${stats.revenue}`} label="from sales" />
+          <StatCard title="Free Eggs" total={stats.freeEggs} label="given away" />
         </div>
       </motion.div>
 
