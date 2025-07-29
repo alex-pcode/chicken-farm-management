@@ -399,6 +399,8 @@ export const ChickenViability = () => {
             </motion.div>
           ))}
         </div>
+
+
       </motion.div>
 
       <motion.div

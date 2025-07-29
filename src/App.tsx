@@ -7,6 +7,7 @@ import { Savings } from './components/Savings'
 import { Profile } from './components/Profile'
 import { CRM } from './components/CRM'
 import { ChickenViability } from './components/ChickenViability'
+import { FeedCostCalculator } from './components/FeedCostCalculator'
 import { motion } from 'framer-motion'
 import { StatCard } from './components/testCom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
@@ -24,6 +25,7 @@ const navigation = [
   { name: 'CRM', emoji: '💼', href: '/crm' },
   { name: 'Expenses', emoji: '💰', href: '/expenses' },
   { name: 'Feed Management', emoji: '🌾', href: '/feed-tracker' },
+  { name: 'Feed Calculator', emoji: '🧮', href: '/feed-calculator' },
   { name: 'Savings', emoji: '📈', href: '/savings' },
   { name: 'Viability', emoji: '🧮', href: '/viability' }
 ];
@@ -417,7 +419,7 @@ const MainApp = () => {
                   {item.emoji}
                 </span>
                 <span className="text-xs font-medium text-center leading-tight truncate w-full">
-                  {item.name === 'Feed Management' ? 'Feed' : item.name === 'Viability' ? 'Calc' : item.name}
+                  {item.name === 'Feed Management' ? 'Feed' : item.name === 'Feed Calculator' ? 'Calc' : item.name === 'Viability' ? 'Viability' : item.name}
                 </span>
               </Link>
             );
@@ -442,6 +444,7 @@ const MainApp = () => {
           <Route path="/crm" element={<CRM />} />
           <Route path="/expenses" element={<Expenses />} />
           <Route path="/feed-tracker" element={<FeedTracker />} />
+          <Route path="/feed-calculator" element={<FeedCostCalculator />} />
           <Route path="/savings" element={<Savings />} />
           <Route path="/viability" element={<ChickenViability />} />
         </Routes>
