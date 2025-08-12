@@ -1,10 +1,27 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { FlockProfile, FlockEvent } from '../types';
-import { saveFlockProfile, deleteFlockEvent, saveFlockEvent } from '../utils/authApiUtils';
+import { Link } from 'react-router-dom';
+import type { FlockProfile, FlockEvent, FlockSummary } from '../types';
+import { apiService } from '../services/api';
+import { ApiServiceError, AuthenticationError, NetworkError, ServerError, getUserFriendlyErrorMessage } from '../types/api';
 import { useFlockProfile } from '../contexts/DataContext';
-import { StatCard } from './testCom';
+import { StatCard } from './ui';
 import AnimatedFarmPNG from './AnimatedFarmPNG';
+import { useAuth } from '../contexts/AuthContext';
+import { 
+  TextInput, 
+  NumberInput, 
+  DateInput, 
+  SelectInput, 
+  TextareaInput,
+  FormCard, 
+  FormGroup, 
+  FormRow, 
+  SubmitButton 
+} from './forms';
+import { useFormState } from '../hooks/useFormState';
+import { useToggle, useTimeoutToggle } from '../hooks/utils';
+import { useAsync } from '../hooks/utils';
 
 const EVENT_TYPES = {
   acquisition: '🐣 New Birds Acquired',
@@ -14,17 +31,9 @@ const EVENT_TYPES = {
   other: '📝 Other Event'
 };
 
-const saveToDatabase = async (profile: FlockProfile) => {
-  try {
-    await saveFlockProfile(profile);
-    return true;
-  } catch (error) {
-    console.error('Error saving to database:', error);
-    return false;
-  }
-};
 
 export const Profile = () => {
+  const { user } = useAuth();
   const { flockProfile: cachedProfile, isLoading: profileLoading, updateFlockProfile } = useFlockProfile();
   const [profile, setProfile] = useState<FlockProfile>({
     id: undefined,
@@ -39,19 +48,58 @@ export const Profile = () => {
     notes: ""
   });
 
-  const [newBreed, setNewBreed] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [flockSummary, setFlockSummary] = useState<FlockSummary | null>(null);
+  
+  // Use custom hooks to reduce useState calls
+  const batchLoading = useToggle(false);
+  const success = useTimeoutToggle(false, 3000);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<string | null>(null);
   
-  const [newEvent, setNewEvent] = useState<Partial<FlockEvent>>({
-    type: 'acquisition',
-    date: new Date().toISOString().split('T')[0],
-    description: '',
-    affectedBirds: undefined,
-    notes: ''
+  // Breed form state management with custom hook
+  const breedForm = useFormState({
+    initialValues: {
+      newBreed: '',
+      acquisitionAge: 'chick',
+      layingStartDate: '',
+      source: ''
+    }
+  });
+  
+  // Event form state management with custom hook
+  const eventForm = useFormState({
+    initialValues: {
+      type: 'acquisition' as FlockEvent['type'],
+      date: new Date().toISOString().split('T')[0],
+      description: '',
+      affectedBirds: undefined as number | undefined,
+      notes: ''
+    }
   });  
+
+  // Function to fetch flock summary from batch management
+  const fetchFlockSummary = async () => {
+    if (!user) return;
+    
+    batchLoading.setTrue();
+    try {
+      const response = await apiService.flock.getFlockSummary();
+      
+      if (response.data) {
+        setFlockSummary(response.data.summary || response.data);
+      } else {
+        // No data available yet
+        console.log('No flock summary data available yet');
+        setFlockSummary(null);
+      }
+    } catch (error) {
+      console.error('Error fetching flock summary:', error);
+      // Don't set error state, just leave flockSummary as null
+      setFlockSummary(null);
+    } finally {
+      batchLoading.setFalse();
+    }
+  };
 
   useEffect(() => {
     if (!profileLoading && cachedProfile) {
@@ -69,8 +117,11 @@ export const Profile = () => {
         notes: cachedProfile.notes || ""
       };
       setProfile(updatedProfile);
+      
+      // Fetch batch summary data
+      fetchFlockSummary();
     }
-  }, [cachedProfile, profileLoading]);
+  }, [cachedProfile, profileLoading, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,70 +134,29 @@ export const Profile = () => {
       breedTypes: profile.breedTypes || []
     };
       try {
-      const saved = await saveToDatabase(updatedProfile);
-      if (saved) {
-        setProfile(updatedProfile);
-        updateFlockProfile(updatedProfile);
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 3000);
-      } else {
-        throw new Error('Failed to save profile');
-      }
-    } catch (err) {
-      setError('Failed to save profile. Please try again.');
-      console.error('Error updating profile:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const addBreed = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newBreed.trim() && !profile.breedTypes?.includes(newBreed.trim())) {
-      setIsLoading(true);
-      setError(null);
+      // Save using consolidated API service
+      await apiService.flock.saveFlockProfile(updatedProfile);
       
-      const updatedProfile = {
-        ...profile,
-        breedTypes: [...(profile.breedTypes || []), newBreed.trim()]
-      };
-        try {
-        const saved = await saveToDatabase(updatedProfile);
-        if (saved) {
-          setProfile(updatedProfile);
-          setNewBreed('');
-          setSuccess(true);
-          setTimeout(() => setSuccess(false), 3000);
-        } else {
-          throw new Error('Failed to save breed');
-        }
-      } catch (err) {
-        setError('Failed to add breed. Please try again.');
-        console.error('Error adding breed:', err);
-      } finally {
-        setIsLoading(false);
+      setProfile(updatedProfile);
+      updateFlockProfile(updatedProfile);
+      success.setTrue();
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      
+      // Use standardized error handling with user-friendly messages
+      let errorMessage = 'Failed to save profile. Please try again.';
+      
+      if (error instanceof AuthenticationError) {
+        errorMessage = 'Session expired. Please refresh the page to continue.';
+      } else if (error instanceof NetworkError) {
+        errorMessage = 'Network connection issue. Please check your internet and try again.';
+      } else if (error instanceof ServerError) {
+        errorMessage = 'Server error. Please try again in a few moments.';
+      } else if (error instanceof ApiServiceError) {
+        errorMessage = getUserFriendlyErrorMessage(error);
       }
-    }
-  };
-
-  const removeBreed = async (breed: string) => {
-    setIsLoading(true);
-    setError(null);
-    
-    const updatedProfile = {
-      ...profile,
-      breedTypes: profile.breedTypes?.filter(b => b !== breed)
-    };
-      try {
-      const saved = await saveToDatabase(updatedProfile);
-      if (saved) {
-        setProfile(updatedProfile);
-      } else {
-        throw new Error('Failed to remove breed');
-      }
-    } catch (err) {
-      setError('Failed to remove breed. Please try again.');
-      console.error('Error removing breed:', err);
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -154,7 +164,7 @@ export const Profile = () => {
 
   const addEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newEvent.description?.trim()) {
+    if (!eventForm.values.description?.trim()) {
       setError('Please provide an event description');
       return;
     }
@@ -164,11 +174,11 @@ export const Profile = () => {
 
     const event: FlockEvent = {
       id: Date.now().toString(), // Temporary ID, will be replaced by database ID
-      date: newEvent.date || new Date().toISOString().split('T')[0],
-      type: newEvent.type as FlockEvent['type'],
-      description: newEvent.description.trim(),
-      affectedBirds: newEvent.affectedBirds,
-      notes: newEvent.notes?.trim()
+      date: eventForm.values.date || new Date().toISOString().split('T')[0],
+      type: eventForm.values.type as FlockEvent['type'],
+      description: eventForm.values.description.trim(),
+      affectedBirds: eventForm.values.affectedBirds,
+      notes: eventForm.values.notes?.trim()
     };
 
     try {
@@ -178,8 +188,8 @@ export const Profile = () => {
         return;
       }
 
-      // Save event to database using new API
-      const response = await saveFlockEvent(profile.id, event);
+      // Save event to database using consolidated API service
+      const response = await apiService.flock.saveFlockEvent(profile.id, event);
       
       if (response && response.data && response.data.event) {
         // Use the database event data which includes the proper ID
@@ -202,21 +212,28 @@ export const Profile = () => {
         };
         
         setProfile(updatedProfile);
-        setNewEvent({
-          type: 'acquisition',
-          date: new Date().toISOString().split('T')[0],
-          description: '',
-          affectedBirds: undefined,
-          notes: ''
-        });
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 3000);
+        eventForm.resetForm();
+        success.setTrue();
       } else {
         throw new Error('Failed to save event');
       }
-    } catch (err) {
-      console.error('Error adding event:', err);
-      setError('Failed to add event. Please try again. Error: ' + (err instanceof Error ? err.message : String(err)));
+    } catch (error) {
+      console.error('Error adding event:', error);
+      
+      // Use standardized error handling with user-friendly messages
+      let errorMessage = 'Failed to add event. Please try again.';
+      
+      if (error instanceof AuthenticationError) {
+        errorMessage = 'Session expired. Please refresh the page to continue.';
+      } else if (error instanceof NetworkError) {
+        errorMessage = 'Network connection issue. Please check your internet and try again.';
+      } else if (error instanceof ServerError) {
+        errorMessage = 'Server error. Please try again in a few moments.';
+      } else if (error instanceof ApiServiceError) {
+        errorMessage = getUserFriendlyErrorMessage(error);
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -227,55 +244,60 @@ export const Profile = () => {
     setError(null);
     
     try {
-      // Delete event from database using new API
-      const response = await deleteFlockEvent(eventId);
+      // Delete event from database using consolidated API service
+      await apiService.flock.deleteFlockEvent(eventId);
       
-      if (response) {
-        // Update local state by removing the event
-        const updatedProfile = {
-          ...profile,
-          events: profile.events.filter(e => e.id !== eventId)
-        };
-        
-        setProfile(updatedProfile);
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 3000);
-      } else {
-        throw new Error('Failed to delete event');
+      // Update local state by removing the event
+      const updatedProfile = {
+        ...profile,
+        events: profile.events.filter(e => e.id !== eventId)
+      };
+      
+      setProfile(updatedProfile);
+      success.setTrue();
+    } catch (error) {
+      console.error('Error removing event:', error);
+      
+      // Use standardized error handling with user-friendly messages
+      let errorMessage = 'Failed to remove event. Please try again.';
+      
+      if (error instanceof AuthenticationError) {
+        errorMessage = 'Session expired. Please refresh the page to continue.';
+      } else if (error instanceof NetworkError) {
+        errorMessage = 'Network connection issue. Please check your internet and try again.';
+      } else if (error instanceof ServerError) {
+        errorMessage = 'Server error. Please try again in a few moments.';
+      } else if (error instanceof ApiServiceError) {
+        errorMessage = getUserFriendlyErrorMessage(error);
       }
-    } catch (err) {
-      console.error('Error removing event:', err);
-      setError('Failed to remove event. Please try again. Error: ' + (err instanceof Error ? err.message : String(err)));
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const [editingEvent, setEditingEvent] = useState<string | null>(null);
+
   const startEditEvent = (event: FlockEvent) => {
     setEditingEvent(event.id);
-    setNewEvent({
+    eventForm.setValues({
       type: event.type,
       date: event.date,
       description: event.description,
       affectedBirds: event.affectedBirds,
-      notes: event.notes
+      notes: event.notes || ''
     });
   };
 
   const cancelEditEvent = () => {
     setEditingEvent(null);
-    setNewEvent({
-      type: 'acquisition',
-      date: new Date().toISOString().split('T')[0],
-      description: '',
-      affectedBirds: undefined,
-      notes: ''
-    });
+    eventForm.resetForm();
   };
 
   const updateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingEvent || !newEvent.description?.trim()) {
+    if (!editingEvent || !eventForm.values.description?.trim()) {
       setError('Please provide an event description');
       return;
     }
@@ -284,32 +306,16 @@ export const Profile = () => {
     setError(null);
 
     const updatedEventData = {
-      date: newEvent.date || new Date().toISOString().split('T')[0],
-      type: newEvent.type,
-      description: newEvent.description.trim(),
-      affectedBirds: newEvent.affectedBirds,
-      notes: newEvent.notes?.trim()
+      date: eventForm.values.date || new Date().toISOString().split('T')[0],
+      type: eventForm.values.type,
+      description: eventForm.values.description.trim(),
+      affectedBirds: eventForm.values.affectedBirds,
+      notes: eventForm.values.notes?.trim()
     };
 
     try {
-      // Update event in database using PUT method
-      const response = await fetch(`/api/saveFlockEvents`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          flockProfileId: profile.id || 1,
-          event: updatedEventData,
-          eventId: editingEvent
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update event');
-      }
-
-      const result = await response.json();
+      // Update event in database using consolidated API service
+      const result = await apiService.flock.saveFlockEvent(profile.id || '1', updatedEventData, editingEvent);
       
       if (result && result.data && result.data.event) {
         // Use the database event data
@@ -333,14 +339,27 @@ export const Profile = () => {
         
         setProfile(updatedProfile);
         cancelEditEvent();
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 3000);
+        success.setTrue();
       } else {
         throw new Error('Failed to update event');
       }
-    } catch (err) {
-      console.error('Error updating event:', err);
-      setError('Failed to update event. Please try again. Error: ' + (err instanceof Error ? err.message : String(err)));
+    } catch (error) {
+      console.error('Error updating event:', error);
+      
+      // Use standardized error handling with user-friendly messages
+      let errorMessage = 'Failed to update event. Please try again.';
+      
+      if (error instanceof AuthenticationError) {
+        errorMessage = 'Session expired. Please refresh the page to continue.';
+      } else if (error instanceof NetworkError) {
+        errorMessage = 'Network connection issue. Please check your internet and try again.';
+      } else if (error instanceof ServerError) {
+        errorMessage = 'Server error. Please try again in a few moments.';
+      } else if (error instanceof ApiServiceError) {
+        errorMessage = getUserFriendlyErrorMessage(error);
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -363,268 +382,391 @@ export const Profile = () => {
         <AnimatedFarmPNG />
       </motion.div>
 
+      {/* Batch Management Summary */}
+      {flockSummary === null && !batchLoading.value && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="glass-card bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200"
+        >
+          <div className="flex items-start gap-4">
+            <span className="text-3xl">📦</span>
+            <div className="flex-1">
+              <h2 className="text-xl font-bold text-gray-900 mb-2">🚀 Batch Management Available!</h2>
+              <p className="text-gray-700 mb-4">
+                Upgrade your flock tracking with our new batch management system. Track groups of chickens, 
+                log losses automatically, and get better production insights.
+              </p>
+              
+              <div className="bg-white rounded-lg p-4 border border-yellow-200 mb-4">
+                <h3 className="font-semibold text-gray-900 mb-2">✨ Benefits:</h3>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  <li>• Track chickens in groups instead of individual counts</li>
+                  <li>• Automatic count updates when logging deaths/losses</li>
+                  <li>• Production analysis based on actual flock size</li>
+                  <li>• Mortality tracking with detailed insights</li>
+                  <li>• Better egg production rate analysis</li>
+                </ul>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                <h4 className="font-semibold text-blue-900 text-sm mb-1">🔧 Setup Required:</h4>
+                <p className="text-sm text-blue-800">
+                  Run the database migration in your Supabase dashboard. 
+                  See <code className="bg-blue-100 px-1 rounded">BATCH_MANAGEMENT_SETUP.md</code> for instructions.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <a 
+                  href="/flock-batches" 
+                  className="neu-button-secondary text-sm"
+                >
+                  View Batch Manager
+                </a>
+                <button 
+                  onClick={fetchFlockSummary}
+                  className="neu-button text-sm"
+                  disabled={batchLoading.value}
+                >
+                  {batchLoading.value ? 'Checking...' : 'Check Again'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {flockSummary && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="glass-card bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">📦 Batch Management Overview</h2>
+            <Link 
+              to="/flock-batches" 
+              className="neu-button-secondary text-sm"
+            >
+              Manage Batches
+            </Link>
+          </div>
+          
+          {batchLoading.value ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <StatCard 
+                  title="🐔 Total Birds" 
+                  total={flockSummary.totalBirds} 
+                  label="in batch system"
+                />
+                <StatCard 
+                  title="� Hens" 
+                  total={flockSummary.totalHens || 0} 
+                  label="female birds"
+                />
+                <StatCard 
+                  title="🐓 Roosters" 
+                  total={flockSummary.totalRoosters || 0} 
+                  label="male birds"
+                />
+                <StatCard 
+                  title="🐥 Chicks" 
+                  total={flockSummary.totalChicks || 0} 
+                  label="young birds"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <StatCard 
+                  title="�📦 Active Batches" 
+                  total={flockSummary.activeBatches} 
+                  label="managed groups"
+                />
+                <StatCard 
+                  title="🥚 Expected Layers" 
+                  total={flockSummary.expectedLayers} 
+                  label="laying age"
+                />
+                <StatCard 
+                  title="💀 Mortality Rate" 
+                  total={`${flockSummary.mortalityRate}%`} 
+                  label="overall loss rate"
+                />
+              </div>
+
+              {flockSummary.batchSummary.length > 0 ? (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Active Batches</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {flockSummary.batchSummary.slice(0, 6).map((batch) => (
+                      <div key={batch.id} className="bg-white rounded-lg p-4 border border-blue-200">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-lg">
+                            {batch.type === 'hens' ? '🐔' : 
+                             batch.type === 'roosters' ? '🐓' : 
+                             batch.type === 'chicks' ? '🐥' : '🐔'}
+                          </span>
+                          <h4 className="font-semibold text-gray-900 text-sm">{batch.name}</h4>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-1">{batch.breed}</p>
+                        <p className="text-lg font-bold text-indigo-600">{batch.currentCount} birds</p>
+                        <p className="text-xs text-gray-500">
+                          Since {new Date(batch.acquisitionDate).toLocaleDateString()}
+                        </p>
+                        {batch.type === 'hens' && (
+                          <span className={`inline-block mt-2 px-2 py-1 rounded-full text-xs ${
+                            batch.isLayingAge 
+                              ? 'bg-green-100 text-green-600' 
+                              : 'bg-yellow-100 text-yellow-600'
+                          }`}>
+                            {batch.isLayingAge ? 'Laying Age' : 'Pre-Laying'}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {flockSummary.batchSummary.length > 6 && (
+                    <div className="mt-4 text-center">
+                      <button 
+                        className="neu-button-secondary text-sm"
+                        onClick={() => {
+                          // Navigate to full batch manager
+                          console.log('Show all batches');
+                        }}
+                      >
+                        View All {flockSummary.batchSummary.length} Batches
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-4xl mb-3">📦</div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Batches Yet</h3>
+                  <p className="text-gray-600 mb-4">
+                    Start using batch management to track your flock in groups and get better insights.
+                  </p>
+                  <button 
+                    className="neu-button"
+                    onClick={() => {
+                      // Navigate to add batch
+                      console.log('Navigate to add batch');
+                    }}
+                  >
+                    Add Your First Batch
+                  </button>
+                </div>
+              )}
+
+              {/* Quick Migration Notice */}
+              {flockSummary.totalBirds === 0 && (profile.hens > 0 || profile.roosters > 0 || profile.chicks > 0) && (
+                <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <span className="text-yellow-500 text-lg">💡</span>
+                    <div>
+                      <h4 className="font-semibold text-yellow-800 mb-1">Upgrade to Batch Management</h4>
+                      <p className="text-sm text-yellow-700 mb-3">
+                        You're currently tracking {profile.hens + profile.roosters + profile.chicks + profile.brooding} birds individually. 
+                        Batch management lets you track groups of chickens, log losses automatically, and get better production insights.
+                      </p>
+                      <button 
+                        className="neu-button-secondary text-sm bg-yellow-100 hover:bg-yellow-200"
+                        onClick={() => {
+                          // Navigate to migration or batch setup
+                          console.log('Start batch migration');
+                        }}
+                      >
+                        Start Using Batches
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </motion.div>
+      )}
+
       {/* Profile Stats */}
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="neu-form"
+      <FormCard
+        title="Add New Batch"
+        success={success.value ? "Batch added successfully!" : undefined}
+        error={error || undefined}
       >
-        <h2 className="neu-title">Flock Information</h2>
-        <AnimatePresence>
-          {success && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="success-toast mb-6"
-            >
-              Profile updated successfully!
-            </motion.div>
-          )}
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="error-toast mb-6"
-            >
-              {error}
-            </motion.div>
-          )}
-        </AnimatePresence>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="flockStartDate">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl" role="img" aria-label="calendar">📅</span>
-                  Flock Start Date
-                </div>
-              </label>
-              <input
-                id="flockStartDate"
-                type="date"
-                value={profile.flockStartDate?.split('T')[0] || ''}
-                onChange={(e) => setProfile({ ...profile, flockStartDate: new Date(e.target.value).toISOString() })}
-                className="neu-input"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="hens">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl" role="img" aria-label="hen">🐔</span>
-                  Number of Hens
-                </div>
-              </label>
-              <input
-                id="hens"
-                type="number"
-                min="0"
-                value={profile.hens}
-                onChange={(e) => setProfile({ ...profile, hens: parseInt(e.target.value) || 0 })}
-                className="neu-input"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="roosters">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl" role="img" aria-label="rooster">🐓</span>
-                  Number of Roosters
-                </div>
-              </label>
-              <input
-                id="roosters"
-                type="number"
-                min="0"
-                value={profile.roosters}
-                onChange={(e) => setProfile({ ...profile, roosters: parseInt(e.target.value) || 0 })}
-                className="neu-input"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="chicks">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl" role="img" aria-label="baby chick">🐥</span>
-                  Number of Chicks
-                </div>
-              </label>
-              <input
-                id="chicks"
-                type="number"
-                min="0"
-                value={profile.chicks}
-                onChange={(e) => setProfile({ ...profile, chicks: parseInt(e.target.value) || 0 })}
-                className="neu-input"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="brooding">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl" role="img" aria-label="brooding hen">🥚</span>
-                  Brooding Hens
-                </div>
-              </label>
-              <input
-                id="brooding"
-                type="number"
-                min="0"
-                value={profile.brooding}
-                onChange={(e) => setProfile({ ...profile, brooding: parseInt(e.target.value) || 0 })}
-                className="neu-input"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-gray-600 text-sm mb-2" htmlFor="notes">
-              Notes
-            </label>
-            <textarea
-              id="notes"
+          <FormRow>
+            <TextInput
+              label="Batch Name"
               value={profile.notes || ''}
-              onChange={(e) => setProfile({ ...profile, notes: e.target.value })}
-              className="neu-input min-h-[100px] py-2"
-              placeholder="Add any notes about your flock..."
-              rows={3}
-            />
-          </div>
-
-          <button type="submit" className="neu-button full-width md:w-auto md:min-w-[200px]" disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Save Profile'}
-          </button>
-        </form>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="neu-form"
-      >
-        <h2 className="neu-title">Breed Types 🪶</h2>
-        <form onSubmit={addBreed} className="space-y-6">
-          <div className="flex gap-4">
-            <input
-              type="text"
-              value={newBreed}
-              onChange={(e) => setNewBreed(e.target.value)}
-              className="neu-input flex-grow"
-              placeholder="Enter breed name..."
-            />
-            <button type="submit" className="neu-button" disabled={isLoading}>
-              {isLoading ? 'Adding...' : 'Add Breed'}
-            </button>
-          </div>
-        </form>
-
-        <div className="mt-6 flex flex-wrap gap-2">
-          {profile.breedTypes?.map((breed) => (
-            <motion.div
-              key={breed}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0 }}
-              className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full"
-            >
-              <span>🪶 {breed}</span>
-              <button
-                onClick={() => removeBreed(breed)}
-                className="w-4 h-4 rounded-full bg-gray-300 hover:bg-gray-400 flex items-center justify-center text-white text-xs"
-                disabled={isLoading}
-              >
-                ×
-              </button>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="neu-form"
-      >
-        <h2 className="neu-title">{editingEvent ? 'Edit Event 📝' : 'Flock Timeline 📅'}</h2>
-        <form onSubmit={editingEvent ? updateEvent : addEvent} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="eventType">
-                Event Type
-              </label>
-              <select
-                id="eventType"
-                value={newEvent.type}
-                onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value as FlockEvent['type'] })}
-                className="neu-input"
-                required
-              >
-                {Object.entries(EVENT_TYPES).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="eventDate">
-                Date
-              </label>
-              <input
-                id="eventDate"
-                type="date"
-                value={newEvent.date}
-                onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-                className="neu-input"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="affectedBirds">
-                Number of Birds (optional)
-              </label>
-              <input
-                id="affectedBirds"
-                type="number"
-                min="0"
-                value={newEvent.affectedBirds || ''}
-                onChange={(e) => setNewEvent({ ...newEvent, affectedBirds: parseInt(e.target.value) || undefined })}
-                className="neu-input"
-                placeholder="Enter number of birds"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-gray-600 text-sm mb-2" htmlFor="eventDescription">
-              Description
-            </label>
-            <input
-              id="eventDescription"
-              type="text"
-              value={newEvent.description}
-              onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-              className="neu-input"
-              placeholder="Describe the event..."
+              onChange={(value) => setProfile({ ...profile, notes: value })}
+              placeholder="e.g., Spring 2024 Layers"
               required
             />
-          </div>
-          <div>
-            <label className="block text-gray-600 text-sm mb-2" htmlFor="eventNotes">
-              Additional Notes
-            </label>
-            <textarea
-              id="eventNotes"
-              value={newEvent.notes}
-              onChange={(e) => setNewEvent({ ...newEvent, notes: e.target.value })}
-              className="neu-input min-h-[100px]"
-              placeholder="Add any additional notes..."
-              rows={3}
+            <TextInput
+              label="Breed"
+              value={breedForm.values.newBreed}
+              onChange={(value) => breedForm.setFieldValue('newBreed', value)}
+              placeholder="e.g., Rhode Island Red"
+              required
+            />
+          </FormRow>
+
+          <FormGroup 
+            label={
+              <span className="flex items-center gap-2">
+                🐔 Bird Counts
+                <span className="text-xs text-gray-500">(Enter 0 for types you don't have)</span>
+              </span>
+            }
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <NumberInput
+                label="🐔 Hens"
+                value={profile.hens}
+                onChange={(value) => setProfile({ ...profile, hens: value })}
+                min={0}
+                placeholder="0"
+              />
+              <NumberInput
+                label="🐓 Roosters"
+                value={profile.roosters}
+                onChange={(value) => setProfile({ ...profile, roosters: value })}
+                min={0}
+                placeholder="0"
+              />
+              <NumberInput
+                label="🐥 Chicks"
+                value={profile.chicks}
+                onChange={(value) => setProfile({ ...profile, chicks: value })}
+                min={0}
+                placeholder="0"
+              />
+            </div>
+            {/* Show total count preview */}
+            {(profile.hens + profile.roosters + profile.chicks) > 0 && (
+              <div className="mt-2 text-sm text-gray-600 bg-gray-50 rounded px-3 py-2">
+                Total: {profile.hens + profile.roosters + profile.chicks} birds
+                {profile.hens > 0 && ` (${profile.hens} hens`}
+                {profile.roosters > 0 && `, ${profile.roosters} roosters`}
+                {profile.chicks > 0 && `, ${profile.chicks} chicks`})
+              </div>
+            )}
+          </FormGroup>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <SelectInput
+              label="Age at Acquisition"
+              value={breedForm.values.acquisitionAge}
+              onChange={(value) => breedForm.setFieldValue('acquisitionAge', value)}
+              options={[
+                { value: 'chick', label: 'Chick (0-8 weeks)' },
+                { value: 'juvenile', label: 'Juvenile (8-18 weeks)' },
+                { value: 'adult', label: 'Adult (18+ weeks)' }
+              ]}
+              required
+            />
+            <DateInput
+              label="Acquisition Date"
+              value={profile.flockStartDate?.split('T')[0] || ''}
+              onChange={(value) => setProfile({ ...profile, flockStartDate: new Date(value).toISOString() })}
+              required
+            />
+            <DateInput
+              label={
+                <span className="flex items-center gap-2">
+                  🥚 Laying Start Date
+                  <span className="text-xs text-gray-500">(Optional)</span>
+                </span>
+              }
+              value={breedForm.values.layingStartDate}
+              onChange={(value) => breedForm.setFieldValue('layingStartDate', value)}
+              helperText="Leave blank if not laying yet. Set when hens actually start laying."
             />
           </div>
+
+          <TextInput
+            label="Source"
+            value={breedForm.values.source}
+            onChange={(value) => breedForm.setFieldValue('source', value)}
+            placeholder="e.g., Local Hatchery, Farm Store"
+            required
+          />
+
+          <TextareaInput
+            label="Notes"
+            value={profile.notes || ''}
+            onChange={(value) => setProfile({ ...profile, notes: value })}
+            placeholder="Additional notes about this batch..."
+            rows={4}
+          />
+
+          <SubmitButton
+            isLoading={isLoading}
+            loadingText="Adding Batch..."
+            text="Add Batch"
+          />
+        </form>
+      </FormCard>
+
+      <FormCard
+        title={editingEvent ? 'Edit Event 📝' : 'Flock Timeline 📅'}
+        success={success.value ? (editingEvent ? "Event updated successfully!" : "Event added successfully!") : undefined}
+        error={error || undefined}
+      >
+        <form onSubmit={editingEvent ? updateEvent : addEvent} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <SelectInput
+              label="Event Type"
+              value={eventForm.values.type || 'acquisition'}
+              onChange={(value) => eventForm.setFieldValue('type', value as FlockEvent['type'])}
+              options={Object.entries(EVENT_TYPES).map(([value, label]) => ({ value, label }))}
+              required
+            />
+            <DateInput
+              label="Date"
+              value={eventForm.values.date || ''}
+              onChange={(value) => eventForm.setFieldValue('date', value)}
+              required
+            />
+            <NumberInput
+              label="Number of Birds (optional)"
+              value={eventForm.values.affectedBirds || 0}
+              onChange={(value) => eventForm.setFieldValue('affectedBirds', value || undefined)}
+              min={0}
+              placeholder="Enter number of birds"
+            />
+          </div>
+          <TextInput
+            label="Description"
+            value={eventForm.values.description || ''}
+            onChange={(value) => eventForm.setFieldValue('description', value)}
+            placeholder="Describe the event..."
+            required
+          />
+          <TextareaInput
+            label="Additional Notes"
+            value={eventForm.values.notes || ''}
+            onChange={(value) => eventForm.setFieldValue('notes', value)}
+            placeholder="Add any additional notes..."
+            rows={3}
+          />
           <div className="flex gap-4">
-            <button type="submit" className="neu-button full-width md:w-auto md:min-w-[200px]" disabled={isLoading}>
-              {isLoading ? (editingEvent ? 'Updating...' : 'Adding...') : (editingEvent ? 'Update Event' : 'Add Event')}
-            </button>
+            <SubmitButton
+              isLoading={isLoading}
+              loadingText={editingEvent ? 'Updating...' : 'Adding...'}
+              text={editingEvent ? 'Update Event' : 'Add Event'}
+              className="md:w-auto md:min-w-[200px]"
+            />
             {editingEvent && (
               <button 
                 type="button" 
@@ -636,7 +778,8 @@ export const Profile = () => {
               </button>
             )}
           </div>
-        </form>        <div className="mt-8">
+        </form>
+        <div className="mt-8">
           <h3 className="text-xl font-semibold text-gray-900 mb-6">Timeline</h3>
           
           {profile.events.length === 0 ? (
@@ -807,7 +950,7 @@ export const Profile = () => {
             </div>
           )}
         </div>
-      </motion.div>
+      </FormCard>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

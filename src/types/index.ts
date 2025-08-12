@@ -1,6 +1,27 @@
-// Database and application types
+/**
+ * Consolidated Type Definitions
+ * 
+ * This module provides centralized access to all application types through
+ * a clean barrel export pattern with logical domain organization.
+ */
 
-// Basic types used in components
+/* ===== FORM AND VALIDATION TYPES ===== */
+
+/**
+ * Form validation error interface used throughout the application
+ * for client-side form validation and error display
+ */
+export interface ValidationError {
+  field: string;
+  message: string;
+  type: 'required' | 'invalid' | 'range';
+}
+
+/* ===== CORE APPLICATION DATA TYPES ===== */
+
+/**
+ * Daily egg production entry record
+ */
 export interface EggEntry {
   id: string;
   date: string;
@@ -8,6 +29,9 @@ export interface EggEntry {
   created_at?: string;
 }
 
+/**
+ * Expense record for financial tracking
+ */
 export interface Expense {
   id?: string;
   date: string;
@@ -17,6 +41,11 @@ export interface Expense {
   created_at?: string;
 }
 
+/* ===== FLOCK MANAGEMENT TYPES ===== */
+
+/**
+ * Historical event record for flock tracking
+ */
 export interface FlockEvent {
   id: string;
   date: string;
@@ -26,7 +55,104 @@ export interface FlockEvent {
   notes?: string;
 }
 
-// Database types
+/**
+ * Batch tracking for organized flock management
+ */
+export interface FlockBatch {
+  id: string;
+  batchName: string;
+  breed: string;
+  acquisitionDate: string;
+  initialCount: number;
+  currentCount: number;
+  type: 'hens' | 'roosters' | 'chicks' | 'mixed';
+  ageAtAcquisition: 'chick' | 'juvenile' | 'adult';
+  expectedLayingStartDate?: string;
+  actualLayingStartDate?: string;
+  source: string; // hatchery, farm, store, etc.
+  notes?: string;
+  isActive: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Mortality tracking record for batch management
+ */
+export interface DeathRecord {
+  id: string;
+  batchId: string;
+  date: string;
+  count: number; // number of birds that died
+  cause: 'predator' | 'disease' | 'age' | 'injury' | 'unknown' | 'culled' | 'other';
+  description: string;
+  notes?: string;
+  created_at?: string;
+}
+
+/**
+ * Batch-specific event tracking
+ */
+export interface BatchEvent {
+  id: string;
+  batchId: string;
+  date: string;
+  type: 'health_check' | 'vaccination' | 'relocation' | 'breeding' | 'laying_start' | 'production_note' | 'other';
+  description: string;
+  affectedCount?: number;
+  notes?: string;
+  created_at?: string;
+}
+
+/* ===== SUMMARY AND ANALYTICS TYPES ===== */
+
+/**
+ * Comprehensive flock analytics and summary data
+ */
+export interface FlockSummary {
+  totalBirds: number;
+  totalHens: number;
+  totalRoosters: number;
+  totalChicks: number;
+  activeBatches: number;
+  expectedLayers: number; // hens that should be laying
+  actualLayers?: number; // based on recent egg production
+  avgEggsPerHen?: number;
+  totalDeaths: number;
+  mortalityRate: number;
+  
+  // Additional insights
+  productionMetrics: {
+    avgDailyEggs: number;
+    productionStatus: 'excellent' | 'good' | 'fair' | 'poor' | 'unknown';
+    productionMessage: string;
+    layingReady: number;
+    tooYoung: number;
+    brooding: number;
+  };
+  
+  mortalityMetrics: {
+    recentDeaths: number;
+    last30Days: number;
+    overallRate: number;
+  };
+  
+  batchSummary: Array<{
+    id: string;
+    name: string;
+    breed: string;
+    type: string;
+    currentCount: number;
+    acquisitionDate: string;
+    isLayingAge: boolean;
+  }>;
+}
+
+/* ===== DATABASE AND PROFILE TYPES ===== */
+
+/**
+ * Database schema representation of flock profile
+ */
 export interface DBFlockProfile {
   id?: string;
   farm_name: string;
@@ -39,7 +165,9 @@ export interface DBFlockProfile {
   updated_at?: string;
 }
 
-// Application types
+/**
+ * Application-level flock profile with computed fields
+ */
 export interface FlockProfile {
   id?: string;
   hens: number;
@@ -55,6 +183,11 @@ export interface FlockProfile {
   updated_at?: string;
 }
 
+/* ===== FEED AND INVENTORY TYPES ===== */
+
+/**
+ * Feed inventory tracking record
+ */
 export interface FeedEntry {
   id: string;
   brand: string;
@@ -70,7 +203,11 @@ export interface FeedEntry {
   updated_at?: string;
 }
 
-// Helper type for test data
+/* ===== UTILITY AND TEST TYPES ===== */
+
+/**
+ * Helper type for test data consolidation
+ */
 export interface TestData {
   eggEntries: EggEntry[];
   chickenExpenses: Expense[];
@@ -78,5 +215,19 @@ export interface TestData {
   feedInventory: FeedEntry[];
 }
 
-// Re-export CRM types for convenience
+/* ===== BARREL EXPORTS ===== */
+
+/**
+ * API response and error handling types
+ */
+export * from './api';
+
+/**
+ * Customer relationship management types
+ */
 export * from './crm';
+
+/**
+ * Service interface definitions
+ */
+export * from './services';

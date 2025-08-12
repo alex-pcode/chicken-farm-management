@@ -1,4 +1,28 @@
 import { supabase } from './supabase';
+import type { 
+  EggEntry, 
+  Expense, 
+  FeedEntry, 
+  FlockProfile, 
+  FlockEvent 
+} from '../types/index';
+import type {
+  EggEntriesResponse,
+  ExpensesResponse,
+  FeedInventoryResponse,
+  FlockProfileResponse,
+  FlockEventsResponse,
+  FlockEventResponse,
+  DeleteEventResponse,
+  MigrationResponse,
+  FetchDataResponse
+} from '../types/api';
+import {
+  AuthenticationError,
+  NetworkError,
+  ServerError,
+  getUserFriendlyErrorMessage
+} from '../types/api';
 
 // Helper function to get authenticated headers with automatic token refresh
 export const getAuthHeaders = async () => {
@@ -25,8 +49,26 @@ export const getAuthHeaders = async () => {
   };
 };
 
-// Original fetchData function with better error handling
-export const fetchData = async () => {
+/**
+ * Fetches all user data from the API
+ * @returns Promise resolving to user data
+ * @throws {AuthenticationError} When user is not authenticated
+ * @throws {NetworkError} When network request fails
+ * @throws {ServerError} When server returns error response
+ * 
+ * @example
+ * ```typescript
+ * try {
+ *   const data = await fetchData();
+ *   console.log('User data loaded:', data);
+ * } catch (error) {
+ *   if (error instanceof AuthenticationError) {
+ *     // Handle authentication error
+ *   }
+ * }
+ * ```
+ */
+export const fetchData = async (): Promise<unknown> => {
   try {
     const response = await fetch('/api/getData', {
       method: 'GET',
@@ -40,23 +82,42 @@ export const fetchData = async () => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const result = await response.json();
+    const result: FetchDataResponse = await response.json();
     return result.data;
   } catch (error) {
     console.error('Error fetching data:', error);
     
-    // If it's an authentication error, the user needs to log in again
     if (error instanceof Error && error.message.includes('not authenticated')) {
-      // This will trigger the AuthContext to show the login screen
       await supabase.auth.signOut();
+      throw new AuthenticationError(getUserFriendlyErrorMessage(error));
     }
     
-    throw error;
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new NetworkError('Unable to fetch data. Please check your connection.');
+    }
+    
+    throw new ServerError('Failed to fetch data. Please try again.');
   }
 };
 
-// Helper functions for authenticated API calls
-export const saveEggEntries = async (entries: any[]) => {
+/**
+ * Saves egg entries to the database
+ * @param entries - Array of egg entries to save
+ * @returns Promise resolving to API response with saved entry information
+ * @throws {AuthenticationError} When user is not authenticated
+ * @throws {NetworkError} When network request fails
+ * @throws {ServerError} When server returns error response
+ * 
+ * @example
+ * ```typescript
+ * const entries: EggEntry[] = [{ id: '1', date: '2025-08-09', count: 12 }];
+ * const response = await saveEggEntries(entries);
+ * if (response.success) {
+ *   console.log(`Saved ${response.data?.saved} entries`);
+ * }
+ * ```
+ */
+export const saveEggEntries = async (entries: EggEntry[]): Promise<EggEntriesResponse> => {
   try {
     const response = await fetch('/api/saveEggEntries', {
       method: 'POST',
@@ -68,14 +129,44 @@ export const saveEggEntries = async (entries: any[]) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    const result: EggEntriesResponse = await response.json();
+    return result;
   } catch (error) {
     console.error('Error saving egg entries:', error);
-    throw error;
+    
+    if (error instanceof Error && error.message.includes('not authenticated')) {
+      await supabase.auth.signOut();
+      throw new AuthenticationError(getUserFriendlyErrorMessage(error));
+    }
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new NetworkError('Unable to save egg entries. Please check your connection.');
+    }
+    
+    throw new ServerError('Failed to save egg entries. Please try again.');
   }
 };
 
-export const saveExpenses = async (expenses: any[]) => {
+/**
+ * Saves expense records to the database
+ * @param expenses - Array of expense records to save
+ * @returns Promise resolving to API response with saved expense information
+ * @throws {AuthenticationError} When user is not authenticated
+ * @throws {NetworkError} When network request fails
+ * @throws {ServerError} When server returns error response
+ * 
+ * @example
+ * ```typescript
+ * const expenses: Expense[] = [{ 
+ *   date: '2025-08-09', 
+ *   category: 'feed', 
+ *   description: 'Chicken feed', 
+ *   amount: 25.50 
+ * }];
+ * const response = await saveExpenses(expenses);
+ * ```
+ */
+export const saveExpenses = async (expenses: Expense[]): Promise<ExpensesResponse> => {
   try {
     const response = await fetch('/api/saveExpenses', {
       method: 'POST',
@@ -87,14 +178,47 @@ export const saveExpenses = async (expenses: any[]) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    const result: ExpensesResponse = await response.json();
+    return result;
   } catch (error) {
     console.error('Error saving expenses:', error);
-    throw error;
+    
+    if (error instanceof Error && error.message.includes('not authenticated')) {
+      await supabase.auth.signOut();
+      throw new AuthenticationError(getUserFriendlyErrorMessage(error));
+    }
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new NetworkError('Unable to save expenses. Please check your connection.');
+    }
+    
+    throw new ServerError('Failed to save expenses. Please try again.');
   }
 };
 
-export const saveFeedInventory = async (inventory: any[]) => {
+/**
+ * Saves feed inventory records to the database
+ * @param inventory - Array of feed inventory items to save
+ * @returns Promise resolving to API response with saved inventory information
+ * @throws {AuthenticationError} When user is not authenticated
+ * @throws {NetworkError} When network request fails
+ * @throws {ServerError} When server returns error response
+ * 
+ * @example
+ * ```typescript
+ * const inventory: FeedEntry[] = [{
+ *   id: '1',
+ *   brand: 'Premium Feed',
+ *   type: 'layer',
+ *   quantity: 50,
+ *   unit: 'kg',
+ *   openedDate: '2025-08-09',
+ *   pricePerUnit: 1.20
+ * }];
+ * const response = await saveFeedInventory(inventory);
+ * ```
+ */
+export const saveFeedInventory = async (inventory: FeedEntry[]): Promise<FeedInventoryResponse> => {
   try {
     const response = await fetch('/api/saveFeedInventory', {
       method: 'POST',
@@ -106,14 +230,46 @@ export const saveFeedInventory = async (inventory: any[]) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    const result: FeedInventoryResponse = await response.json();
+    return result;
   } catch (error) {
     console.error('Error saving feed inventory:', error);
-    throw error;
+    
+    if (error instanceof Error && error.message.includes('not authenticated')) {
+      await supabase.auth.signOut();
+      throw new AuthenticationError(getUserFriendlyErrorMessage(error));
+    }
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new NetworkError('Unable to save feed inventory. Please check your connection.');
+    }
+    
+    throw new ServerError('Failed to save feed inventory. Please try again.');
   }
 };
 
-export const saveFlockProfile = async (profile: any) => {
+/**
+ * Saves or updates flock profile information
+ * @param profile - Flock profile data to save
+ * @returns Promise resolving to API response with saved profile information
+ * @throws {AuthenticationError} When user is not authenticated
+ * @throws {NetworkError} When network request fails
+ * @throws {ServerError} When server returns error response
+ * 
+ * @example
+ * ```typescript
+ * const profile: FlockProfile = {
+ *   hens: 25,
+ *   roosters: 2,
+ *   chicks: 0,
+ *   lastUpdated: '2025-08-09',
+ *   breedTypes: ['Rhode Island Red'],
+ *   events: []
+ * };
+ * const response = await saveFlockProfile(profile);
+ * ```
+ */
+export const saveFlockProfile = async (profile: FlockProfile): Promise<FlockProfileResponse> => {
   try {
     const response = await fetch('/api/saveFlockProfile', {
       method: 'POST',
@@ -125,14 +281,45 @@ export const saveFlockProfile = async (profile: any) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    const result: FlockProfileResponse = await response.json();
+    return result;
   } catch (error) {
     console.error('Error saving flock profile:', error);
-    throw error;
+    
+    if (error instanceof Error && error.message.includes('not authenticated')) {
+      await supabase.auth.signOut();
+      throw new AuthenticationError(getUserFriendlyErrorMessage(error));
+    }
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new NetworkError('Unable to save flock profile. Please check your connection.');
+    }
+    
+    throw new ServerError('Failed to save flock profile. Please try again.');
   }
 };
 
-export const saveFlockEvents = async (events: any[]) => {
+/**
+ * Saves multiple flock events to the database
+ * @param events - Array of flock events to save
+ * @returns Promise resolving to API response with saved events information
+ * @throws {AuthenticationError} When user is not authenticated
+ * @throws {NetworkError} When network request fails
+ * @throws {ServerError} When server returns error response
+ * 
+ * @example
+ * ```typescript
+ * const events: FlockEvent[] = [{
+ *   id: '1',
+ *   date: '2025-08-09',
+ *   type: 'laying_start',
+ *   description: 'First eggs from new batch',
+ *   affectedBirds: 10
+ * }];
+ * const response = await saveFlockEvents(events);
+ * ```
+ */
+export const saveFlockEvents = async (events: FlockEvent[]): Promise<FlockEventsResponse> => {
   try {
     const response = await fetch('/api/saveFlockEvents', {
       method: 'POST',
@@ -144,14 +331,41 @@ export const saveFlockEvents = async (events: any[]) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    const result: FlockEventsResponse = await response.json();
+    return result;
   } catch (error) {
     console.error('Error saving flock events:', error);
-    throw error;
+    
+    if (error instanceof Error && error.message.includes('not authenticated')) {
+      await supabase.auth.signOut();
+      throw new AuthenticationError(getUserFriendlyErrorMessage(error));
+    }
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new NetworkError('Unable to save flock events. Please check your connection.');
+    }
+    
+    throw new ServerError('Failed to save flock events. Please try again.');
   }
 };
 
-export const deleteFlockEvent = async (eventId: string) => {
+/**
+ * Deletes a flock event from the database
+ * @param eventId - ID of the event to delete
+ * @returns Promise resolving to API response confirming deletion
+ * @throws {AuthenticationError} When user is not authenticated
+ * @throws {NetworkError} When network request fails
+ * @throws {ServerError} When server returns error response
+ * 
+ * @example
+ * ```typescript
+ * const response = await deleteFlockEvent('event123');
+ * if (response.success) {
+ *   console.log('Event deleted successfully');
+ * }
+ * ```
+ */
+export const deleteFlockEvent = async (eventId: string): Promise<DeleteEventResponse> => {
   try {
     const response = await fetch('/api/deleteFlockEvent', {
       method: 'DELETE',
@@ -163,14 +377,46 @@ export const deleteFlockEvent = async (eventId: string) => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    const result: DeleteEventResponse = await response.json();
+    return result;
   } catch (error) {
     console.error('Error deleting flock event:', error);
-    throw error;
+    
+    if (error instanceof Error && error.message.includes('not authenticated')) {
+      await supabase.auth.signOut();
+      throw new AuthenticationError(getUserFriendlyErrorMessage(error));
+    }
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new NetworkError('Unable to delete flock event. Please check your connection.');
+    }
+    
+    throw new ServerError('Failed to delete flock event. Please try again.');
   }
 };
 
-export const saveFlockEvent = async (flockProfileId: string, event: any, eventId?: string) => {
+/**
+ * Saves or updates a single flock event
+ * @param flockProfileId - ID of the flock profile
+ * @param event - Flock event data to save
+ * @param eventId - Optional event ID for updates
+ * @returns Promise resolving to API response with saved event information
+ * @throws {AuthenticationError} When user is not authenticated
+ * @throws {NetworkError} When network request fails
+ * @throws {ServerError} When server returns error response
+ * 
+ * @example
+ * ```typescript
+ * const event: FlockEvent = {
+ *   id: '1',
+ *   date: '2025-08-09',
+ *   type: 'health_check',
+ *   description: 'Monthly health inspection'
+ * };
+ * const response = await saveFlockEvent('profile123', event);
+ * ```
+ */
+export const saveFlockEvent = async (flockProfileId: string, event: FlockEvent, eventId?: string): Promise<FlockEventResponse> => {
   try {
     const method = eventId ? 'PUT' : 'POST';
     const response = await fetch('/api/saveFlockEvents', {
@@ -183,14 +429,40 @@ export const saveFlockEvent = async (flockProfileId: string, event: any, eventId
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    const result: FlockEventResponse = await response.json();
+    return result;
   } catch (error) {
     console.error('Error saving flock event:', error);
-    throw error;
+    
+    if (error instanceof Error && error.message.includes('not authenticated')) {
+      await supabase.auth.signOut();
+      throw new AuthenticationError(getUserFriendlyErrorMessage(error));
+    }
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new NetworkError('Unable to save flock event. Please check your connection.');
+    }
+    
+    throw new ServerError('Failed to save flock event. Please try again.');
   }
 };
 
-export const migrateUserData = async () => {
+/**
+ * Migrates user data between storage systems
+ * @returns Promise resolving to API response with migration information
+ * @throws {AuthenticationError} When user is not authenticated
+ * @throws {NetworkError} When network request fails
+ * @throws {ServerError} When server returns error response
+ * 
+ * @example
+ * ```typescript
+ * const response = await migrateUserData();
+ * if (response.success) {
+ *   console.log(`Migrated ${response.data?.recordsProcessed} records`);
+ * }
+ * ```
+ */
+export const migrateUserData = async (): Promise<MigrationResponse> => {
   try {
     const response = await fetch('/api/migrateUserData', {
       method: 'POST',
@@ -201,9 +473,23 @@ export const migrateUserData = async () => {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    const result: MigrationResponse = await response.json();
+    return result;
   } catch (error) {
     console.error('Error migrating user data:', error);
-    throw error;
+    
+    if (error instanceof Error && error.message.includes('not authenticated')) {
+      await supabase.auth.signOut();
+      throw new AuthenticationError(getUserFriendlyErrorMessage(error));
+    }
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new NetworkError('Unable to migrate user data. Please check your connection.');
+    }
+    
+    throw new ServerError('Failed to migrate user data. Please try again.');
   }
 };
+
+// Re-export error classes for convenience
+export { AuthenticationError, NetworkError, ServerError, getUserFriendlyErrorMessage };

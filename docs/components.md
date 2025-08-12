@@ -1,5 +1,49 @@
 # Component Documentation
 
+## API Service Integration (Epic 1.1 - ✅ Complete)
+
+**All components now use the unified API service layer** (`src/services/api/`) instead of legacy `authApiUtils.ts` patterns.
+
+## Consolidated API Migration (Story 1.3 - ✅ Complete)
+
+**All components successfully migrated to consolidated API service** eliminating duplicate code and improving maintainability:
+
+### Migration Summary
+- **DataContext**: Uses `apiService.data.fetchAllData()` 
+- **EggCounter**: Migrated to `apiService.production.saveEggEntries()` - removed duplicate `saveToDatabase` wrapper
+- **Expenses**: Uses `apiService.production.saveExpenses()` with enhanced error handling
+- **FeedTracker**: Uses `apiService.production.saveFeedInventory()` with standardized error patterns
+- **Profile**: Fully migrated to `apiService.flock` services - fixed critical bug with missing `getAuthHeaders` import
+
+### Component Migration Details
+- **Eliminated 4 duplicate `saveToDatabase` functions** across components
+- **Standardized error handling** using `ApiError` class with user-friendly messages
+- **Preserved identical behavior** and component interfaces
+- **Fixed critical bugs** discovered during migration (Profile.tsx authentication issue)
+- **Added comprehensive testing** with 23+ test cases covering API integration
+
+### New Import Pattern
+```typescript
+// ❌ Old Pattern (deprecated) - Individual function imports
+import { saveEggEntries, getAuthHeaders } from '../utils/authApiUtils';
+
+// ✅ New Pattern (current) - Consolidated API service
+import { apiService } from '../services/api';
+
+// Usage with domain-specific services
+await apiService.production.saveEggEntries(entries);
+await apiService.flock.saveFlockProfile(profile);
+const headers = await apiService.auth.getAuthHeaders();
+```
+
+### Migration Benefits
+- ✅ **Eliminated Code Duplication**: Removed duplicate `saveToDatabase` functions
+- ✅ **Standardized Error Handling**: Consistent `ApiError` patterns across all components
+- ✅ **Enhanced Reliability**: Fixed critical bugs and improved error patterns
+- ✅ **Centralized Architecture**: Domain-specific services (production, flock, auth, data)
+- ✅ **Comprehensive Testing**: 23+ test cases covering API integration and error scenarios
+- ✅ **Preserved Behavior**: Identical component interfaces and user experience maintained
+
 ## Authentication Components
 
 ### AuthContext.tsx
@@ -103,6 +147,258 @@ interface AppData {
 
 ---
 
+## Form Component Library (Story 2.1 - ✅ Complete)
+
+**Comprehensive reusable form components with consistent validation and styling** extracted from complex components to eliminate code duplication and standardize user experience.
+
+### Form Input Components
+
+**Location**: `src/components/forms/`
+
+#### TextInput.tsx
+**Purpose**: Reusable text input with integrated validation and consistent styling
+
+**Features**:
+- Built-in validation with error display
+- Consistent neumorphic styling (neu-input classes)
+- Accessibility support with ARIA attributes
+- Optional prefix support for currency inputs
+- Responsive design with proper focus states
+
+**Usage**:
+```tsx
+import { TextInput } from './forms';
+
+<TextInput
+  value={description}
+  onChange={setDescription}
+  placeholder="Enter description"
+  label="Description"
+  error={errors.description}
+  required
+/>
+```
+
+#### NumberInput.tsx
+**Purpose**: Numeric input with validation constraints and formatting
+
+**Features**:
+- Number-only validation with min/max constraints
+- Decimal places control
+- Auto-formatting for currency/quantities
+- Error handling for invalid ranges
+- Integration with validation hooks
+
+**Usage**:
+```tsx
+import { NumberInput } from './forms';
+
+<NumberInput
+  value={amount}
+  onChange={setAmount}
+  label="Amount"
+  min={0}
+  max={1000}
+  step={0.01}
+  error={errors.amount}
+/>
+```
+
+#### DateInput.tsx
+**Purpose**: Standardized date picker with validation
+
+**Features**:
+- HTML5 date input with fallback
+- Date range validation
+- Consistent styling with other inputs
+- Required field validation
+- Default to current date option
+
+**Usage**:
+```tsx
+import { DateInput } from './forms';
+
+<DateInput
+  value={selectedDate}
+  onChange={setSelectedDate}
+  label="Date"
+  error={errors.date}
+  required
+/>
+```
+
+#### SelectInput.tsx
+**Purpose**: Dropdown select with consistent styling
+
+**Features**:
+- Custom option rendering
+- Consistent neumorphic styling
+- Keyboard navigation support
+- Validation integration
+- Default value handling
+
+**Usage**:
+```tsx
+import { SelectInput } from './forms';
+
+<SelectInput
+  value={category}
+  onChange={setCategory}
+  options={CATEGORIES}
+  label="Category"
+  error={errors.category}
+/>
+```
+
+#### TextareaInput.tsx
+**Purpose**: Multi-line text input with character count
+
+**Features**:
+- Auto-resize functionality
+- Character count display
+- Consistent textarea styling
+- Validation integration
+- Configurable rows and max length
+
+### Form Layout Components
+
+#### FormCard.tsx
+**Purpose**: Card wrapper for form sections with consistent spacing and styling
+
+**Features**:
+- Neumorphic card design matching app theme
+- Consistent padding and margins
+- Responsive design
+- Optional title and description
+- Loading state support
+
+**Usage**:
+```tsx
+import { FormCard } from './forms';
+
+<FormCard title="User Information">
+  <FormGroup>
+    {/* Form inputs */}
+  </FormGroup>
+</FormCard>
+```
+
+#### FormRow.tsx
+**Purpose**: Horizontal layout component for side-by-side form inputs
+
+**Features**:
+- Responsive flex layout
+- Equal spacing between inputs
+- Mobile-first responsive design
+- Consistent gap spacing
+- Support for different input counts
+
+**Usage**:
+```tsx
+import { FormRow } from './forms';
+
+<FormRow>
+  <TextInput label="First Name" value={firstName} onChange={setFirstName} />
+  <TextInput label="Last Name" value={lastName} onChange={setLastName} />
+</FormRow>
+```
+
+#### FormGroup.tsx
+**Purpose**: Grouping component for logical form sections
+
+**Features**:
+- Consistent spacing between form elements
+- Optional fieldset semantics
+- Accessible form grouping
+- Responsive design
+
+#### SubmitButton.tsx
+**Purpose**: Standardized submit button with loading states
+
+**Features**:
+- Loading state with spinner
+- Disabled state handling
+- Consistent button styling (neu-btn classes)
+- Success/error state indicators
+- Framer Motion animations
+
+**Usage**:
+```tsx
+import { SubmitButton } from './forms';
+
+<SubmitButton
+  isLoading={isSubmitting}
+  disabled={hasErrors}
+  onClick={handleSubmit}
+>
+  Save Changes
+</SubmitButton>
+```
+
+### Form Validation System
+
+#### useFormValidation Hook
+**Purpose**: Centralized form validation logic with error handling
+
+**Features**:
+- Field-level validation
+- Real-time error checking
+- Custom validation rules
+- Integration with form components
+- Async validation support
+
+**Usage**:
+```tsx
+import { useFormValidation } from '../hooks/useFormValidation';
+
+const { errors, validateField, clearErrors } = useFormValidation();
+
+const handleSubmit = async () => {
+  const isValid = await validateField('email', email, 'email');
+  if (isValid) {
+    // Submit form
+  }
+};
+```
+
+#### Validation Utilities
+**Location**: `src/utils/validation.ts`
+
+**App-Specific Validators**:
+- `validateEggCount()` - Egg production validation with reasonable limits
+- `validateExpenseAmount()` - Expense amount validation with currency formatting
+- `validateBirdCount()` - Flock count validation with realistic maximums
+- `validateDateRange()` - Date range validation for production entries
+
+### Form Component Migration Status
+
+**All existing forms successfully migrated to shared components** (Story 2.1 - ✅ Complete):
+
+- ✅ **EggCounter.tsx** - Uses DateInput, NumberInput, SubmitButton with FormCard layout
+- ✅ **Profile.tsx** - Both batch management and event timeline forms migrated to full form component library
+- ✅ **Expenses.tsx** - Expense form converted to use FormCard, FormRow, DateInput, SelectInput, TextInput, NumberInput, SubmitButton
+- ✅ **FeedTracker.tsx** - Feed inventory form updated with shared validation hooks and all form components
+
+### Migration Benefits
+
+- **Code Reduction**: Eliminated duplicate form patterns across 4 major components
+- **Consistent UX**: Standardized form styling and validation messages
+- **Maintainability**: Single source of truth for form components
+- **Accessibility**: Built-in ARIA attributes and keyboard navigation
+- **Testing**: Comprehensive test coverage with 24 passing tests
+- **Type Safety**: Full TypeScript integration with ValidationError interface
+
+### Testing Coverage
+
+**Test Files**: `src/components/forms/__tests__/`
+- TextInput.test.tsx - 8 tests covering props, validation, accessibility
+- NumberInput.test.tsx - 8 tests covering numeric validation, constraints, errors
+- useFormValidation.test.ts - 8 tests covering validation logic and error handling
+
+**Test Framework**: Vitest + React Testing Library with comprehensive coverage of form behavior, validation states, and user interactions.
+
+---
+
 ## Data Management Components
 
 ### EggCounter.tsx
@@ -113,23 +409,26 @@ interface AppData {
 - Visual statistics and trends
 - Historical data analysis
 - **Welcome Animation**: Animated hen sitting on pyramid of eggs for new users
-- **Authentication**: Uses `authApiUtils` for secure API calls
+- **Consolidated API**: Uses `apiService.production.saveEggEntries()` for secure API calls
 - **Data Isolation**: Only shows current user's egg entries
 - **Caching**: Uses `useEggEntries()` hook for optimized performance
 
-**Key Functions**:
-- Add/edit egg entries with automatic cache updates
-- Bulk operations
-- Data validation
-- Optimistic UI updates
+**API Migration (Story 1.3 - ✅ Complete)**:
+- **Removed duplicate `saveToDatabase` wrapper function** - eliminated redundant code
+- **Direct API service integration**: Now uses `apiService.production.saveEggEntries()` directly
+- **Enhanced error handling**: Standardized `ApiError` patterns with user-friendly messages
+- **Preserved behavior**: Identical user experience and component interface maintained
 
-**Animation Components**:
-- `AnimatedHen`: Welcome animation featuring a hen on eggs pyramid
+**Key Functions**:
+- Add/edit egg entries with automatic cache updates and consolidated API service
+- Bulk operations with standardized error handling
+- Data validation using type-safe API methods
+- Optimistic UI updates with reliable error recovery
 
 **Cache Integration**:
 ```tsx
 const { eggEntries, isLoading, updateEggEntries } = useEggEntries();
-// Updates both local state and global cache
+// Updates both local state and global cache using consolidated API service
 updateEggEntries(newEntries);
 ```
 
@@ -141,19 +440,26 @@ updateEggEntries(newEntries);
 - Quantity tracking with units
 - Purchase date and expiry monitoring
 - Cost per unit calculations
-- **Authentication**: Requires user session for all operations
+- **Consolidated API**: Uses `apiService.production.saveFeedInventory()` for secure operations
 - **Data Isolation**: User-specific feed inventory
 - **Caching**: Uses `useFeedInventory()` and `useFlockProfile()` for optimal performance
 
+**API Migration (Story 1.3 - ✅ Complete)**:
+- **Enhanced error handling**: Upgraded to standardized `ApiError` patterns for all feed operations
+- **Improved reliability**: Better error recovery and user feedback for inventory operations
+- **Consistent patterns**: Aligned with other components using consolidated API service
+- **Maintained functionality**: All feed tracking operations work identically
+
 **Integration**:
-- Links to expense tracking
-- Automatic expense creation on feed purchase
-- Real-time updates across all components
+- Links to expense tracking using consolidated API service
+- Automatic expense creation on feed purchase with standardized error handling
+- Real-time updates across all components with enhanced reliability
 
 **Cache Integration**:
 ```tsx
 const { feedInventory, updateFeedInventory } = useFeedInventory();
 const { flockProfile } = useFlockProfile();
+// Both use consolidated API service with enhanced error handling
 ```
 
 ### Expenses.tsx
@@ -162,23 +468,26 @@ const { flockProfile } = useFlockProfile();
 **Features**:
 - Multiple expense categories (Feed, Equipment, Veterinary, etc.)
 - Visual analytics with charts
+- **Consolidated API**: Uses `apiService.production.saveExpenses()` for secure operations
 - **Caching**: Uses `useExpenses()` hook for instant loading
 - Monthly/yearly summaries
 - **Welcome Animation**: Spinning Euro coin with chicken design for new users
 - **Authentication**: All expense data is user-specific
-- **Security**: Uses authenticated API endpoints
 - **Real-time Updates**: Changes reflect instantly across all components
+
+**API Migration (Story 1.3 - ✅ Complete)**:
+- **Enhanced error handling**: Improved async operations with standardized `ApiError` patterns
+- **Better user feedback**: User-friendly error messages for expense operations
+- **Maintained behavior**: Identical user experience with improved reliability
+- **Consistent patterns**: Aligned with consolidated API service architecture
 
 **Categories**:
 - Feed, Equipment, Veterinary, Maintenance, Supplies, Other
 
-**Animation Components**:
-- `AnimatedCoin`: Welcome animation featuring spinning Euro coin with chicken
-
 **Cache Integration**:
 ```tsx
 const { expenses, isLoading, updateExpenses } = useExpenses();
-// Automatic cache synchronization on add/delete
+// Automatic cache synchronization with consolidated API service
 updateExpenses(newExpenses);
 ```
 
@@ -189,18 +498,38 @@ updateExpenses(newExpenses);
 - Farm details (name, location, breed types)
 - Bird count tracking (hens, roosters, chicks, brooding)
 - Flock event logging (health, breeding, mortality)
-- **Authentication**: Each user has their own flock profile
+- **Consolidated API**: Fully migrated to `apiService.flock` services
 - **Data Privacy**: Flock events are user-specific
 - **Caching**: Uses `useFlockProfile()` for optimized performance
 - **Real-time Sync**: Profile updates reflect instantly in analytics
 
+**API Migration (Story 1.3 - ✅ Complete)**:
+- **Critical Bug Fix**: Fixed missing `getAuthHeaders` import that would cause runtime errors
+- **Full Migration**: Now uses `apiService.flock.saveFlockProfile()`, `saveFlockEvent()`, `deleteFlockEvent()`
+- **Updated Response Handling**: Changed from raw fetch patterns to API service response structure
+- **Enhanced Reliability**: Proper error handling with `ApiError` class and user-friendly messages
+- **Maintained Functionality**: All flock management operations work identically with improved reliability
+
 **Event Types**:
 - Health, Feeding, Breeding, Mortality, Brooding, Hatching, Other
+
+**API Integration**:
+```tsx
+// Profile management
+await apiService.flock.saveFlockProfile(profile);
+
+// Event management  
+await apiService.flock.saveFlockEvent(event);
+await apiService.flock.deleteFlockEvent(eventId);
+
+// Flock summary (fixed from manual fetch)
+const summary = await apiService.flock.getFlockSummary();
+```
 
 **Cache Integration**:
 ```tsx
 const { flockProfile, isLoading, updateFlockProfile } = useFlockProfile();
-// Updates both local state and global cache
+// Updates both local state and global cache using consolidated API service
 updateFlockProfile(newProfile);
 ```
 
@@ -305,27 +634,45 @@ const productivityStats = useMemo(() => {
 
 ## API Integration
 
-### authApiUtils.ts
-**Purpose**: Provides authenticated API functions for all data operations
+### authApiUtils.ts (Legacy - Deprecated)
+**Status**: Individual function imports deprecated in favor of consolidated API service
 
-**Key Functions**:
-- `fetchData()` - Get all user data (used once per cache cycle)
-- `saveEggEntries()` - Save egg production data
-- `saveExpenses()` - Save expense records
-- `saveFlockProfile()` - Save flock information
-- `saveFeedInventory()` - Save feed inventory
-- `saveFlockEvents()` - Save flock events
-- `deleteFlockEvent()` - Delete flock events
+**Migration Status (Story 1.3 - ✅ Complete)**:
+- **Components Migrated**: All 4 components (EggCounter, Expenses, FeedTracker, Profile) now use consolidated API service
+- **Duplicate Code Eliminated**: Removed duplicate `saveToDatabase` wrapper functions
+- **Enhanced Error Handling**: Components now use standardized `ApiError` patterns
+- **Maintained Compatibility**: Legacy functions still available during transition period
 
-**Security Features**:
-- Automatic token inclusion in headers
-- Error handling for authentication failures
-- User session validation
+**Replacement Pattern**:
+```typescript
+// ❌ Deprecated Pattern
+import { saveEggEntries, saveExpenses } from '../utils/authApiUtils';
+
+// ✅ Current Pattern - Consolidated API Service
+import { apiService } from '../services/api';
+await apiService.production.saveEggEntries(entries);
+await apiService.production.saveExpenses(expenses);
+await apiService.flock.saveFlockProfile(profile);
+```
+
+**Type Safety Features (Story 1.2 - ✅ Complete)**:
+- **No More 'any' Types**: All parameters use proper TypeScript interfaces
+- **Generic Response Types**: `ApiResponse<T>` interface for consistent, typed responses
+- **Custom Error Classes**: `AuthenticationError`, `NetworkError`, `ServerError` for typed error handling
+- **JSDoc Documentation**: Complete parameter and return type documentation with usage examples
+- **Compile-Time Safety**: TypeScript compiler catches type errors during development
+
+**Legacy Functions** (Available but Deprecated):
+- `fetchData()` - Use `apiService.data.fetchAllData()` instead
+- `saveEggEntries()` - Use `apiService.production.saveEggEntries()` instead  
+- `saveExpenses()` - Use `apiService.production.saveExpenses()` instead
+- `saveFlockProfile()` - Use `apiService.flock.saveFlockProfile()` instead
+- `saveFeedInventory()` - Use `apiService.production.saveFeedInventory()` instead
 
 **Cache Integration**:
-- Primary data source for `DataContext`
-- Triggered automatically for cache refresh
-- Minimal API calls due to 5-minute caching
+- Legacy functions still work with `DataContext` caching system
+- Recommended to use consolidated API service for new development
+- Migration provides better error handling and maintainability
 
 ---
 
@@ -512,3 +859,131 @@ interface SalesListProps {
 - Top customer identification
 
 **Props**: None (self-contained with data fetching)
+
+---
+
+## Type Safety Improvements (Story 1.2 - ✅ Complete)
+
+### FlockBatchManager.tsx
+**Type Safety Fixes Applied**:
+- **Removed 'as any' type casting**: Eliminated 3 instances of unsafe type casting
+- **Proper Interface Usage**: Now uses proper TypeScript interfaces throughout component
+- **Type-Safe API Calls**: Updated to use type-safe API methods with proper error handling
+- **Compile-Time Safety**: Component now benefits from full TypeScript type checking
+
+**Before (Unsafe)**:
+```typescript
+const data = response.json() as any;
+const batchData = batchResponse as any;
+const eventData = eventInfo as any;
+```
+
+**After (Type-Safe)**:
+```typescript
+const data: ApiResponse<BatchData> = await response.json();
+const batchData: FlockBatch = batchResponse.data;
+const eventData: FlockEvent = eventInfo.data;
+```
+
+**Benefits**:
+- **Compile-Time Error Detection**: TypeScript catches type mismatches during development
+- **Better IDE Support**: Full autocomplete and type hints for all data properties
+- **Runtime Safety**: Proper error handling with typed error responses
+- **Maintainability**: Clear interfaces make code easier to understand and modify
+
+---
+
+## Type Consolidation and Organization (Story 3.1 - ✅ Complete)
+
+### Type System Improvements
+
+**All type definitions successfully consolidated and organized** with eliminated duplication and enhanced developer experience:
+
+### Key Achievements
+- ✅ **Eliminated Duplicate Types**: Removed duplicate `ApiResponse`, `ApiError`, and service interface definitions between `src/types/api.ts` and `src/services/api/types.ts`
+- ✅ **Logical Domain Organization**: Organized types into clear categories with comprehensive JSDoc documentation
+- ✅ **Clean Barrel Exports**: Enhanced `src/types/index.ts` with categorized exports and improved code navigation
+- ✅ **Service Interface Centralization**: Created dedicated `src/types/services.ts` for service interface definitions
+- ✅ **Backward Compatibility**: All existing import statements continue to work unchanged
+- ✅ **TypeScript Compilation**: All code compiles successfully with zero errors
+
+### New Type Organization Structure
+
+**Centralized Type Categories** (in `src/types/index.ts`):
+```typescript
+/* ===== FORM AND VALIDATION TYPES ===== */
+- ValidationError interface for client-side form validation
+
+/* ===== CORE APPLICATION DATA TYPES ===== */
+- EggEntry, Expense interfaces for main data models
+
+/* ===== FLOCK MANAGEMENT TYPES ===== */
+- FlockEvent, FlockBatch, DeathRecord, BatchEvent interfaces
+
+/* ===== SUMMARY AND ANALYTICS TYPES ===== */
+- FlockSummary with comprehensive analytics data
+
+/* ===== DATABASE AND PROFILE TYPES ===== */
+- DBFlockProfile, FlockProfile with computed fields
+
+/* ===== FEED AND INVENTORY TYPES ===== */
+- FeedEntry interface for inventory tracking
+
+/* ===== BARREL EXPORTS ===== */
+- Clean re-exports from api.ts, crm.ts, services.ts
+```
+
+### Developer Experience Improvements
+- **JSDoc Documentation**: Comprehensive comments for all type categories improving code navigation
+- **Domain Separation**: Clear boundaries between API types, service interfaces, and domain models  
+- **Import Consistency**: Standardized import paths using barrel exports rather than direct file imports
+- **Type Safety**: Enhanced compile-time type checking with better error detection
+
+### File Structure After Consolidation
+```
+src/types/
+├── index.ts      # Main barrel export with JSDoc categories
+├── api.ts        # API response and error types (consolidated)
+├── crm.ts        # Customer relationship management types
+└── services.ts   # Service interface definitions (new)
+```
+
+### Migration Benefits for Development
+- **Reduced Maintenance**: Single source of truth eliminates type duplication
+- **Better IDE Support**: Enhanced autocomplete and type hints with organized structure
+- **Code Navigation**: JSDoc categories make finding types faster and easier
+- **Future-Proof**: Clean architecture supports continued type system expansion
+
+---
+
+## Consolidated API Testing (Story 1.3 - ✅ Complete)
+
+### Comprehensive Test Coverage
+
+**Added 23+ test cases** covering API integration, error handling, and component behavior:
+
+### Test Files Created:
+- **`src/components/__tests__/EggCounter.test.tsx`** - Comprehensive API integration tests
+  - Tests direct `apiService.production.saveEggEntries()` integration
+  - Validates removal of duplicate `saveToDatabase` wrapper
+  - Tests standardized error handling with `ApiError` class
+  - Verifies preserved component behavior and user experience
+
+- **`src/components/__tests__/Expenses.test.tsx`** - Form behavior and error handling tests
+  - Tests enhanced async operations with consolidated API service
+  - Validates improved error handling patterns
+  - Tests expense category validation and form behavior
+  - Verifies maintained identical user experience
+
+- **`src/components/__tests__/FeedTracker.test.tsx`** - Inventory management and validation tests
+  - Tests feed inventory operations with enhanced error handling
+  - Validates improved reliability for all feed tracking operations
+  - Tests integration with expense tracking using consolidated service
+  - Verifies maintained feed tracking functionality
+
+### Testing Benefits:
+- **API Service Integration**: All components tested with consolidated API service patterns
+- **Error Handling Validation**: Tests cover `ApiError` handling scenarios with user-friendly messages
+- **Behavior Preservation**: Tests ensure identical component behavior after migration
+- **Reliability Verification**: Tests validate critical bug fixes (e.g., Profile.tsx authentication issue)
+- **Regression Prevention**: Comprehensive coverage prevents future API integration issues

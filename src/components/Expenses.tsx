@@ -1,17 +1,36 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSpinner } from './LoadingSpinner';
 import type { Expense } from '../types';
-import { saveExpenses } from '../utils/authApiUtils';
+import { apiService } from '../services/api';
+import { ApiServiceError, AuthenticationError, NetworkError, ServerError, getUserFriendlyErrorMessage } from '../types/api';
 import { useExpenses } from '../contexts/DataContext';
 import { AnimatedCoinPNG } from './AnimatedCoinPNG';
-
-interface ValidationError {
-  field: string;
-  message: string;
-}
+import { v4 as uuidv4 } from 'uuid';
+import { 
+  TextInput, 
+  NumberInput, 
+  DateInput, 
+  SelectInput,
+  FormCard, 
+  FormRow, 
+  SubmitButton 
+} from './forms';
+import type { ValidationError } from '../types';
+import { useExpenseData } from '../hooks/data/useExpenseData';
+import { useExpenseForm } from '../hooks/forms/useExpenseForm';
+import { useExpensePagination } from '../hooks/pagination/useExpensePagination';
+import { useToggle, useTimeoutToggle } from '../hooks/utils';
+import { 
+  DataTable, 
+  StatCard, 
+  ConfirmDialog,
+  PaginationControls,
+  GridContainer 
+} from './ui';
+import type { TableColumn } from './ui';
 
 const CATEGORIES = [
   'Feed',
@@ -22,137 +41,36 @@ const CATEGORIES = [
   'Other'
 ];
 
-const saveToDatabase = async (expenses: Expense[]) => {
-  try {
-    await saveExpenses(expenses);
-  } catch (error) {
-    console.error('Error saving to database:', error);
-  }
-};
 
 export const Expenses = () => {
-  const { expenses: cachedExpenses, isLoading: dataLoading, updateExpenses } = useExpenses();
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [category, setCategory] = useState(CATEGORIES[0]);
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [errors, setErrors] = useState<ValidationError[]>([]);
-  const [success, setSuccess] = useState(false);
+  // Use custom hooks for data management
+  const { 
+    expenses, 
+    isLoading, 
+    addExpense, 
+    deleteExpense, 
+    totalAmount, 
+    thisMonthTotal, 
+    thisWeekTotal, 
+    expensesByCategory 
+  } = useExpenseData();
+
+  // UI state hooks
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [continueMode, setContinueMode] = useState(false);  
-  
-  useEffect(() => {
-    if (!dataLoading) {
-      setExpenses(cachedExpenses);
-      setIsLoading(false);
-    }
-  }, [cachedExpenses, dataLoading]);
 
-  const validateForm = (): boolean => {
-    const newErrors: ValidationError[] = [];
-    
-    if (!description.trim()) {
-      newErrors.push({ field: 'description', message: 'Please enter a description' });
-    }
-    
-    if (!amount) {
-      newErrors.push({ field: 'amount', message: 'Please enter an amount' });
-    } else {
-      const numAmount = parseFloat(amount);
-      if (isNaN(numAmount) || numAmount <= 0) {
-        newErrors.push({ field: 'amount', message: 'Please enter a valid amount greater than 0' });
+  const handleDelete = async (id: string) => {
+    if (deleteConfirm === id) {
+      try {
+        await deleteExpense(id);
+        setDeleteConfirm(null);
+      } catch (error) {
+        console.error('Error deleting expense:', error);
+        // Error handling is done by the hook
       }
-    }
-
-    if (!date) {
-      newErrors.push({ field: 'date', message: 'Please select a date' });
-    }
-
-    setErrors(newErrors);
-    return newErrors.length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSuccess(false);
-
-    if (!validateForm()) {
-      return;
-    }
-
-    const newExpense: Expense = {
-      id: Date.now().toString(),
-      date,
-      category,
-      description: description.trim(),
-      amount: parseFloat(amount)
-    };    const updatedExpenses = [...expenses, newExpense];
-    setExpenses(updatedExpenses);
-    updateExpenses(updatedExpenses);
-    
-    // Save to database
-    saveToDatabase(updatedExpenses);
-
-    // Reset form based on continue mode
-    if (!continueMode) {
-      setDescription('');
-      setAmount('');
-      setDate(new Date().toISOString().split('T')[0]);
-      setCategory(CATEGORIES[0]);
-    } else {
-      setDescription('');
-      setAmount('');
-    }
-    
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
-  };
-
-  const handleDelete = (id: string) => {
-    if (deleteConfirm === id) {      const updatedExpenses = expenses.filter(expense => expense.id !== id);
-      setExpenses(updatedExpenses);
-      updateExpenses(updatedExpenses);
-      
-      // Save to database
-      saveToDatabase(updatedExpenses);
-      
-      setDeleteConfirm(null);
     } else {
       setDeleteConfirm(id);
       setTimeout(() => setDeleteConfirm(null), 3000);
     }
-  };
-
-  const calculateSummary = () => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    const monthlyTotal = expenses
-      .filter(expense => {
-        const expenseDate = new Date(expense.date);
-        return expenseDate.getMonth() === currentMonth && 
-               expenseDate.getFullYear() === currentYear;
-      })
-      .reduce((sum, expense) => sum + expense.amount, 0);
-
-    const yearlyTotal = expenses
-      .filter(expense => {
-        const expenseDate = new Date(expense.date);
-        return expenseDate.getFullYear() === currentYear;
-      })
-      .reduce((sum, expense) => sum + expense.amount, 0);
-
-    const categoryTotals = CATEGORIES.map(cat => ({
-      category: cat,
-      total: expenses
-        .filter(expense => expense.category === cat)
-        .reduce((sum, expense) => sum + expense.amount, 0)
-    }));
-
-    return { monthlyTotal, yearlyTotal, categoryTotals };
   };
 
   const formatCurrency = (amount: number) => {
@@ -161,16 +79,101 @@ export const Expenses = () => {
       currency: 'USD'
     }).format(amount);
   };
+
+  // Table columns configuration
+  const tableColumns: TableColumn<Expense>[] = useMemo(() => [
+    {
+      key: 'date',
+      label: 'Date',
+      render: (value, expense) => expense.date,
+    },
+    {
+      key: 'category',
+      label: 'Category',
+      render: (value, expense) => expense.category,
+    },
+    {
+      key: 'description',
+      label: 'Description',
+      render: (value, expense) => expense.description,
+    },
+    {
+      key: 'amount',
+      label: 'Amount',
+      render: (value, expense) => formatCurrency(expense.amount),
+    },
+    {
+      key: 'id',
+      label: 'Actions',
+      render: (value, expense) => expense.id ? (
+        <button
+          onClick={() => handleDelete(expense.id!)}
+          className={`inline-flex items-center p-2 rounded-full
+            ${deleteConfirm === expense.id
+              ? 'text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100'
+              : 'text-gray-400 hover:text-gray-500 hover:bg-gray-100'
+            } transition-colors`}
+          title={deleteConfirm === expense.id ? "Click again to confirm deletion" : "Delete expense"}
+        >
+          <TrashIcon className="h-5 w-5" />
+        </button>
+      ) : null,
+    },
+  ], [deleteConfirm]);
+  
+  // Use form management hook
+  const continueMode = useToggle(false);
+  const successState = useTimeoutToggle(false, 3000);
+  
+  const expenseForm = useExpenseForm({
+    categories: CATEGORIES,
+    onSuccess: () => {
+      successState.setTrue();
+      if (!continueMode.value) {
+        // Reset category if not in continue mode
+        expenseForm.setValue('category', CATEGORIES[0]);
+      }
+    }
+  });
+  
+  // Use pagination hook
+  const {
+    paginatedExpenses,
+    currentPage,
+    totalPages,
+    goToPage,
+    nextPage,
+    previousPage,
+    isFirstPage,
+    isLastPage
+  } = useExpensePagination({
+    expenses,
+    pageSize: 10,
+    sortDirection: 'desc'
+  });
+  
+  // Form submission is now handled by useExpenseForm hook
+  const handleSubmit = expenseForm.handleSubmit;
+
+  // Summary calculations are now provided by useExpenseData hook
+  const calculateYearlyTotal = () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    return expenses
+      .filter(expense => {
+        const expenseDate = new Date(expense.date);
+        return expenseDate.getFullYear() === currentYear;
+      })
+      .reduce((sum, expense) => sum + expense.amount, 0);
+  };
   const categoryData = useMemo(() => {
     return CATEGORIES.map(category => ({
       name: category,
-      total: expenses
-        .filter(expense => expense.category === category)
-        .reduce((sum, expense) => sum + expense.amount, 0)
+      total: expensesByCategory[category] || 0
     }));
-  }, [expenses]);
+  }, [expensesByCategory]);
 
-  const summary = calculateSummary();
+  const yearlyTotal = calculateYearlyTotal();
 
   return (
     <motion.div
@@ -189,133 +192,62 @@ export const Expenses = () => {
         <AnimatedCoinPNG />
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="neu-form"
+      <FormCard
+        title="Add New Expense"
+        success={successState.value ? "Expense added successfully!" : undefined}
+        error={expenseForm.errors.length > 0 ? expenseForm.errors.map(e => e.message).join(', ') : undefined}
       >
-        <h2 className="neu-title">Add New Expense</h2>
-        <AnimatePresence mode="wait">
-          {success && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="success-toast mb-6"
-            >
-              Expense added successfully!
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <AnimatePresence mode="wait">
-          {errors.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="error-toast mb-6"
-            >
-              <ul className="list-disc list-inside">
-                {errors.map((error, index) => (
-                  <li key={index}>{error.message}</li>
-                ))}
-              </ul>
-            </motion.div>
-          )}
-        </AnimatePresence>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="expenseDate">
-                Date
-              </label>
-              <input
-                id="expenseDate"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="neu-input"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="category">
-                Category
-              </label>
-              <select
-                id="category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="neu-input"
-              >
-                {CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-gray-600 text-sm mb-2" htmlFor="description">
-              Description
-            </label>
-            <input
-              id="description"
-              type="text"
-              value={description}
-              onChange={(e) => {
-                setDescription(e.target.value);
-                setErrors(errors.filter(e => e.field !== 'description'));
-              }}
-              className="neu-input"
-              placeholder="Enter expense description"
+          <FormRow>
+            <DateInput
+              label="Date"
+              value={expenseForm.values.date}
+              onChange={expenseForm.handleChange('date')}
               required
             />
-          </div>
-          <div>
-            <label className="block text-gray-600 text-sm mb-2" htmlFor="amount">
-              Amount ($)
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <span className="text-gray-500 font-medium">$</span>
-              </div>
-              <input
-                id="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                value={amount}
-                onChange={(e) => {
-                  setAmount(e.target.value);
-                  setErrors(errors.filter(e => e.field !== 'amount'));
-                }}
-                className="neu-input pl-8"
-                placeholder="0.00"
-                required
-              />
-            </div>
-          </div>
+            <SelectInput
+              label="Category"
+              value={expenseForm.values.category}
+              onChange={expenseForm.handleChange('category')}
+              options={CATEGORIES.map(cat => ({ value: cat, label: cat }))}
+            />
+          </FormRow>
+          <TextInput
+            label="Description"
+            value={expenseForm.values.description}
+            onChange={expenseForm.handleChange('description')}
+            placeholder="Enter expense description"
+            required
+          />
+          <NumberInput
+            label="Amount ($)"
+            value={parseFloat(expenseForm.values.amount) || 0}
+            onChange={expenseForm.handleChange('amount')}
+            min={0}
+            step={0.01}
+            placeholder="0.00"
+            prefix="$"
+            required
+          />
           <div className="flex items-center space-x-2">
             <input
               id="continueMode"
               type="checkbox"
-              checked={continueMode}
-              onChange={(e) => setContinueMode(e.target.checked)}
+              checked={continueMode.value}
+              onChange={(e) => continueMode.setValue(e.target.checked)}
               className="neu-checkbox"
             />
             <label htmlFor="continueMode" className="text-sm text-gray-600">
               Keep date and category for next entry
             </label>
           </div>
-          <button
-            type="submit"
-            className="neu-button full-width md:w-auto md:min-w-[200px]"
-          >
-            Add Expense
-          </button>
+          <SubmitButton
+            isLoading={expenseForm.isSubmitting}
+            text="Add Expense"
+            className="md:w-auto md:min-w-[200px]"
+          />
         </form>
-      </motion.div>
+      </FormCard>
 
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-900">Expense Records</h2>
@@ -325,31 +257,35 @@ export const Expenses = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="glass-card space-y-6"
+        className="space-y-6"
       >
         <h2 className="text-2xl font-bold text-gray-900">Expense Summary</h2>
         {isLoading ? (
           <LoadingSpinner />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="stat-card">
-              <h3 className="text-lg font-medium text-white/90">This Month</h3>
-              <p className="text-4xl font-bold mt-2">{formatCurrency(summary.monthlyTotal)}</p>
-              <p className="text-sm text-white/75 mt-1">total expenses</p>
-            </div>
-            <div className="stat-card">
-              <h3 className="text-lg font-medium text-white/90">This Year</h3>
-              <p className="text-4xl font-bold mt-2">{formatCurrency(summary.yearlyTotal)}</p>
-              <p className="text-sm text-white/75 mt-1">total expenses</p>
-            </div>
-            <div className="stat-card">
-              <h3 className="text-lg font-medium text-white/90">Average Monthly</h3>
-              <p className="text-4xl font-bold mt-2">
-                {formatCurrency(summary.yearlyTotal / 12)}
-              </p>
-              <p className="text-sm text-white/75 mt-1">monthly average</p>
-            </div>
-          </div>
+          <GridContainer columns={3} gap="lg">
+            <StatCard
+              title="This Month"
+              value={formatCurrency(thisMonthTotal)}
+              description="total expenses"
+              variant="primary"
+              animated
+            />
+            <StatCard
+              title="This Year"
+              value={formatCurrency(yearlyTotal)}
+              description="total expenses"
+              variant="primary"
+              animated
+            />
+            <StatCard
+              title="Average Monthly"
+              value={formatCurrency(yearlyTotal / 12)}
+              description="monthly average"
+              variant="primary"
+              animated
+            />
+          </GridContainer>
         )}
       </motion.div>      <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -401,61 +337,32 @@ export const Expenses = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="glass-card"
+        className="glass-card space-y-6"
       >
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold text-gray-900">Recent Expenses</h2>
-          <div className="text-sm text-gray-500">
-            Showing {Math.min(expenses.length, 10)} of {expenses.length} entries
-          </div>
-        </div>        {isLoading ? (
-          <LoadingSpinner />
-        ) : (
-          <div className="overflow-x-auto w-full">
-            <table className="w-full">
-              <thead>
-                <tr>
-                  <th className="px-2 md:px-6 py-2 md:py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Date</th>
-                  <th className="px-2 md:px-6 py-2 md:py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Category</th>
-                  <th className="px-2 md:px-6 py-2 md:py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Description</th>
-                  <th className="px-2 md:px-6 py-2 md:py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Amount</th>
-                  <th className="px-2 md:px-6 py-2 md:py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {expenses.slice().reverse().map((expense) => (
-                  <motion.tr
-                    key={expense.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="hover:bg-gray-50/50 transition-colors"
-                  >
-                    <td className="px-6 py-4 text-sm text-gray-600">{expense.date}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{expense.category}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{expense.description}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      {formatCurrency(expense.amount)}
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      {expense.id && (
-                        <button
-                          onClick={() => handleDelete(expense.id!)}
-                          className={`inline-flex items-center p-2 rounded-full
-                            ${deleteConfirm === expense.id
-                              ? 'text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100'
-                              : 'text-gray-400 hover:text-gray-500 hover:bg-gray-100'
-                            } transition-colors`}
-                          title={deleteConfirm === expense.id ? "Click again to confirm deletion" : "Delete expense"}
-                        >
-                          <TrashIcon className="h-5 w-5" />
-                        </button>
-                      )}
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        </div>
+        
+        <DataTable
+          data={paginatedExpenses}
+          columns={tableColumns}
+          loading={isLoading}
+          emptyMessage="No expenses found"
+          className="w-full"
+        />
+        
+        {totalPages > 1 && (
+          <PaginationControls
+            totalItems={expenses.length}
+            pageSize={10}
+            showPageSizeSelector={false}
+            variant="default"
+            className="border-t border-gray-200 pt-4"
+            paginationOptions={{
+              initialPage: currentPage,
+              totalItems: expenses.length
+            }}
+          />
         )}
       </motion.div>
     </motion.div>

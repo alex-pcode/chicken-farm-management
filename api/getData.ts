@@ -142,7 +142,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { data: feedInventory, error: feedError } = await supabase
       .from('feed_inventory')
       .select('*')
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
     if (feedError) {
       console.error('Supabase feed_inventory error:', feedError);
       throw feedError;
@@ -152,7 +153,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { data: expenses, error: expensesError } = await supabase
       .from('expenses')
       .select('*')
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .order('date', { ascending: false });
+    
+    console.log('API: Expenses fetched for user', user.id, '- Count:', expenses?.length || 0);
+    
     if (expensesError) {
       console.error('Supabase expenses error:', expensesError);
       throw expensesError;
@@ -228,7 +233,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timestamp: new Date().toISOString()
     };
     
-    console.log('Returning response with data:', response);
     res.status(200).json(response);
   } catch (error) {
     console.error('Error in getData:', error);

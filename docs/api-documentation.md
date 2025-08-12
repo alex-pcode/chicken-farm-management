@@ -4,6 +4,167 @@
 
 The Chicken Manager API provides secure, user-specific endpoints for managing chicken flock data. All endpoints require user authentication via JWT tokens provided by Supabase Auth.
 
+## New API Service Layer (January 2025)
+
+**✅ IMPLEMENTED**: The application now uses a unified API service layer (`src/services/api/`) for all API operations. This provides:
+
+- **Centralized Authentication**: Automatic token refresh and header management
+- **Consistent Error Handling**: Standardized ApiError class with proper error responses
+- **Domain Separation**: Organized services (Auth, Data, Production, Flock, CRM)
+- **Type Safety**: Full TypeScript support with proper interfaces
+- **Legacy Compatibility**: Backward-compatible with existing API patterns
+
+## Type-Safe API Implementation (Story 1.2 - ✅ Complete)
+
+**All API methods now feature comprehensive TypeScript typing** replacing all `any` types with proper interfaces:
+
+- **Type-Safe Parameters**: All API methods use strongly-typed interfaces instead of `any[]` or `any` types
+- **Generic Response Types**: `ApiResponse<T>` interface ensures consistent, typed API responses  
+- **Custom Error Classes**: `AuthenticationError`, `NetworkError`, and `ServerError` provide typed error handling
+- **JSDoc Documentation**: Complete parameter and return type documentation with usage examples
+- **Compile-Time Safety**: TypeScript compiler catches type errors during development
+- **Runtime Validation**: Proper error handling with user-friendly typed error messages
+
+## Consolidated API Service Migration (Story 1.3 - ✅ Complete)
+
+**All components now use the unified API service layer** eliminating duplicate code and improving maintainability:
+
+- **Eliminated Duplicates**: Removed duplicate `saveToDatabase` functions from all 4 components
+- **Centralized Architecture**: All components now use domain-specific API services (production, flock, auth)
+- **Standardized Error Handling**: Components use consistent `ApiError` class with user-friendly messages
+- **Preserved Behavior**: Identical component interfaces and user experience maintained
+- **Enhanced Reliability**: Fixed critical bugs and improved error handling patterns
+- **Comprehensive Testing**: 23+ test cases covering API integration and error scenarios
+
+### Using the Consolidated API Service
+
+```typescript
+import { apiService } from '../services/api';
+import { EggEntry, Expense, FlockProfile } from '../types';
+import { ApiResponse, ApiError } from '../types/api';
+
+// Production operations using domain-specific services
+const eggEntries: EggEntry[] = [
+  { id: 'uuid', date: '2025-01-06', count: 12, created_at: new Date() }
+];
+const eggResponse = await apiService.production.saveEggEntries(eggEntries);
+
+// Expense tracking with consolidated service
+const expenses: Expense[] = [
+  { id: 'uuid', date: '2025-01-06', category: 'Feed', description: 'Layer feed', amount: 45.99 }
+];
+const expenseResponse = await apiService.production.saveExpenses(expenses);
+
+// Flock management using flock service
+const profile: FlockProfile = {
+  farmName: 'Happy Hens Farm',
+  flockSize: 25,
+  breedTypes: ['Rhode Island Red'],
+  // ... other typed properties
+};
+const profileResponse = await apiService.flock.saveFlockProfile(profile);
+
+// Feed inventory management
+const feedInventory: FeedEntry[] = [
+  { id: 'uuid', brand: 'Premium Feed', type: 'Pellets', quantity: 50 }
+];
+await apiService.production.saveFeedInventory(feedInventory);
+
+// Authentication operations
+const headers = await apiService.auth.getAuthHeaders();
+const isAuthenticated = await apiService.auth.isAuthenticated();
+```
+
+### Legacy API Methods (Deprecated)
+
+The following individual function imports are deprecated in favor of the consolidated service:
+
+```typescript
+// ❌ Deprecated - Individual function imports
+import { saveEggEntries, saveExpenses, saveFlockProfile } from '../utils/authApiUtils';
+
+// ✅ Recommended - Consolidated API service
+import { apiService } from '../services/api';
+await apiService.production.saveEggEntries(entries);
+```
+
+### API Response Structure
+
+All API methods now return consistently typed responses using the generic `ApiResponse<T>` interface:
+
+```typescript
+interface ApiResponse<T> {
+  message: string;
+  data: T;
+  timestamp: string;
+  success?: boolean;
+}
+
+// Error responses use typed error classes
+interface ApiErrorResponse {
+  message: string;
+  error: string;
+  code?: string;
+  timestamp: string;
+}
+```
+
+### Error Handling with Consolidated API Service
+
+The consolidated API service provides standardized error handling across all components:
+
+```typescript
+import { apiService } from '../services/api';
+import { ApiError } from '../types/api';
+
+// Modern error handling pattern used by all components
+try {
+  const result = await apiService.production.saveEggEntries(entries);
+  // Success - result contains typed response data
+} catch (error) {
+  if (error instanceof ApiError) {
+    if (error.status === 401) {
+      // User automatically signed out by service layer
+      console.log('Authentication failed - user redirected to login');
+    } else {
+      // User-friendly error message displayed to user
+      console.error(`API Error ${error.status}: ${error.message}`);
+      setErrorMessage(error.message); // Standardized error handling
+    }
+  } else {
+    // Unexpected errors
+    console.error('Unexpected error:', error);
+    setErrorMessage('An unexpected error occurred. Please try again.');
+  }
+}
+```
+
+### Component Integration Benefits
+
+Components using the consolidated service gain:
+
+```typescript
+// Before - Duplicate error handling in each component
+const saveToDatabase = async (data) => {
+  try {
+    const response = await fetch('/api/saveData', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) throw new Error('Save failed');
+    return response.json();
+  } catch (error) {
+    console.error('Component-specific error handling');
+    throw error;
+  }
+};
+
+// After - Standardized service with consistent error handling
+await apiService.production.saveEggEntries(entries);
+// Error handling is automatically standardized across all components
+```
+
 ## Authentication
 
 ### Required Headers
@@ -67,58 +228,90 @@ Content-Type: application/json
 ### POST /api/saveEggEntries
 Saves or updates egg production entries for the authenticated user.
 
+**Type Definition:**
+```typescript
+function saveEggEntries(entries: EggEntry[]): Promise<ApiResponse<EggEntriesSaveData>>
+```
+
 **Headers:**
 ```
 Authorization: Bearer <token>
 Content-Type: application/json
 ```
 
-**Request Body:**
+**Request Body (EggEntry[]):**
 ```json
 [
   {
     "id": "uuid-string",
-    "date": "2025-01-06",
-    "count": 12
+    "date": "2025-01-06", 
+    "count": 12,
+    "created_at": "2025-01-06T10:00:00Z"
   }
 ]
 ```
 
-**Response:**
+**Response (ApiResponse<EggEntriesSaveData>):**
 ```json
 {
   "message": "Egg entries saved successfully",
   "data": {
-    "eggEntries": [...]
+    "eggEntries": [...],
+    "updatedCount": 1
   },
-  "timestamp": "2025-01-06T..."
+  "timestamp": "2025-01-06T...",
+  "success": true
 }
 ```
 
 ### POST /api/saveExpenses
 Saves or updates expense records for the authenticated user.
 
+**Type Definition:**
+```typescript
+function saveExpenses(expenses: Expense[]): Promise<ApiResponse<ExpensesSaveData>>
+```
+
 **Headers:**
 ```
 Authorization: Bearer <token>
 Content-Type: application/json
 ```
 
-**Request Body:**
+**Request Body (Expense[]):**
 ```json
 [
   {
     "id": "uuid-string",
     "date": "2025-01-06",
     "category": "Feed",
-    "description": "Layer feed purchase",
-    "amount": 45.99
+    "description": "Layer feed purchase", 
+    "amount": 45.99,
+    "created_at": "2025-01-06T10:00:00Z"
   }
 ]
 ```
 
+**Response (ApiResponse<ExpensesSaveData>):**
+```json
+{
+  "message": "Expenses saved successfully",
+  "data": {
+    "expenses": [...],
+    "updatedCount": 1
+  },
+  "timestamp": "2025-01-06T...",
+  "success": true
+}
+```
+
 ### POST /api/saveFlockProfile
 Saves or updates the user's flock profile information.
+
+**Type Definition:**
+```typescript
+function saveFlockProfile(profile: FlockProfile): Promise<ApiResponse<FlockProfileSaveData>>
+```
 
 **Headers:**
 ```
@@ -126,11 +319,11 @@ Authorization: Bearer <token>
 Content-Type: application/json
 ```
 
-**Request Body:**
+**Request Body (FlockProfile):**
 ```json
 {
   "farmName": "Happy Hens Farm",
-  "location": "Rural Valley",
+  "location": "Rural Valley", 
   "flockSize": 25,
   "breedTypes": ["Rhode Island Red", "Leghorn"],
   "flockStartDate": "2024-03-15",
@@ -141,8 +334,26 @@ Content-Type: application/json
 }
 ```
 
+**Response (ApiResponse<FlockProfileSaveData>):**
+```json
+{
+  "message": "Flock profile saved successfully",
+  "data": {
+    "flockProfile": {...},
+    "updated": true
+  },
+  "timestamp": "2025-01-06T...",
+  "success": true
+}
+```
+
 ### POST /api/saveFeedInventory
 Saves or updates feed inventory records for the authenticated user.
+
+**Type Definition:**
+```typescript
+function saveFeedInventory(inventory: FeedEntry[]): Promise<ApiResponse<FeedInventorySaveData>>
+```
 
 **Headers:**
 ```
@@ -150,24 +361,43 @@ Authorization: Bearer <token>
 Content-Type: application/json
 ```
 
-**Request Body:**
+**Request Body (FeedEntry[]):**
 ```json
 [
   {
     "id": "uuid-string",
     "brand": "Premium Layer Feed",
-    "type": "Pellets",
+    "type": "Pellets", 
     "quantity": 50,
     "unit": "lbs",
     "pricePerUnit": 0.89,
     "openedDate": "2025-01-01",
-    "depletedDate": null
+    "depletedDate": null,
+    "created_at": "2025-01-01T10:00:00Z"
   }
 ]
 ```
 
+**Response (ApiResponse<FeedInventorySaveData>):**
+```json
+{
+  "message": "Feed inventory saved successfully",
+  "data": {
+    "feedInventory": [...],
+    "updatedCount": 1
+  },
+  "timestamp": "2025-01-06T...",
+  "success": true
+}
+```
+
 ### POST /api/saveFlockEvents
 Saves individual flock events for the authenticated user.
+
+**Type Definition:**
+```typescript
+function saveFlockEvents(events: FlockEvent[]): Promise<ApiResponse<FlockEventsSaveData>>
+```
 
 **Headers:**
 ```
@@ -175,17 +405,32 @@ Authorization: Bearer <token>
 Content-Type: application/json
 ```
 
-**Request Body:**
+**Request Body (FlockEvent[]):**
 ```json
-{
-  "flockProfileId": "uuid-string",
-  "event": {
+[
+  {
+    "id": "uuid-string",
+    "flockProfileId": "uuid-string",
     "date": "2025-01-06",
     "type": "health",
-    "description": "Vaccination administered",
+    "description": "Vaccination administered", 
     "affectedBirds": 25,
-    "notes": "Annual vaccination program"
+    "notes": "Annual vaccination program",
+    "created_at": "2025-01-06T10:00:00Z"
   }
+]
+```
+
+**Response (ApiResponse<FlockEventsSaveData>):**
+```json
+{
+  "message": "Flock events saved successfully",
+  "data": {
+    "flockEvents": [...],
+    "updatedCount": 1
+  },
+  "timestamp": "2025-01-06T...",
+  "success": true
 }
 ```
 
@@ -506,5 +751,14 @@ Content-Type: application/json
 
 ---
 
-**Last Updated**: January 2025
-**API Version**: 1.0 with Authentication
+## Type Definitions
+
+For complete interface definitions and error classes, see:
+- `src/types/index.ts` - Core data interfaces (EggEntry, Expense, FlockProfile, etc.)
+- `src/types/api.ts` - API response types and error classes
+- `src/utils/authApiUtils.ts` - JSDoc documentation with usage examples
+
+---
+
+**Last Updated**: January 2025  
+**API Version**: 1.0 with Authentication and Type Safety

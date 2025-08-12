@@ -42,22 +42,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const entries = req.body;
     console.log('Received egg entries:', entries);
     
-    // Upsert egg entries by id (or insert if no id exists) with user_id
+    // Use upsert with date as the conflict resolution key
+    // The database has a unique constraint on 'date' field
     const { data, error } = await supabase
       .from('egg_entries')
       .upsert(
         entries.map((entry: any) => ({
-          id: entry.id, // Include the id for upsert
           date: entry.date,
           count: entry.count,
-          user_id: user.id // Add user_id for data isolation
+          user_id: user.id
         })),
-        { onConflict: 'id' }
+        { 
+          onConflict: 'date',
+          ignoreDuplicates: false 
+        }
       )
       .select();
 
     if (error) {
-      throw new Error(`Database insert error: ${error.message}`);
+      throw new Error(`Database upsert error: ${error.message}`);
     }
     
     console.log('Egg entries saved to Supabase:', data);

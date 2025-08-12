@@ -1,0 +1,26 @@
+# Chicken Manager Brownfield Architecture Document
+
+## Table of Contents
+
+- [Chicken Manager Brownfield Architecture Document](#table-of-contents)
+  - [Introduction](#introduction)
+  - [Quick Reference - Key Files and Entry Points](#quick-reference-key-files-and-entry-points)
+  - [High Level Architecture](#high-level-architecture)
+  - [Source Tree and Module Organization](#source-tree-and-module-organization)
+  - [Technical Debt and Known Issues](#technical-debt-and-known-issues)
+  - [Integration Points and External Dependencies](#integration-points-and-external-dependencies)
+  - [Development and Deployment](#development-and-deployment)
+  - [Current Architecture Patterns That Need Refactoring](#current-architecture-patterns-that-need-refactoring)
+  - [PRD-Specific Refactoring Impact Analysis](#prd-specific-refactoring-impact-analysis)
+  - [Testing Reality & 2025 Framework Recommendations](#testing-reality-2025-framework-recommendations)
+  - [Coding Standards & Style Guide](#coding-standards-style-guide)
+  - [Development Tooling & Code Quality](#development-tooling-code-quality)
+  - [Error Monitoring & Production Observability](#error-monitoring-production-observability)
+  - [CI/CD Pipeline Enhancement](#cicd-pipeline-enhancement)
+  - [Security Considerations](#security-considerations)
+  - [Performance Monitoring](#performance-monitoring)
+  - [Implementation Priority Matrix](#implementation-priority-matrix)
+  - [Gap Analysis Summary](#gap-analysis-summary)
+  - [Appendix - Useful Commands and Scripts](#appendix-useful-commands-and-scripts)
+  - [Success Criteria for Refactoring](#success-criteria-for-refactoring)
+  - [Technology Stack Evolution & 2025 Recommendations](#technology-stack-evolution-2025-recommendations)

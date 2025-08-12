@@ -1,10 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import type { FeedEntry, FlockProfile } from '../types';
-import { saveFeedInventory, saveExpenses } from '../utils/authApiUtils';
+import { apiService } from '../services/api';
+import { ApiServiceError, AuthenticationError, NetworkError, ServerError, getUserFriendlyErrorMessage } from '../types/api';
 import { useFeedInventory, useFlockProfile, useAppData } from '../contexts/DataContext';
 import { v4 as uuidv4 } from 'uuid';
 import AnimatedFeedPNG from './AnimatedFeedPNG';
+import { 
+  TextInput, 
+  NumberInput, 
+  DateInput, 
+  SelectInput,
+  FormCard, 
+  FormRow, 
+  SubmitButton 
+} from './forms';
+import { useSimpleValidation } from '../hooks/useSimpleValidation';
+import { useFeedData } from '../hooks/data/useFeedData';
+import { useFormState } from '../hooks/useFormState';
+import { useToggle, useTimeoutToggle } from '../hooks/utils';
+import { 
+  DataTable, 
+  StatCard, 
+  GridContainer 
+} from './ui';
+import type { TableColumn } from './ui';
 
 const FEED_TYPES = [
   'Baby chicks',
@@ -12,45 +32,152 @@ const FEED_TYPES = [
   'Both'
 ];
 
-const saveToDatabase = async (inventory: FeedEntry[]) => {
-  try {
-    await saveFeedInventory(inventory);
-  } catch (error) {
-    console.error('Error saving to database:', error);
-  }
-};
 
 export const FeedTracker = () => {
-  const { feedInventory: cachedInventory, isLoading: inventoryLoading, updateFeedInventory } = useFeedInventory();
+  // Use custom data management hooks
+  const {
+    feedEntries: feedInventory,
+    isLoading: inventoryLoading,
+    addFeedEntry,
+    updateFeedEntry,
+    deleteFeedEntry,
+    totalQuantity,
+    totalValue,
+    feedByType
+  } = useFeedData();
+  
   const { flockProfile: cachedProfile, isLoading: profileLoading } = useFlockProfile();
   const { data, updateExpenses } = useAppData();
   
-  const [feedInventory, setFeedInventory] = useState<FeedEntry[]>([]);
-  const [flockProfile, setFlockProfile] = useState<FlockProfile | null>(null);
+  // UI state hooks
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [showEstimator, setShowEstimator] = useState(false);
+  const showEstimator = useToggle(false);
   
-  // Form states for new feed entry
-  const [brand, setBrand] = useState('');
-  const [type, setType] = useState(FEED_TYPES[0]);
-  const [quantity, setQuantity] = useState('');
-  const [unit, setUnit] = useState<'kg' | 'lbs'>('kg');
-  const [openedDate, setOpenedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [batchNumber, setBatchNumber] = useState('');  
-  const [pricePerUnit, setPricePerUnit] = useState('');
+  // Data loading is handled by hooks
+  const flockProfile = cachedProfile;
 
-  useEffect(() => {
-    if (!inventoryLoading) {
-      setFeedInventory(cachedInventory);
+  const handleDelete = async (id: string) => {
+    if (deleteConfirm === id) {
+      try {
+        await deleteFeedEntry(id);
+        setDeleteConfirm(null);
+      } catch (error) {
+        console.error('Error deleting feed entry:', error);
+        setErrorMsg('Failed to delete feed entry. Please try again.');
+      }
+    } else {
+      setDeleteConfirm(id);
+      setTimeout(() => setDeleteConfirm(null), 3000);
     }
-  }, [cachedInventory, inventoryLoading]);
+  };
 
-  useEffect(() => {
-    if (!profileLoading) {
-      setFlockProfile(cachedProfile);
+  const handleDepleteFeed = async (id: string) => {    
+    try {
+      // Use the hook's updateFeedEntry method
+      await updateFeedEntry(id, { 
+        depletedDate: new Date().toISOString().split('T')[0] 
+      });
+    } catch (error) {
+      console.error('Error saving feed depletion:', error);
+      
+      // Use standardized error handling
+      let errorMessage = 'Failed to mark feed as depleted. Please try again.';
+      
+      if (error instanceof AuthenticationError) {
+        errorMessage = 'Session expired. Please refresh the page to continue.';
+      } else if (error instanceof NetworkError) {
+        errorMessage = 'Network connection issue. Please check your internet and try again.';
+      } else if (error instanceof ServerError) {
+        errorMessage = 'Server error. Please try again in a few moments.';
+      } else if (error instanceof ApiServiceError) {
+        errorMessage = getUserFriendlyErrorMessage(error);
+      }
+      
+      setErrorMsg(errorMessage);
     }
-  }, [cachedProfile, profileLoading]);
+  };
+
+  // Table columns configuration
+  const tableColumns: TableColumn<FeedEntry>[] = useMemo(() => [
+    {
+      key: 'brand',
+      label: 'Brand',
+      render: (value, feed) => feed.brand,
+    },
+    {
+      key: 'type',
+      label: 'Type',
+      render: (value, feed) => feed.type,
+    },
+    {
+      key: 'quantity',
+      label: 'Quantity',
+      render: (value, feed) => `${feed.quantity} ${feed.unit}`,
+    },
+    {
+      key: 'pricePerUnit',
+      label: 'Price',
+      render: (value, feed) => `$${(feed.quantity * feed.pricePerUnit).toFixed(2)}`,
+    },
+    {
+      key: 'openedDate',
+      label: 'Opened',
+      render: (value, feed) => feed.openedDate,
+    },
+    {
+      key: 'depletedDate',
+      label: 'Duration',
+      render: (value, feed) => feed.depletedDate ? (
+        `${calculateDuration(feed.openedDate, feed.depletedDate)} days`
+      ) : (
+        <button
+          onClick={() => handleDepleteFeed(feed.id)}
+          className="text-indigo-600 hover:text-indigo-700"
+        >
+          Mark Depleted
+        </button>
+      ),
+    },
+    {
+      key: 'id',
+      label: 'Actions',
+      render: (value, feed) => (
+        <button
+          onClick={() => handleDelete(feed.id)}
+          className={`inline-flex items-center p-2 rounded-full
+            ${deleteConfirm === feed.id
+              ? 'text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100'
+              : 'text-gray-400 hover:text-gray-500 hover:bg-gray-100'
+            } transition-colors`}
+          title={deleteConfirm === feed.id ? "Click again to confirm deletion" : "Delete feed"}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+        </button>
+      ),
+    },
+  ], [deleteConfirm]);
+  
+  // Form state management
+  const feedForm = useFormState({
+    initialValues: {
+      brand: '',
+      type: FEED_TYPES[0],
+      quantity: '',
+      unit: 'kg' as 'kg' | 'lbs',
+      openedDate: new Date().toISOString().split('T')[0],
+      batchNumber: '',
+      pricePerUnit: ''
+    }
+  });
+
+  // Form validation using shared hook
+  const { errors, setFieldError, clearFieldError, clearAllErrors } = useSimpleValidation();
+  const submittingState = useToggle(false);
+
+  // Data loading is now handled by custom hooks
 
   const calculateDuration = (openedDate: string, depletedDate?: string) => {
     if (!depletedDate) return null;
@@ -145,87 +272,87 @@ export const FeedTracker = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    submittingState.setTrue();
+    clearAllErrors();
     
-    // Validate required fields
-    if (!brand || !quantity || !pricePerUnit) {
-      setErrorMsg('Please fill in all required fields including price per unit.');
+    // Validate required fields using shared validation
+    let hasErrors = false;
+    
+    if (!feedForm.values.brand.trim()) {
+      setFieldError('brand', 'Brand name is required');
+      hasErrors = true;
+    }
+    
+    if (!feedForm.values.quantity || parseFloat(feedForm.values.quantity) <= 0) {
+      setFieldError('quantity', 'Quantity must be greater than 0');
+      hasErrors = true;
+    }
+    
+    if (!feedForm.values.pricePerUnit || parseFloat(feedForm.values.pricePerUnit) <= 0) {
+      setFieldError('pricePerUnit', 'Price per unit must be greater than 0');
+      hasErrors = true;
+    }
+    
+    if (hasErrors) {
+      submittingState.setFalse();
       return;
     }
     
-    const newFeed: FeedEntry = {
-      id: uuidv4(),
-      brand,
-      type,
-      quantity: parseFloat(quantity),
-      unit,
-      openedDate, // already in YYYY-MM-DD format
-      pricePerUnit: parseFloat(pricePerUnit),
+    const newFeed: Omit<FeedEntry, 'id'> = {
+      brand: feedForm.values.brand,
+      type: feedForm.values.type,
+      quantity: parseFloat(feedForm.values.quantity),
+      unit: feedForm.values.unit,
+      openedDate: feedForm.values.openedDate,
+      pricePerUnit: parseFloat(feedForm.values.pricePerUnit),
       // Do not include batchNumber or description here
     };
-    const updatedInventory = [...feedInventory, newFeed];
-    setFeedInventory(updatedInventory);
-    updateFeedInventory(updatedInventory);
+    
     try {
-      await saveToDatabase(updatedInventory.map(feed => ({
-        id: feed.id,
-        brand: feed.brand,
-        type: feed.type,
-        quantity: feed.quantity,
-        unit: feed.unit,
-        pricePerUnit: feed.pricePerUnit,
-        openedDate: feed.openedDate,
-        depletedDate: feed.depletedDate // undefined if not set
-      })));
-    } catch (err) {
-      setErrorMsg('Failed to save feed inventory. Please try again.');
+      // Use the hook's addFeedEntry method
+      await addFeedEntry(newFeed);
+      
+      // Reset form on success
+      feedForm.resetForm();
+      
+    } catch (error) {
+      console.error('Error saving feed inventory:', error);
+      
+      // Use standardized error handling with user-friendly messages
+      let errorMessage = 'Failed to save feed inventory. Please try again.';
+      
+      if (error instanceof AuthenticationError) {
+        errorMessage = 'Session expired. Please refresh the page to continue.';
+      } else if (error instanceof NetworkError) {
+        errorMessage = 'Network connection issue. Please check your internet and try again.';
+      } else if (error instanceof ServerError) {
+        errorMessage = 'Server error. Please try again in a few moments.';
+      } else if (error instanceof ApiServiceError) {
+        errorMessage = getUserFriendlyErrorMessage(error);
+      }
+      
+      setErrorMsg(errorMessage);
     }
 
     // Add expense entry automatically when feed is purchased
     try {
       const newExpense = {
-        id: uuidv4(),
-        date: openedDate,
+        date: feedForm.values.openedDate,
         category: 'Feed',
-        description: `${brand} ${type} (${quantity} ${unit})`,
-        amount: parseFloat(quantity) * parseFloat(pricePerUnit)
+        description: `${feedForm.values.brand} ${feedForm.values.type} (${feedForm.values.quantity} ${feedForm.values.unit})`,
+        amount: parseFloat(feedForm.values.quantity) * parseFloat(feedForm.values.pricePerUnit)
       };
 
-      const updatedExpenses = [...data.expenses, newExpense];
-      updateExpenses(updatedExpenses);
-      await saveExpenses(updatedExpenses);
+      // Save expense without ID (let database generate UUID)
+      await apiService.production.saveExpenses([newExpense]);
     } catch (error) {
       console.error('Error saving expenses:', error);
       setErrorMsg('Feed saved but failed to record expense. Please add manually.');
     }
     
-    // Reset form
-    setBrand('');
-    setQuantity('');
-    setBatchNumber('');
-    setPricePerUnit('');
-  };
-  const handleDepleteFeed = (id: string) => {
-    const updatedInventory = feedInventory.map(feed => {
-      if (feed.id === id) {
-        return { ...feed, depletedDate: new Date().toISOString().split('T')[0] };
-      }
-      return feed;
-    });
-    setFeedInventory(updatedInventory);
-    updateFeedInventory(updatedInventory);
-    saveToDatabase(updatedInventory);
-  };
-
-  const handleDelete = (id: string) => {
-    if (deleteConfirm === id) {      const updatedInventory = feedInventory.filter(feed => feed.id !== id);
-      setFeedInventory(updatedInventory);
-      updateFeedInventory(updatedInventory);
-      saveToDatabase(updatedInventory);
-      setDeleteConfirm(null);
-    } else {
-      setDeleteConfirm(id);
-      setTimeout(() => setDeleteConfirm(null), 3000);
-    }
+    // Form is already reset above on success
+    submittingState.setFalse();
+    clearAllErrors();
   };
 
   return (
@@ -245,135 +372,93 @@ export const FeedTracker = () => {
         <AnimatedFeedPNG />
       </motion.div>
 
-      <motion.div 
-        id="addFeedForm"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="neu-form"
+      <FormCard
+        title="Add New Feed"
+        error={errorMsg || undefined}
+        validationErrors={errors}
       >
-        <h2 className="neu-title">Add New Feed</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="brand">
-                Brand Name
-              </label>
-              <input
-                id="brand"
-                type="text"
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
-                className="neu-input"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="type">
-                Feed Type
-              </label>
-              <select
-                id="type"
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-                className="neu-input"
-              >
-                {FEED_TYPES.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-          </div>
+          <FormRow>
+            <TextInput
+              label="Brand Name"
+              value={feedForm.values.brand}
+              onChange={(value) => {
+                feedForm.setValue('brand', value);
+                clearFieldError('brand');
+              }}
+              validation={errors.filter(e => e.field === 'brand')}
+              required
+            />
+            <SelectInput
+              label="Feed Type"
+              value={feedForm.values.type}
+              onChange={(value) => feedForm.setValue('type', value)}
+              options={FEED_TYPES.map(feedType => ({ value: feedType, label: feedType }))}
+            />
+          </FormRow>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="quantity">
-                Quantity
-              </label>
-              <input
-                id="quantity"
-                type="number"
-                step="0.1"
-                min="0"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                className="neu-input"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="unit">
-                Unit
-              </label>
-              <select
-                id="unit"
-                value={unit}
-                onChange={(e) => setUnit(e.target.value as 'kg' | 'lbs')}
-                className="neu-input"
-              >
-                <option value="kg">Kilograms (kg)</option>
-                <option value="lbs">Pounds (lbs)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="pricePerUnit">
-                Price per Unit
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <span className="text-gray-500">$</span>
-                </div>
-                <input
-                  id="pricePerUnit"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={pricePerUnit}
-                  onChange={(e) => setPricePerUnit(e.target.value)}
-                  className="neu-input pl-8"
-                  required
-                />
-              </div>
-            </div>
+            <NumberInput
+              label="Quantity"
+              value={parseFloat(feedForm.values.quantity) || 0}
+              onChange={(value) => {
+                feedForm.setValue('quantity', value.toString());
+                clearFieldError('quantity');
+              }}
+              min={0}
+              step={0.1}
+              validation={errors.filter(e => e.field === 'quantity')}
+              required
+            />
+            <SelectInput
+              label="Unit"
+              value={feedForm.values.unit}
+              onChange={(value) => feedForm.setValue('unit', value as 'kg' | 'lbs')}
+              options={[
+                { value: 'kg', label: 'Kilograms (kg)' },
+                { value: 'lbs', label: 'Pounds (lbs)' }
+              ]}
+            />
+            <NumberInput
+              label="Price per Unit"
+              value={parseFloat(feedForm.values.pricePerUnit) || 0}
+              onChange={(value) => {
+                feedForm.setValue('pricePerUnit', value.toString());
+                clearFieldError('pricePerUnit');
+              }}
+              min={0}
+              step={0.01}
+              prefix="$"
+              validation={errors.filter(e => e.field === 'pricePerUnit')}
+              required
+            />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="openedDate">
-                Purchase Date
-              </label>
-              <input
-                id="openedDate"
-                type="date"
-                value={openedDate}
-                onChange={(e) => setOpenedDate(e.target.value)}
-                className="neu-input"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="batchNumber">
-                Batch Number (Optional)
-              </label>
-              <input
-                id="batchNumber"
-                type="text"
-                value={batchNumber}
-                onChange={(e) => setBatchNumber(e.target.value)}
-                className="neu-input"
-              />
-            </div>
-          </div>
+          <FormRow>
+            <DateInput
+              label="Purchase Date"
+              value={feedForm.values.openedDate}
+              onChange={(value) => feedForm.setValue('openedDate', value)}
+              required
+            />
+            <TextInput
+              label="Batch Number (Optional)"
+              value={feedForm.values.batchNumber}
+              onChange={(value) => feedForm.setValue('batchNumber', value)}
+            />
+          </FormRow>
 
-          <button type="submit" className="neu-button full-width md:w-auto md:min-w-[200px]">
-            Add Feed to Inventory
-          </button>
-        </form>        {errorMsg && (
-          <div className="text-red-600 font-semibold mb-4">{errorMsg}</div>
-        )}
-      </motion.div>
+          <SubmitButton
+            isLoading={submittingState.value}
+            loadingText="Adding Feed..."
+            text="Add Feed to Inventory"
+            className="md:w-auto md:min-w-[200px]"
+          />
+        </form>
+      </FormCard>
 
       {/* Feed Consumption Estimator */}
-      {showEstimator && flockProfile && (
+      {showEstimator.value && flockProfile && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -384,16 +469,20 @@ export const FeedTracker = () => {
             {/* Current Flock Overview */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800">Current Flock</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-yellow-50 rounded-lg text-center">
-                  <div className="text-2xl font-bold text-yellow-600">{flockProfile.chicks}</div>
-                  <div className="text-sm text-gray-600">Baby Chicks</div>
-                </div>
-                <div className="p-4 bg-blue-50 rounded-lg text-center">
-                  <div className="text-2xl font-bold text-blue-600">{flockProfile.hens + flockProfile.roosters}</div>
-                  <div className="text-sm text-gray-600">Adult Birds</div>
-                </div>
-              </div>
+              <GridContainer columns={2} gap="md">
+                <StatCard
+                  title="Baby Chicks"
+                  value={flockProfile.chicks.toString()}
+                  variant="warning"
+                  animated
+                />
+                <StatCard
+                  title="Adult Birds"
+                  value={(flockProfile.hens + flockProfile.roosters).toString()}
+                  variant="info"
+                  animated
+                />
+              </GridContainer>
               
               {(() => {
                 const futureNeeds = estimateFutureNeeds(30);
@@ -512,7 +601,7 @@ export const FeedTracker = () => {
                         <div key={type}>
                           <span className="font-medium text-green-700">{type}:</span>
                           <div className="text-green-600">
-                            {data.avgDailyConsumption.toFixed(2)} {unit}/day avg
+                            {data.avgDailyConsumption.toFixed(2)} kg/day avg
                           </div>
                           <div className="text-green-500 text-xs">
                             ${data.avgDailyCost.toFixed(2)}/day • {data.count} cycles
@@ -538,75 +627,20 @@ export const FeedTracker = () => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Feed Inventory</h2>
           <button
-            onClick={() => setShowEstimator(!showEstimator)}
+            onClick={showEstimator.toggle}
             className="neu-button"
           >
-            {showEstimator ? 'Hide Analysis' : 'Show Feed Analysis'}
+            {showEstimator.value ? 'Hide Analysis' : 'Show Feed Analysis'}
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead>
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Brand</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Type</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Quantity</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Price</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Opened</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Duration</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {feedInventory.map((feed) => (
-                <motion.tr
-                  key={feed.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="hover:bg-gray-50/50 transition-colors"
-                >
-                  <td className="px-6 py-4 text-sm text-gray-600">{feed.brand}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{feed.type}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {feed.quantity} {feed.unit}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    ${(feed.quantity * feed.pricePerUnit).toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{feed.openedDate}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {feed.depletedDate ? (
-                      `${calculateDuration(feed.openedDate, feed.depletedDate)} days`
-                    ) : (
-                      <button
-                        onClick={() => handleDepleteFeed(feed.id)}
-                        className="text-indigo-600 hover:text-indigo-700"
-                      >
-                        Mark Depleted
-                      </button>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-sm">
-                    <button
-                      onClick={() => handleDelete(feed.id)}
-                      className={`inline-flex items-center p-2 rounded-full
-                        ${deleteConfirm === feed.id
-                          ? 'text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100'
-                          : 'text-gray-400 hover:text-gray-500 hover:bg-gray-100'
-                        } transition-colors`}
-                      title={deleteConfirm === feed.id ? "Click again to confirm deletion" : "Delete feed"}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          data={feedInventory}
+          columns={tableColumns}
+          loading={inventoryLoading}
+          emptyMessage="No feed inventory found"
+          className="w-full"
+        />
       </motion.div>
     </motion.div>
   );

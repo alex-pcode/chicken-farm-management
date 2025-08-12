@@ -32,3 +32,8 @@ dist-ssr
 
 .vercel
 .env.vercel
+
+# Claude Code and BMad configuration
+.bmad-core
+.claude
+.docs

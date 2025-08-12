@@ -8,6 +8,7 @@ import { Profile } from './components/Profile'
 import { CRM } from './components/CRM'
 import { ChickenViability } from './components/ChickenViability'
 import { FeedCostCalculator } from './components/FeedCostCalculator'
+import { FlockBatchManager } from './components/FlockBatchManager'
 import { motion } from 'framer-motion'
 import { StatCard } from './components/testCom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
@@ -440,6 +441,7 @@ const MainApp = () => {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/flock-batches" element={<FlockBatchManager />} />
           <Route path="/egg-counter" element={<EggCounter />} />
           <Route path="/crm" element={<CRM />} />
           <Route path="/expenses" element={<Expenses />} />

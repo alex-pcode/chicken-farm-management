@@ -1,0 +1,356 @@
+/**
+ * Chicken Viability Calculator Styles
+ * WordPress-compatible CSS (converted from Tailwind)
+ */
+
+/* Container and Layout */
+.cvc-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Header Styles */
+.cvc-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.cvc-title {
+    font-size: 2rem;
+    font-weight: bold;
+    background: linear-gradient(to right, #4f46e5, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.cvc-subtitle {
+    color: #6b7280;
+    margin-top: 0.5rem;
+}
+
+/* Glass Card Effect */
+.cvc-glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Section Titles */
+.cvc-section-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #111827;
+    margin-bottom: 1.5rem;
+}
+
+/* Grid Layouts */
+.cvc-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.cvc-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.cvc-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Info Boxes */
+.cvc-info-box {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 1px solid;
+}
+
+.cvc-info-blue {
+    background-color: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.cvc-info-green {
+    background-color: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
+.cvc-info-orange {
+    background-color: #fff7ed;
+    border-color: #fed7aa;
+}
+
+.cvc-info-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.cvc-info-icon {
+    font-size: 1.125rem;
+    margin-top: 0.125rem;
+}
+
+.cvc-info-title {
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+.cvc-info-text {
+    font-size: 0.875rem;
+    color: #374151;
+    line-height: 1.5;
+}
+
+/* Option Cards */
+.cvc-option-card {
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.cvc-option-card:hover {
+    background: #f9fafb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.cvc-option-card.cvc-selected {
+    border-color: #4f46e5;
+    background: #eef2ff;
+    box-shadow: 0 0 0 1px #4f46e5;
+}
+
+.cvc-option-content {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.cvc-option-price {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #4f46e5;
+    margin-bottom: 0.5rem;
+}
+
+.cvc-option-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+.cvc-option-description {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 1rem;
+}
+
+.cvc-option-details {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.cvc-option-details li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.cvc-checkmark {
+    color: #10b981;
+    margin-top: 0.125rem;
+}
+
+/* Form Elements */
+.cvc-input-field {
+    margin-bottom: 1rem;
+}
+
+.cvc-label {
+    display: block;
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.cvc-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.9);
+    transition: all 0.2s ease;
+}
+
+.cvc-input:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.cvc-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.cvc-input-suffix {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+/* Custom Amount Section */
+.cvc-custom-amount {
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    margin-top: 1.5rem;
+}
+
+/* Results Section */
+.cvc-results-section {
+    background: linear-gradient(to right, #eff6ff, #eef2ff);
+    border-color: #bfdbfe;
+}
+
+.cvc-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.cvc-stat-card {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.cvc-stat-title {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+.cvc-stat-value {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #111827;
+}
+
+.cvc-stat-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+.cvc-profit-positive {
+    color: #059669;
+}
+
+.cvc-profit-negative {
+    color: #dc2626;
+}
+
+/* Assessment Section */
+.cvc-assessment-section {
+    background: linear-gradient(to right, #f0fdf4, #ecfdf5);
+    border-color: #bbf7d0;
+}
+
+.cvc-assessment-point {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.cvc-assessment-icon {
+    font-size: 1.125rem;
+    margin-top: 0.125rem;
+}
+
+.cvc-assessment-title {
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.25rem;
+}
+
+.cvc-assessment-text {
+    font-size: 0.875rem;
+    color: #374151;
+    line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .cvc-container {
+        padding: 0 1rem;
+    }
+    
+    .cvc-title {
+        font-size: 1.5rem;
+    }
+    
+    .cvc-section-title {
+        font-size: 1.25rem;
+    }
+    
+    .cvc-grid-3,
+    .cvc-grid-4 {
+        grid-template-columns: 1fr;
+    }
+    
+    .cvc-glass-card {
+        padding: 1rem;
+    }
+}
+
+/* Loading and Animation States */
+.cvc-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.cvc-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { fetchData } from '../utils/authApiUtils';
+import { apiService } from '../services/api';
 import type { EggEntry, Expense, FeedEntry, FlockProfile, FlockEvent } from '../types';
 
 import type { Customer, SaleWithCustomer, SalesSummary } from '../types/crm';
@@ -57,17 +57,18 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     setError(null);
     
     try {
-      const dbData = await fetchData();
+      const response = await apiService.data.fetchAllData();
+      const dbData = response.data;
       
       setData({
-        eggEntries: dbData.eggEntries || [],
-        expenses: dbData.expenses || [],
-        feedInventory: dbData.feedInventory || [],
-        flockProfile: dbData.flockProfile || null,
-        flockEvents: dbData.flockEvents || [],
-        customers: dbData.customers || [],
-        sales: dbData.sales || [],
-        summary: dbData.summary || undefined
+        eggEntries: dbData?.eggEntries || [],
+        expenses: dbData?.expenses || [],
+        feedInventory: dbData?.feedInventory || [],
+        flockProfile: dbData?.flockProfile || null,
+        flockEvents: dbData?.flockEvents || [],
+        customers: dbData?.customers || [],
+        sales: dbData?.sales || [],
+        summary: dbData?.summary || undefined
       });
       
       setLastFetched(new Date());
