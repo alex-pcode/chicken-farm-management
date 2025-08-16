@@ -1,0 +1,354 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Missing required Supabase environment variables');
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Helper function to get user from authorization header
+async function getAuthenticatedUser(req: VercelRequest) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return null;
+  
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  return error ? null : user;
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (!['POST', 'DELETE'].includes(req.method || '')) {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
+
+  try {
+    // Get authenticated user
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized - Please log in' });
+    }
+
+    // Set the user session on the Supabase client for RLS policies
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+    if (token) {
+      await supabase.auth.setSession({
+        access_token: token,
+        refresh_token: '',
+      });
+    }
+
+    const { operation, table } = req.query;
+
+    if (req.method === 'POST') {
+      return await handleSave(user, operation as string, table as string, req.body, res);
+    } else if (req.method === 'DELETE') {
+      return await handleDelete(user, operation as string, table as string, req.body, res);
+    }
+  } catch (error) {
+    console.error('Error in CRUD endpoint:', error);
+    res.status(500).json({
+      message: 'Error processing request',
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+}
+
+// Handle save operations (create/update)
+async function handleSave(user: any, operation: string, table: string, body: any, res: VercelResponse) {
+  switch (operation) {
+    case 'eggs':
+    case 'eggEntries':
+      return await saveEggEntries(user, body, res);
+    case 'expenses':
+      return await saveExpenses(user, body, res);
+    case 'feed':
+    case 'feedInventory':
+      return await saveFeedInventory(user, body, res);
+    case 'flockEvents':
+      return await saveFlockEvents(user, body, res);
+    case 'flockProfile':
+      return await saveFlockProfile(user, body, res);
+    default:
+      return res.status(400).json({ message: 'Invalid operation' });
+  }
+}
+
+// Handle delete operations
+async function handleDelete(user: any, operation: string, table: string, body: any, res: VercelResponse) {
+  const { id } = body;
+  if (!id) {
+    return res.status(400).json({ message: 'ID is required for delete operations' });
+  }
+
+  switch (operation) {
+    case 'expenses':
+      return await deleteExpense(user, id, res);
+    case 'feed':
+    case 'feedInventory':
+      return await deleteFeedInventory(user, id, res);
+    case 'flockEvents':
+      return await deleteFlockEvent(user, id, res);
+    default:
+      return res.status(400).json({ message: 'Invalid delete operation' });
+  }
+}
+
+// Save egg entries
+async function saveEggEntries(user: any, eggData: any, res: VercelResponse) {
+  const eggWithUser = Array.isArray(eggData) 
+    ? eggData.map(egg => ({ 
+        user_id: user.id,
+        date: egg.date,
+        count: egg.count,
+        ...(egg.id && { id: egg.id })
+      }))
+    : {
+        user_id: user.id,
+        date: eggData.date,
+        count: eggData.count,
+        ...(eggData.id && { id: eggData.id })
+      };
+
+  const { data, error } = await supabase
+    .from('egg_entries')
+    .upsert(eggWithUser, { onConflict: 'id' })
+    .select();
+
+  if (error) {
+    throw new Error(`Database upsert error: ${error.message}`);
+  }
+
+  res.status(200).json({ 
+    message: 'Egg entries saved successfully', 
+    data: { eggEntries: data },
+    timestamp: new Date().toISOString()
+  });
+}
+
+// Save expenses
+async function saveExpenses(user: any, expenseData: any, res: VercelResponse) {
+  const expenseWithUser = Array.isArray(expenseData) 
+    ? expenseData.map(expense => {
+        const mapped: any = { 
+          user_id: user.id,
+          category: expense.category,
+          amount: expense.amount,
+          date: expense.date,
+          description: expense.description
+        };
+        if (expense.id) mapped.id = expense.id;
+        if (expense.created_at) mapped.created_at = expense.created_at;
+        return mapped;
+      })
+    : {
+        user_id: user.id,
+        category: expenseData.category,
+        amount: expenseData.amount,
+        date: expenseData.date,
+        description: expenseData.description,
+        ...(expenseData.id && { id: expenseData.id }),
+        ...(expenseData.created_at && { created_at: expenseData.created_at })
+      };
+
+  const { data, error } = await supabase
+    .from('expenses')
+    .upsert(expenseWithUser, { onConflict: 'id' })
+    .select();
+
+  if (error) {
+    throw new Error(`Database upsert error: ${error.message}`);
+  }
+
+  res.status(200).json({ 
+    message: 'Expenses saved successfully', 
+    data: { expenses: data },
+    timestamp: new Date().toISOString()
+  });
+}
+
+// Save feed inventory
+async function saveFeedInventory(user: any, feedData: any, res: VercelResponse) {
+  const feedWithUser = Array.isArray(feedData) 
+    ? feedData.map(feed => ({
+        user_id: user.id,
+        name: feed.brand || feed.name,
+        type: feed.type || 'Layer Feed',
+        quantity: feed.quantity,
+        unit: feed.unit || 'lbs',
+        cost_per_unit: feed.pricePerUnit || feed.cost_per_unit,
+        purchase_date: feed.openedDate || feed.purchase_date,
+        expiry_date: feed.depletedDate || feed.expiry_date,
+        batch_number: feed.batchNumber || feed.batch_number || '',
+        ...(feed.id && { id: feed.id })
+      }))
+    : {
+        user_id: user.id,
+        name: feedData.brand || feedData.name,
+        type: feedData.type || 'Layer Feed',
+        quantity: feedData.quantity,
+        unit: feedData.unit || 'lbs',
+        cost_per_unit: feedData.pricePerUnit || feedData.cost_per_unit,
+        purchase_date: feedData.openedDate || feedData.purchase_date,
+        expiry_date: feedData.depletedDate || feedData.expiry_date,
+        batch_number: feedData.batchNumber || feedData.batch_number || '',
+        ...(feedData.id && { id: feedData.id })
+      };
+
+  const { data, error } = await supabase
+    .from('feed_inventory')
+    .upsert(feedWithUser, { onConflict: 'id' })
+    .select();
+
+  if (error) {
+    throw new Error(`Database upsert error: ${error.message}`);
+  }
+
+  res.status(200).json({ 
+    message: 'Feed inventory saved successfully', 
+    data: { feedInventory: data },
+    timestamp: new Date().toISOString()
+  });
+}
+
+// Save flock events
+async function saveFlockEvents(user: any, eventData: any, res: VercelResponse) {
+  const eventWithUser = Array.isArray(eventData) 
+    ? eventData.map(event => ({
+        user_id: user.id,
+        flock_profile_id: event.flock_profile_id || event.flockProfileId,
+        date: event.date,
+        type: event.type,
+        description: event.description,
+        affected_birds: event.affected_birds || event.affectedBirds,
+        notes: event.notes,
+        ...(event.id && { id: event.id })
+      }))
+    : {
+        user_id: user.id,
+        flock_profile_id: eventData.flock_profile_id || eventData.flockProfileId,
+        date: eventData.date,
+        type: eventData.type,
+        description: eventData.description,
+        affected_birds: eventData.affected_birds || eventData.affectedBirds,
+        notes: eventData.notes,
+        ...(eventData.id && { id: eventData.id })
+      };
+
+  const { data, error } = await supabase
+    .from('flock_events')
+    .upsert(eventWithUser, { onConflict: 'id' })
+    .select();
+
+  if (error) {
+    throw new Error(`Database upsert error: ${error.message}`);
+  }
+
+  res.status(200).json({ 
+    message: 'Flock events saved successfully', 
+    data: { flockEvents: data },
+    timestamp: new Date().toISOString()
+  });
+}
+
+// Save flock profile
+async function saveFlockProfile(user: any, profileData: any, res: VercelResponse) {
+  const profileWithUser = {
+    user_id: user.id,
+    farm_name: profileData.farmName || profileData.farm_name,
+    location: profileData.location,
+    flock_size: profileData.flockSize || profileData.flock_size,
+    breed: Array.isArray(profileData.breedTypes) 
+      ? profileData.breedTypes.join(', ') 
+      : profileData.breed,
+    start_date: profileData.flockStartDate || profileData.start_date,
+    notes: profileData.notes || '',
+    hens: profileData.hens || 0,
+    roosters: profileData.roosters || 0,
+    chicks: profileData.chicks || 0,
+    brooding: profileData.brooding || 0,
+    ...(profileData.id && { id: profileData.id })
+  };
+
+  const { data, error } = await supabase
+    .from('flock_profiles')
+    .upsert(profileWithUser, { onConflict: 'id' })
+    .select();
+
+  if (error) {
+    throw new Error(`Database upsert error: ${error.message}`);
+  }
+
+  res.status(200).json({ 
+    message: 'Flock profile saved successfully', 
+    data: { flockProfile: data?.[0] },
+    timestamp: new Date().toISOString()
+  });
+}
+
+// Delete expense
+async function deleteExpense(user: any, id: string, res: VercelResponse) {
+  const { error } = await supabase
+    .from('expenses')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  if (error) {
+    throw new Error(`Database delete error: ${error.message}`);
+  }
+
+  res.status(200).json({
+    message: 'Expense deleted successfully',
+    timestamp: new Date().toISOString()
+  });
+}
+
+// Delete feed inventory
+async function deleteFeedInventory(user: any, id: string, res: VercelResponse) {
+  const { error } = await supabase
+    .from('feed_inventory')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  if (error) {
+    throw new Error(`Database delete error: ${error.message}`);
+  }
+
+  res.status(200).json({
+    message: 'Feed inventory item deleted successfully',
+    timestamp: new Date().toISOString()
+  });
+}
+
+// Delete flock event
+async function deleteFlockEvent(user: any, id: string, res: VercelResponse) {
+  const { error } = await supabase
+    .from('flock_events')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  if (error) {
+    throw new Error(`Database delete error: ${error.message}`);
+  }
+
+  res.status(200).json({
+    message: 'Flock event deleted successfully',
+    timestamp: new Date().toISOString()
+  });
+}

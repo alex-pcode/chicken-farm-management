@@ -70,7 +70,7 @@ export const getAuthHeaders = async () => {
  */
 export const fetchData = async (): Promise<unknown> => {
   try {
-    const response = await fetch('/api/getData', {
+    const response = await fetch('/api/data?type=all', {
       method: 'GET',
       headers: await getAuthHeaders(),
     });
@@ -119,7 +119,7 @@ export const fetchData = async (): Promise<unknown> => {
  */
 export const saveEggEntries = async (entries: EggEntry[]): Promise<EggEntriesResponse> => {
   try {
-    const response = await fetch('/api/saveEggEntries', {
+    const response = await fetch('/api/crud?operation=eggs', {
       method: 'POST',
       headers: await getAuthHeaders(),
       body: JSON.stringify(entries),
@@ -168,7 +168,7 @@ export const saveEggEntries = async (entries: EggEntry[]): Promise<EggEntriesRes
  */
 export const saveExpenses = async (expenses: Expense[]): Promise<ExpensesResponse> => {
   try {
-    const response = await fetch('/api/saveExpenses', {
+    const response = await fetch('/api/crud?operation=expenses', {
       method: 'POST',
       headers: await getAuthHeaders(),
       body: JSON.stringify(expenses),
@@ -220,7 +220,7 @@ export const saveExpenses = async (expenses: Expense[]): Promise<ExpensesRespons
  */
 export const saveFeedInventory = async (inventory: FeedEntry[]): Promise<FeedInventoryResponse> => {
   try {
-    const response = await fetch('/api/saveFeedInventory', {
+    const response = await fetch('/api/crud?operation=feed', {
       method: 'POST',
       headers: await getAuthHeaders(),
       body: JSON.stringify(inventory),
@@ -271,7 +271,7 @@ export const saveFeedInventory = async (inventory: FeedEntry[]): Promise<FeedInv
  */
 export const saveFlockProfile = async (profile: FlockProfile): Promise<FlockProfileResponse> => {
   try {
-    const response = await fetch('/api/saveFlockProfile', {
+    const response = await fetch('/api/crud?operation=flockProfile', {
       method: 'POST',
       headers: await getAuthHeaders(),
       body: JSON.stringify(profile),
@@ -321,7 +321,7 @@ export const saveFlockProfile = async (profile: FlockProfile): Promise<FlockProf
  */
 export const saveFlockEvents = async (events: FlockEvent[]): Promise<FlockEventsResponse> => {
   try {
-    const response = await fetch('/api/saveFlockEvents', {
+    const response = await fetch('/api/crud?operation=flockEvents', {
       method: 'POST',
       headers: await getAuthHeaders(),
       body: JSON.stringify(events),
@@ -367,10 +367,10 @@ export const saveFlockEvents = async (events: FlockEvent[]): Promise<FlockEvents
  */
 export const deleteFlockEvent = async (eventId: string): Promise<DeleteEventResponse> => {
   try {
-    const response = await fetch('/api/deleteFlockEvent', {
+    const response = await fetch('/api/crud?operation=flockEvents', {
       method: 'DELETE',
       headers: await getAuthHeaders(),
-      body: JSON.stringify({ eventId }),
+      body: JSON.stringify({ id: eventId }),
     });
 
     if (!response.ok) {
@@ -418,11 +418,11 @@ export const deleteFlockEvent = async (eventId: string): Promise<DeleteEventResp
  */
 export const saveFlockEvent = async (flockProfileId: string, event: FlockEvent, eventId?: string): Promise<FlockEventResponse> => {
   try {
-    const method = eventId ? 'PUT' : 'POST';
-    const response = await fetch('/api/saveFlockEvents', {
-      method,
+    const eventWithProfile = { ...event, flock_profile_id: flockProfileId, id: eventId };
+    const response = await fetch('/api/crud?operation=flockEvents', {
+      method: 'POST',
       headers: await getAuthHeaders(),
-      body: JSON.stringify({ flockProfileId, event, eventId }),
+      body: JSON.stringify(eventWithProfile),
     });
 
     if (!response.ok) {
@@ -488,6 +488,76 @@ export const migrateUserData = async (): Promise<MigrationResponse> => {
     }
     
     throw new ServerError('Failed to migrate user data. Please try again.');
+  }
+};
+
+/**
+ * Deletes an expense from the database
+ * @param expenseId - ID of the expense to delete
+ * @returns Promise resolving to API response confirming deletion
+ */
+export const deleteExpense = async (expenseId: string): Promise<DeleteEventResponse> => {
+  try {
+    const response = await fetch('/api/crud?operation=expenses', {
+      method: 'DELETE',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ id: expenseId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result: DeleteEventResponse = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Error deleting expense:', error);
+    
+    if (error instanceof Error && error.message.includes('not authenticated')) {
+      await supabase.auth.signOut();
+      throw new AuthenticationError(getUserFriendlyErrorMessage(error));
+    }
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new NetworkError('Unable to delete expense. Please check your connection.');
+    }
+    
+    throw new ServerError('Failed to delete expense. Please try again.');
+  }
+};
+
+/**
+ * Deletes a feed inventory item from the database
+ * @param feedId - ID of the feed inventory item to delete
+ * @returns Promise resolving to API response confirming deletion
+ */
+export const deleteFeedInventory = async (feedId: string): Promise<DeleteEventResponse> => {
+  try {
+    const response = await fetch('/api/crud?operation=feed', {
+      method: 'DELETE',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ id: feedId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result: DeleteEventResponse = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Error deleting feed inventory:', error);
+    
+    if (error instanceof Error && error.message.includes('not authenticated')) {
+      await supabase.auth.signOut();
+      throw new AuthenticationError(getUserFriendlyErrorMessage(error));
+    }
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      throw new NetworkError('Unable to delete feed inventory. Please check your connection.');
+    }
+    
+    throw new ServerError('Failed to delete feed inventory. Please try again.');
   }
 };
 
