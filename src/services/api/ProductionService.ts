@@ -22,14 +22,14 @@ export class ProductionService extends BaseApiService implements IProductionServ
    * Get egg entries from database
    */
   public async getEggEntries(): Promise<ApiResponse> {
-    // Use the existing getData endpoint and extract eggEntries
-    const response = await this.get('/getData');
+    // Use the production data endpoint which returns { eggEntries: [...] }
+    const response = await this.get('/data?type=production');
     if (response.data && typeof response.data === 'object' && 'eggEntries' in response.data) {
       const responseData = response.data as { eggEntries: EggEntry[] };
       return {
         success: true,
         data: responseData.eggEntries,
-        message: 'Egg entries extracted from full data response'
+        message: 'Egg entries fetched successfully'
       };
     }
 
@@ -45,28 +45,28 @@ export class ProductionService extends BaseApiService implements IProductionServ
    * Save egg entries to database
    */
   public async saveEggEntries(entries: EggEntry[]): Promise<ApiResponse> {
-    return this.post('/saveEggEntries', entries);
+    return this.post('/crud?operation=eggs', entries);
   }
 
   /**
    * Save feed inventory to database
    */
   public async saveFeedInventory(inventory: FeedEntry[]): Promise<ApiResponse> {
-    return this.post('/saveFeedInventory', inventory);
+    return this.post('/crud?operation=feed', inventory);
   }
 
   /**
    * Get expenses from database
    */
   public async getExpenses(): Promise<ApiResponse> {
-    // Use the existing getData endpoint and extract expenses
-    const response = await this.get('/getData');
+    // Use the expenses data endpoint which returns { expenses: [...] }
+    const response = await this.get('/data?type=expenses');
     if (response.data && typeof response.data === 'object' && 'expenses' in response.data) {
       const responseData = response.data as { expenses: Expense[] };
       return {
         success: true,
         data: responseData.expenses,
-        message: 'Expenses extracted from full data response'
+        message: 'Expenses fetched successfully'
       };
     }
 
@@ -82,21 +82,21 @@ export class ProductionService extends BaseApiService implements IProductionServ
    * Save expenses to database
    */
   public async saveExpenses(expenses: Expense[]): Promise<ApiResponse> {
-    return this.post('/saveExpenses', expenses);
+    return this.post('/crud?operation=expenses', expenses);
   }
 
   /**
    * Delete expense by ID
    */
   public async deleteExpense(expenseId: string): Promise<ApiResponse> {
-    return this.delete('/deleteExpense', { expenseId });
+    return this.delete('/crud?operation=expenses', { id: expenseId });
   }
 
   /**
    * Delete feed inventory item
    */
   public async deleteFeedInventory(feedId: string): Promise<ApiResponse> {
-    return this.delete('/deleteFeedInventory', { feedId });
+    return this.delete('/crud?operation=feed', { id: feedId });
   }
 
   /**

@@ -22,14 +22,14 @@ export class FlockService extends BaseApiService implements IFlockService {
    * Save flock profile to database
    */
   public async saveFlockProfile(profile: FlockProfile): Promise<ApiResponse> {
-    return this.post('/saveFlockProfile', profile);
+    return this.post('/crud?operation=flockProfile', profile);
   }
 
   /**
    * Save multiple flock events to database
    */
   public async saveFlockEvents(events: FlockEvent[]): Promise<ApiResponse> {
-    return this.post('/saveFlockEvents', events);
+    return this.post('/crud?operation=flockEvents', events);
   }
 
   /**
@@ -41,20 +41,15 @@ export class FlockService extends BaseApiService implements IFlockService {
     eventId?: string
   ): Promise<ApiResponse> {
     const method = eventId ? 'PUT' : 'POST';
-    const requestData = { flockProfileId, event, eventId };
-    
-    if (method === 'PUT') {
-      return this.put('/saveFlockEvents', requestData);
-    } else {
-      return this.post('/saveFlockEvents', requestData);
-    }
+    const eventWithProfile = { ...event, flock_profile_id: flockProfileId, id: eventId };
+    return this.post('/crud?operation=flockEvents', eventWithProfile);
   }
 
   /**
    * Delete a flock event
    */
   public async deleteFlockEvent(eventId: string): Promise<ApiResponse> {
-    return this.delete('/deleteFlockEvent', { eventId });
+    return this.delete('/crud?operation=flockEvents', { id: eventId });
   }
 
   /**

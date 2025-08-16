@@ -60,7 +60,7 @@ export class DataService extends BaseApiService implements IDataService {
       flockEvents?: FlockEvent[];
       flockBatches?: FlockBatch[];
       deathRecords?: DeathRecord[];
-    }>('/getData', this.isAppData.bind(this));
+    }>('/data?type=all', this.isAppData.bind(this));
 
     // Normalize the response structure - API returns { data: { ... } } 
     // but components expect direct access to the nested data
