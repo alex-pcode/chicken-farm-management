@@ -1,6 +1,6 @@
 // Feature Flag System Tests
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { FeatureFlagProvider, useFeatureFlags, Feature } from '../FeatureFlagProvider'
 import { featureFlags } from '../../utils/featureFlags'
 

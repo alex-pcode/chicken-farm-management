@@ -2,8 +2,6 @@
 import React from 'react'
 import { render, RenderOptions } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
-import { AuthProvider } from '../contexts/AuthContext'
-import { DataProvider } from '../contexts/DataContext'
 
 // Mock providers for testing
 const MockAuthProvider = ({ children }: { children: React.ReactNode }) => (

@@ -87,7 +87,6 @@ A comprehensive web application for managing your chicken flock, tracking egg pr
    VITE_SUPABASE_URL=your_supabase_project_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
    SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-   VITE_USE_LOCAL_STORAGE=false
    ```
    
    ⚠️ **Important**: Never commit your `.env` file to git. It's already excluded in `.gitignore`.
@@ -220,7 +219,6 @@ All API endpoints require authentication:
 VITE_SUPABASE_URL=your_production_supabase_url
 VITE_SUPABASE_ANON_KEY=your_production_supabase_key
 SUPABASE_SERVICE_ROLE_KEY=your_production_service_role_key
-VITE_USE_LOCAL_STORAGE=false
 ```
 
 ⚠️ **Security Note**: Set these in your Vercel dashboard, never commit them to git.

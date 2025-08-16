@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL!;
+const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 if (!supabaseUrl || !supabaseServiceKey) {
@@ -145,7 +145,7 @@ async function handleGet(req: VercelRequest, res: VercelResponse, userId: string
     const today = new Date();
     let layingReady = 0;
     let tooYoung = 0;
-    let brooding = 0;
+    const brooding = 0;
 
     flockBatches?.forEach(batch => {
       if (batch.type === 'hens') {

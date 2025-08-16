@@ -14,11 +14,11 @@ import type {
   DeleteEventResponse,
   MigrationResponse
 } from '../../types'
-import {
-  AuthenticationError,
-  NetworkError,
-  ServerError
-} from '../../types/api'
+//import {
+//  AuthenticationError,
+//  NetworkError,
+//  ServerError
+//} from '../../types/api'
 
 // Mock fetch globally
 global.fetch = vi.fn()
@@ -200,7 +200,7 @@ describe('Auth API Utils - Type Safety', () => {
       const event: FlockEvent = {
         id: '1',
         date: '2025-08-09',
-        type: 'health_check',
+        type: 'other',
         description: 'Monthly health inspection'
       }
 

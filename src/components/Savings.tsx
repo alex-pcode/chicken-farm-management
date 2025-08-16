@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { useAppData } from '../contexts/DataContext';
+import { useOptimizedAppData } from '../contexts/OptimizedDataProvider';
 import { StatCard } from './testCom';
 import { LoadingSpinner } from './LoadingSpinner';
 import AnimatedSavingsPNG from './AnimatedSavingsPNG';
@@ -8,7 +8,7 @@ import AnimatedSavingsPNG from './AnimatedSavingsPNG';
 type TimePeriod = 'all' | 'month' | 'year' | 'custom';
 
 export const Savings = () => {
-  const { data, isLoading } = useAppData();
+  const { data, isLoading } = useOptimizedAppData();
   const [eggPrice, setEggPrice] = useState('0.30'); // Default price per egg
   const [startingCost, setStartingCost] = useState('0.00'); // Default starting cost
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
@@ -140,7 +140,7 @@ export const Savings = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="w-full"
+        className="w-full mt-5 mb-0"
       >
         <AnimatedSavingsPNG />
       </motion.div>

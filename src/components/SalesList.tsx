@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Customer, SaleWithCustomer } from '../types/crm';
-import { getAuthHeaders } from '../utils/authApiUtils';
+import { apiService } from '../services/api';
 
 interface SalesListProps {
   sales: SaleWithCustomer[];
@@ -53,11 +53,8 @@ export const SalesList = ({ sales, customers, onDataChange }: SalesListProps) =>
     setError(null);
 
     try {
-      const headers = await getAuthHeaders();
-      
       // Convert eggs back to dozens and individual
       const saleData = {
-        id: editingSale.id,
         customer_id: formData.customer_id,
         sale_date: formData.sale_date,
         dozen_count: Math.floor(formData.eggs_count / 12),
@@ -66,16 +63,7 @@ export const SalesList = ({ sales, customers, onDataChange }: SalesListProps) =>
         notes: formData.notes
       };
 
-      const response = await fetch('/api/sales', {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(saleData)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update sale');
-      }
+      await apiService.crm.updateSale(editingSale.id, saleData);
 
       resetForm();
       onDataChange();

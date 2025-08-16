@@ -6,7 +6,7 @@ export const measurePerformance = (name: string) => {
   return Sentry.startSpan({ name }, (span) => {
     return {
       finish: () => span?.end(),
-      addData: (key: string, value: any) => span?.setData(key, value),
+      addData: (key: string, value: any) => span?.setAttributes({ [key]: value }),
     }
   })
 }
@@ -70,7 +70,8 @@ export const trackUserExperienceIssue = (issue: {
   component?: string
   epic?: string
 }) => {
-  Sentry.captureMessage(`UX Issue: ${issue.type}`, 'warning', {
+  Sentry.captureMessage(`UX Issue: ${issue.type}`, {
+    level: 'warning',
     tags: {
       issue_type: 'ux_degradation',
       refactoring_epic: issue.epic,
@@ -95,7 +96,8 @@ export const trackPerformanceRegression = (metric: {
   const regression = ((metric.value - metric.baseline) / metric.baseline) * 100
   
   if (regression > metric.threshold) {
-    Sentry.captureMessage(`Performance Regression: ${metric.name}`, 'warning', {
+    Sentry.captureMessage(`Performance Regression: ${metric.name}`, {
+      level: 'warning',
       tags: {
         issue_type: 'performance_regression',
         refactoring_epic: metric.epic,
@@ -115,7 +117,7 @@ export const trackPerformanceRegression = (metric: {
 // Web Vitals monitoring for user experience impact
 export const initializeWebVitalsMonitoring = () => {
   if (typeof window !== 'undefined') {
-    import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+    import('web-vitals').then(({ onCLS, onINP, onFCP, onLCP, onTTFB }) => {
       const sendVitalToSentry = (metric: any) => {
         Sentry.addBreadcrumb({
           category: 'web-vital',
@@ -137,11 +139,11 @@ export const initializeWebVitalsMonitoring = () => {
         }
       }
 
-      getCLS(sendVitalToSentry)
-      getFID(sendVitalToSentry)
-      getFCP(sendVitalToSentry)
-      getLCP(sendVitalToSentry)
-      getTTFB(sendVitalToSentry)
+      onCLS(sendVitalToSentry)
+      onINP(sendVitalToSentry)  // INP replaced FID in web-vitals v3+
+      onFCP(sendVitalToSentry)
+      onLCP(sendVitalToSentry)
+      onTTFB(sendVitalToSentry)
     }).catch(console.warn)
   }
 }

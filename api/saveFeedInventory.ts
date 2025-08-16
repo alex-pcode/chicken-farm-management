@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   throw new Error('Missing required Supabase environment variables');
@@ -42,43 +42,68 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const feedData = req.body;
-    console.log('Received feed inventory data:', feedData);
+    console.log('Received feed inventory data:', JSON.stringify(feedData, null, 2));
 
     // Map frontend fields to database fields and add user_id
-    const mappedFeedData = Array.isArray(feedData) ? feedData.map(item => ({
-      id: item.id,
+    const mappedFeedData = Array.isArray(feedData) ? feedData.map(item => {
+      const mapped = {
+        user_id: user.id,
+        name: item.brand, // Map 'brand' to 'name'
+        quantity: item.quantity,
+        unit: item.unit,
+        cost_per_unit: item.pricePerUnit, // Map 'pricePerUnit' to 'cost_per_unit'
+        purchase_date: item.openedDate, // Map 'openedDate' to 'purchase_date'
+        expiry_date: item.depletedDate, // Map 'depletedDate' to 'expiry_date'
+        updated_at: item.updatedAt || new Date().toISOString()
+      };
+      
+      // Only include ID if it exists (for updates)
+      if (item.id) {
+        mapped.id = item.id;
+      }
+      
+      // Include created_at if it exists (preserve original timestamp)
+      if (item.createdAt) {
+        mapped.created_at = item.createdAt;
+      }
+      
+      return mapped;
+    }) : [{
       user_id: user.id,
-      name: item.brand, // Map 'brand' to 'name'
-      quantity: item.quantity,
-      unit: item.unit,
-      cost_per_unit: item.pricePerUnit, // Map 'pricePerUnit' to 'cost_per_unit'
-      purchase_date: item.openedDate, // Map 'openedDate' to 'purchase_date'
-      expiry_date: item.depletedDate, // Map 'depletedDate' to 'expiry_date'
-      // Note: type and batch_number are not stored in current schema
-      created_at: item.createdAt,
-      updated_at: item.updatedAt || new Date().toISOString()
-    })) : [{
-      id: feedData.id,
       name: feedData.brand,
       quantity: feedData.quantity,
       unit: feedData.unit,
       cost_per_unit: feedData.pricePerUnit,
       purchase_date: feedData.openedDate,
       expiry_date: feedData.depletedDate,
-      created_at: feedData.createdAt,
-      updated_at: feedData.updatedAt || new Date().toISOString()
+      updated_at: feedData.updatedAt || new Date().toISOString(),
+      ...(feedData.id && { id: feedData.id }), // Only include ID if it exists
+      ...(feedData.createdAt && { created_at: feedData.createdAt })
     }];
 
-    // Upsert feed inventory items by id
-    const { data, error } = await supabase
-      .from('feed_inventory')
-      .upsert(mappedFeedData, { onConflict: 'id' });
+    // Use UPSERT to update existing entries or insert new ones
+    let data = null;
+    if (mappedFeedData.length > 0) {
+      console.log('Mapped feed data for UPSERT:', JSON.stringify(mappedFeedData, null, 2));
+      
+      const { data: upsertData, error: upsertError } = await supabase
+        .from('feed_inventory')
+        .upsert(mappedFeedData, { 
+          onConflict: 'id',
+          ignoreDuplicates: false 
+        })
+        .select(); // Add select to return the inserted/updated data
 
-    if (error) {
-      throw new Error(`Database upsert error: ${error.message}`);
+      if (upsertError) {
+        console.error('UPSERT Error:', upsertError);
+        throw new Error(`Database upsert error: ${upsertError.message}`);
+      }
+      
+      console.log('UPSERT Result:', upsertData);
+      data = upsertData;
     }
 
-    console.log('Feed inventory upserted to Supabase:', data);
+    console.log('Feed inventory upserted in Supabase:', data);
 
     res.status(200).json({ 
       message: 'Feed inventory saved successfully', 

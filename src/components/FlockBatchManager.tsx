@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { FlockBatch, DeathRecord, FlockSummary } from '../types';
 import { StatCard } from './ui';
 import { useAuth } from '../contexts/AuthContext';
-import { getAuthHeaders } from '../utils/authApiUtils';
+import { apiService } from '../services/api';
 
 interface FlockBatchManagerProps {
   className?: string;
@@ -11,7 +11,7 @@ interface FlockBatchManagerProps {
 
 export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'batches' | 'deaths' | 'add-batch'>('overview');
+  const [activeTab, setActiveTab] = useState<'batches' | 'deaths' | 'add-batch'>('batches');
   const [batches, setBatches] = useState<FlockBatch[]>([]);
   const [deathRecords, setDeathRecords] = useState<DeathRecord[]>([]);
   const [flockSummary, setFlockSummary] = useState<FlockSummary | null>(null);
@@ -47,7 +47,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
   const makeAuthenticatedRequest = async (url: string, options: RequestInit = {}) => {
     if (!user) throw new Error('User not authenticated');
 
-    const headers = await getAuthHeaders();
+    const headers = await apiService.auth.getAuthHeaders();
     
     return fetch(url, {
       ...options,
@@ -290,7 +290,6 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
   }, []);
 
   const tabs = [
-    { id: 'overview', label: '📊 Overview', icon: '📊' },
     { id: 'batches', label: '🐔 Batches', icon: '🐔' },
     { id: 'deaths', label: '💀 Losses', icon: '💀' },
     { id: 'add-batch', label: '➕ Add Batch', icon: '➕' }
@@ -307,7 +306,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
         <h1 className="text-2xl lg:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
           🐔 Flock Batch Manager
         </h1>
-        <p className="text-gray-600 mt-2">Manage your flock in groups, track losses, and monitor production</p>
+        <p className="text-gray-600 mt-2">Organize chickens into batches, track losses, and manage flock groups</p>
       </div>
 
       {/* Messages */}
@@ -340,7 +339,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as 'overview' | 'batches' | 'deaths' | 'add-batch')}
+              onClick={() => setActiveTab(tab.id as 'batches' | 'deaths' | 'add-batch')}
               className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
                 activeTab === tab.id
                   ? 'bg-indigo-500 text-white shadow-lg'
@@ -356,108 +355,6 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
 
       {/* Tab Content */}
       <AnimatePresence mode="wait">
-        {activeTab === 'overview' && (
-          <motion.div
-            key="overview"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="space-y-6"
-          >
-            {/* Flock Statistics */}
-            {flockSummary && (
-              <>
-                <div className="neu-form">
-                  <h2 className="neu-title">Flock Overview</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <StatCard 
-                      title="🐔 Total Birds" 
-                      total={flockSummary.totalBirds} 
-                      label="active birds"
-                    />
-                    <StatCard 
-                      title="🐔 Hens" 
-                      total={flockSummary.totalHens || 0} 
-                      label="female birds"
-                    />
-                    <StatCard 
-                      title="🐓 Roosters" 
-                      total={flockSummary.totalRoosters || 0} 
-                      label="male birds"
-                    />
-                    <StatCard 
-                      title="🐥 Chicks" 
-                      total={flockSummary.totalChicks || 0} 
-                      label="young birds"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-                    <StatCard 
-                      title="🥚 Laying Hens" 
-                      total={flockSummary.expectedLayers} 
-                      label="productive birds"
-                    />
-                    <StatCard 
-                      title="📦 Active Batches" 
-                      total={flockSummary.activeBatches} 
-                      label="managed groups"
-                    />
-                    <StatCard 
-                      title="💀 Total Losses" 
-                      total={flockSummary.totalDeaths} 
-                      label={`${flockSummary.mortalityRate}% mortality`}
-                    />
-                  </div>
-                </div>
-
-                {/* Quick Batch Summary */}
-                <div className="neu-form">
-                  <h2 className="neu-title">Batch Summary</h2>
-                  {flockSummary.batchSummary.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="text-6xl mb-4">📦</div>
-                      <p className="text-gray-500">No batches yet. Add your first batch to get started!</p>
-                      <button
-                        onClick={() => setActiveTab('add-batch')}
-                        className="neu-button mt-4"
-                      >
-                        Add First Batch
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {flockSummary.batchSummary.map((batch) => (
-                        <div key={batch.id} className="bg-gray-50 rounded-lg p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-lg">
-                              {batch.type === 'hens' ? '🐔' : 
-                               batch.type === 'roosters' ? '🐓' : 
-                               batch.type === 'chicks' ? '🐥' : '🐔'}
-                            </span>
-                            <h3 className="font-semibold text-gray-900">{batch.name}</h3>
-                          </div>
-                          <p className="text-sm text-gray-600">{batch.breed}</p>
-                          <p className="text-lg font-bold text-indigo-600">{batch.currentCount} birds</p>
-                          {batch.type === 'hens' && (
-                            <span className={`text-xs px-2 py-1 rounded-full ${
-                              batch.isLayingAge 
-                                ? 'bg-green-100 text-green-600' 
-                                : 'bg-yellow-100 text-yellow-600'
-                            }`}>
-                              {batch.isLayingAge ? 'Laying Age' : 'Pre-Laying'}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-          </motion.div>
-        )}
-
         {activeTab === 'batches' && (
           <motion.div
             key="batches"

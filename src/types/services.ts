@@ -1,13 +1,6 @@
 // Service interface definitions for API layer
 import type { 
   ApiResponse, 
-  EggEntriesResponse, 
-  ExpensesResponse, 
-  FeedInventoryResponse, 
-  FlockProfileResponse, 
-  FlockEventsResponse, 
-  FlockEventResponse, 
-  DeleteEventResponse,
   FetchDataResponse 
 } from './api';
 import type { 
@@ -52,7 +45,9 @@ export interface ProductionService {
   saveEggEntries(entries: EggEntry[]): Promise<ApiResponse>;
   getExpenses(): Promise<ApiResponse>;
   saveExpenses(expenses: Expense[]): Promise<ApiResponse>;
+  deleteExpense(expenseId: string): Promise<ApiResponse>;
   saveFeedInventory(inventory: FeedEntry[]): Promise<ApiResponse>;
+  deleteFeedInventory(feedId: string): Promise<ApiResponse>;
 }
 
 export interface CrmService {

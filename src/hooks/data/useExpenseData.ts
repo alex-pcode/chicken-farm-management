@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useDataFetch } from './useDataFetch';
-import { useExpenses } from '../../contexts/DataContext';
+import { useOptimizedAppData } from '../../contexts/OptimizedDataProvider';
 import { apiService } from '../../services/api';
 import type { Expense } from '../../types';
 
@@ -32,12 +32,9 @@ export const useExpenseData = (options: UseExpenseDataOptions = {}): UseExpenseD
     category
   } = options;
 
-  // Use DataContext for cached data
-  const { 
-    expenses: contextExpenses, 
-    isLoading: contextLoading, 
-    updateExpenses 
-  } = useExpenses();
+  // Use OptimizedDataProvider for cached data
+  const { data, isLoading: contextLoading, refreshData } = useOptimizedAppData();
+  const contextExpenses = data.expenses;
 
   // Memoize the fetcher function to prevent infinite loops
   const fetcher = useCallback(() => apiService.production.getExpenses(), []);
@@ -52,11 +49,11 @@ export const useExpenseData = (options: UseExpenseDataOptions = {}): UseExpenseD
     key: 'expenses',
     fetcher,
     cacheTime,
-    enabled: autoRefresh && !contextExpenses.length
+    enabled: autoRefresh && (!contextExpenses || contextExpenses.length === 0)
   });
 
   // Use context data preferentially, fallback to fetched data
-  const allExpenses = contextExpenses.length > 0 ? contextExpenses : (fetchedExpenses || []);
+  const allExpenses = (contextExpenses && contextExpenses.length > 0) ? contextExpenses : (fetchedExpenses || []);
   
   // Ensure allExpenses is always an array
   const safeAllExpenses = Array.isArray(allExpenses) ? allExpenses : [];
@@ -78,58 +75,45 @@ export const useExpenseData = (options: UseExpenseDataOptions = {}): UseExpenseD
       // Save to API without ID (let database generate UUID)
       await apiService.production.saveExpenses([expense]);
       
-      // After successful save, add to local state with temporary ID for UI
-      const newExpense: Expense = {
-        ...expense,
-        id: `temp-${Date.now()}` // Temporary ID for local state only
-      };
-      
-      const updatedExpenses = [...safeAllExpenses, newExpense];
-      updateExpenses(updatedExpenses);
+      // After successful save, refresh data from server to get updated state
+      await refreshData();
       
     } catch (err) {
-      // No optimistic update, so no need to revert
       throw err;
     }
-  }, [safeAllExpenses, updateExpenses]);
+  }, [refreshData]);
 
   // Update existing expense
   const updateExpense = useCallback(async (id: string, updatedData: Partial<Expense>) => {
     const expenseIndex = safeAllExpenses.findIndex(expense => expense.id === id);
     if (expenseIndex === -1) return;
 
-    const updatedExpenses = [...safeAllExpenses];
-    updatedExpenses[expenseIndex] = { ...updatedExpenses[expenseIndex], ...updatedData };
-    
-    // Optimistic update
-    updateExpenses(updatedExpenses);
+    const expenseToUpdate = { ...safeAllExpenses[expenseIndex], ...updatedData };
     
     try {
       // Save to API
-      await apiService.production.saveExpenses([updatedExpenses[expenseIndex]]);
+      await apiService.production.saveExpenses([expenseToUpdate]);
+      
+      // After successful save, refresh data from server to get updated state
+      await refreshData();
     } catch (err) {
-      // Revert on error
-      updateExpenses(safeAllExpenses);
       throw err;
     }
-  }, [safeAllExpenses, updateExpenses]);
+  }, [safeAllExpenses, refreshData]);
 
   // Delete expense
   const deleteExpense = useCallback(async (id: string) => {
-    const updatedExpenses = safeAllExpenses.filter(expense => expense.id !== id);
-    
-    // Optimistic update
-    updateExpenses(updatedExpenses);
-    
     try {
-      // Delete from API (assuming API has delete endpoint)
-      await apiService.production.deleteExpense?.(id);
+      // Use proper DELETE API endpoint
+      await apiService.production.deleteExpense(id);
+      
+      // After successful delete, refresh data from server to get updated state
+      await refreshData();
     } catch (err) {
-      // Revert on error
-      updateExpenses(safeAllExpenses);
+      console.error('Failed to delete expense:', err);
       throw err;
     }
-  }, [safeAllExpenses, updateExpenses]);
+  }, [refreshData]);
 
   // Statistics calculations
   const statistics = useMemo(() => {

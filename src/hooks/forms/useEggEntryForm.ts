@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useFormState } from './useFormState';
 import { useFormSubmit } from './useFormSubmit';
 import { useEggData } from '../data/useEggData';
-import { validateEggCount, validateDateRange } from '../../utils/validation';
+import { validateEggCount, validators } from '../../utils/validation';
 import type { EggEntry, ValidationError } from '../../types';
 
 export interface EggEntryFormData {
@@ -65,7 +65,7 @@ export const useEggEntryForm = (options: UseEggEntryFormOptions = {}): UseEggEnt
     }
     
     // Validate date
-    const dateError = validateDateRange(values.date);
+    const dateError = validators.dateRange()(values.date);
     if (dateError) {
       formState.setError('date', dateError);
       isValid = false;
@@ -142,7 +142,7 @@ export const useEggEntryForm = (options: UseEggEntryFormOptions = {}): UseEggEnt
         return true;
         
       case 'date':
-        const dateError = validateDateRange(value);
+        const dateError = validators.dateRange()(value);
         if (dateError) {
           formState.setError('date', dateError);
           return false;

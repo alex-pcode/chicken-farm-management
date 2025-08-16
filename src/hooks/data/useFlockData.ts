@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useDataFetch } from './useDataFetch';
-import { useFlockProfile } from '../../contexts/DataContext';
+import { useOptimizedAppData } from '../../contexts/OptimizedDataProvider';
 import { apiService } from '../../services/api';
 import type { FlockProfile, FlockEvent, FlockSummary } from '../../types';
 
@@ -34,12 +34,10 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
     includeEvents = true
   } = options;
 
-  // Use DataContext for cached data
-  const { 
-    flockProfile: contextProfile, 
-    isLoading: contextLoading, 
-    updateFlockProfile 
-  } = useFlockProfile();
+  // Use OptimizedDataProvider for cached data
+  const { data, isLoading: contextLoading, refreshData } = useOptimizedAppData();
+  const contextProfile = data.flockProfile;
+  const contextEvents = data.flockEvents;
 
   // Fallback data fetching hook for profile (if DataContext fails)
   const {
@@ -84,7 +82,7 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
   // Update flock profile
   const updateProfile = useCallback(async (updatedProfile: FlockProfile) => {
     // Optimistic update
-    updateFlockProfile(updatedProfile);
+    refreshData(updatedProfile);
     
     try {
       // Save to API
@@ -92,11 +90,11 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
     } catch (err) {
       // Revert on error
       if (contextProfile) {
-        updateFlockProfile(contextProfile);
+        refreshData(contextProfile);
       }
       throw err;
     }
-  }, [contextProfile, updateFlockProfile]);
+  }, [contextProfile, refreshData]);
 
   // Add new flock event
   const addEvent = useCallback(async (eventData: Omit<FlockEvent, 'id'>) => {
@@ -113,17 +111,17 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
     };
     
     // Optimistic update
-    updateFlockProfile(updatedProfile);
+    refreshData(updatedProfile);
     
     try {
       // Save to API
       await apiService.flock.saveFlockEvent(newEvent);
     } catch (err) {
       // Revert on error
-      updateFlockProfile(profile);
+      refreshData(profile);
       throw err;
     }
-  }, [profile, updateFlockProfile]);
+  }, [profile, refreshData]);
 
   // Update existing flock event
   const updateEvent = useCallback(async (id: string, eventData: Partial<FlockEvent>) => {
@@ -141,17 +139,17 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
     };
     
     // Optimistic update
-    updateFlockProfile(updatedProfile);
+    refreshData(updatedProfile);
     
     try {
       // Save to API
       await apiService.flock.saveFlockEvent(updatedEvents[eventIndex]);
     } catch (err) {
       // Revert on error
-      updateFlockProfile(profile);
+      refreshData(profile);
       throw err;
     }
-  }, [profile, updateFlockProfile]);
+  }, [profile, refreshData]);
 
   // Delete flock event
   const deleteEvent = useCallback(async (id: string) => {
@@ -164,17 +162,17 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
     };
     
     // Optimistic update
-    updateFlockProfile(updatedProfile);
+    refreshData(updatedProfile);
     
     try {
       // Delete from API
       await apiService.flock.deleteFlockEvent(id);
     } catch (err) {
       // Revert on error
-      updateFlockProfile(profile);
+      refreshData(profile);
       throw err;
     }
-  }, [profile, updateFlockProfile]);
+  }, [profile, refreshData]);
 
   // Flock statistics and calculations
   const statistics = useMemo(() => {

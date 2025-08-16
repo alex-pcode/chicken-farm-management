@@ -20,10 +20,10 @@ export abstract class BaseApiService {
    */
   protected async getAuthHeaders(): Promise<Record<string, string>> {
     // First try to get the current session
-    let { data: { session }, error } = await supabase.auth.getSession();
+    let { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     // If no session or session is expired, try to refresh
-    if (error || !session || !session.access_token) {
+    if (sessionError || !session || !session.access_token) {
       this.logDebug('No valid session found, attempting token refresh');
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
       
@@ -89,10 +89,11 @@ export abstract class BaseApiService {
       
       // Transform message format to ApiResponse format if needed
       if ('message' in rawData && 'timestamp' in rawData && !('success' in rawData)) {
+        const messageData = rawData as { data?: T; message: string };
         const transformedData: ApiResponse<T> = {
           success: true,
-          data: rawData.data,
-          message: rawData.message
+          data: messageData.data,
+          message: messageData.message
         };
         return transformedData;
       }

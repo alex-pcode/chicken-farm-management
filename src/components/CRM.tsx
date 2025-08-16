@@ -5,13 +5,17 @@ import { SalesList } from './SalesList';
 import { QuickSale } from './QuickSale';
 import { SalesReports } from './SalesReports';
 import AnimatedCRMPNG from './AnimatedCRMPNG';
-import { useAppData } from '../contexts/DataContext';
+import { useCRMData } from '../contexts/OptimizedDataProvider';
+
+// Basic utilities
+import { cn } from '../utils/shadcn/cn';
+import { StatCard } from './testCom';
 
 type CRMTab = 'customers' | 'sales' | 'quick-sale' | 'reports';
 
 export const CRM = () => {
   const [activeTab, setActiveTab] = useState<CRMTab>('customers');
-  const { data, isLoading, error, refreshData } = useAppData();
+  const { data, isLoading, error, refreshData } = useCRMData();
 
   const tabs = [
     { id: 'customers' as CRMTab, label: 'Customers', emoji: '👥' },
@@ -65,99 +69,105 @@ export const CRM = () => {
         <AnimatedCRMPNG />
       </motion.div>
 
-      {/* Summary Stats */}
+      {/* Enhanced Summary Stats with Epic 4 Cards */}
       {data.summary && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-6"
-        >
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <div className="neu-stat">
-              <h3 className="text-lg font-medium text-gray-600">Customers</h3>
-              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">{data.summary.customer_count}</p>
-              <p className="text-sm text-gray-500 mt-1">total customers</p>
-            </div>
-            <div className="neu-stat">
-              <h3 className="text-lg font-medium text-gray-600">Sales</h3>
-              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">{data.summary.total_sales}</p>
-              <p className="text-sm text-gray-500 mt-1">total sales</p>
-            </div>
-            <div className="neu-stat">
-              <h3 className="text-lg font-medium text-gray-600">Revenue</h3>
-              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">${data.summary.total_revenue.toFixed(2)}</p>
-              <p className="text-sm text-gray-500 mt-1">total revenue</p>
-            </div>
-            <div className="neu-stat">
-              <h3 className="text-lg font-medium text-gray-600">Eggs Sold</h3>
-              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">{data.summary.total_eggs_sold}</p>
-              <p className="text-sm text-gray-500 mt-1">eggs sold</p>
-            </div>
-            <div className="neu-stat">
-              <h3 className="text-lg font-medium text-gray-600">Free Eggs</h3>
-              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">{data.summary.free_eggs_given || 0}</p>
-              <p className="text-sm text-gray-500 mt-1">eggs given</p>
-            </div>
-            <div className="neu-stat">
-              <h3 className="text-lg font-medium text-gray-600">Top Customer</h3>
-              <p className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent truncate">{data.summary.top_customer || 'None'}</p>
-              <p className="text-sm text-gray-500 mt-1">best customer</p>
-            </div>
+        <div className="mt-6">
+          {/* Mobile-First Responsive Stat Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <StatCard
+              title="Customers"
+              total={data.summary.customer_count}
+              label="active"
+            />
+            <StatCard
+              title="Sales"
+              total={data.summary.total_sales}
+              label="transactions"
+            />
+            <StatCard
+              title="Revenue"
+              total={`$${data.summary.total_revenue.toFixed(2)}`}
+              label="total earnings"
+            />
+            <StatCard
+              title="Eggs Sold"
+              total={data.summary.total_eggs_sold}
+              label="units"
+            />
+            <StatCard
+              title="Free Eggs"
+              total={data.summary.free_eggs_given || 0}
+              label="given away"
+            />
+            <StatCard
+              title="Top Customer"
+              total={data.summary.top_customer || 'None'}
+              label="highest purchaser"
+            />
           </div>
-        </motion.div>
+        </div>
       )}
 
-      {/* Tab Navigation */}
+      {/* Enhanced Tab Navigation with Epic 4 Styling */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 mt-8">
-        {tabs.map((tab) => (
-          <button
+        {tabs.map((tab, index) => (
+          <motion.button
             key={tab.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 + (index * 0.1) }}
             onClick={() => setActiveTab(tab.id)}
-            className={`neu-button flex items-center justify-center gap-2 px-4 py-3 text-center ${
+            className={cn(
+              'neu-button',
+              "flex items-center justify-center gap-2 px-4 py-3 text-center transition-all duration-300",
+              "hover:scale-[1.02] active:scale-[0.98]",
+              "focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-300",
               activeTab === tab.id
-                ? 'bg-indigo-100 text-indigo-700'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
+                ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-[0_4px_20px_rgba(99,102,241,0.3)]'
+                : 'hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)]'
+            )}
           >
-            <span role="img" aria-label={tab.label}>{tab.emoji}</span>
-            <span className="font-medium">{tab.label}</span>
-          </button>
+            <span role="img" aria-label={tab.label} className="text-lg">{tab.emoji}</span>
+            <span className="font-medium font-[Fraunces]">{tab.label}</span>
+          </motion.button>
         ))}
       </div>
 
       {/* Tab Content */}
-      <motion.div
-        key={activeTab}
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.2 }}
-      >
-        {activeTab === 'customers' && (
-          <CustomerList 
-            customers={data.customers || []} 
-            onDataChange={handleDataChange}
-          />
-        )}
-        
-        {activeTab === 'sales' && (
-          <SalesList 
-            sales={data.sales || []} 
-            customers={data.customers || []}
-            onDataChange={handleDataChange}
-          />
-        )}
-        
-        {activeTab === 'quick-sale' && (
-          <QuickSale 
-            customers={data.customers || []} 
-            onDataChange={handleDataChange}
-          />
-        )}
-        
-        {activeTab === 'reports' && (
-          <SalesReports />
-        )}
-      </motion.div>
+      <div className="glass-card min-h-[400px]">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        >
+          {activeTab === 'customers' && (
+            <CustomerList 
+              customers={data.customers || []} 
+              onDataChange={handleDataChange}
+            />
+          )}
+          
+          {activeTab === 'sales' && (
+            <SalesList 
+              sales={data.sales || []} 
+              customers={data.customers || []}
+              onDataChange={handleDataChange}
+            />
+          )}
+          
+          {activeTab === 'quick-sale' && (
+            <QuickSale 
+              customers={data.customers || []} 
+              onDataChange={handleDataChange}
+            />
+          )}
+          
+          {activeTab === 'reports' && (
+            <SalesReports />
+          )}
+        </motion.div>
+      </div>
     </div>
   );
 };

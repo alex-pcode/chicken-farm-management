@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   throw new Error('Missing required Supabase environment variables');
@@ -41,18 +41,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(401).json({ message: 'Unauthorized - Please log in' });
     }
 
+    // Set the user session on the Supabase client for RLS policies
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+    if (token) {
+      await supabase.auth.setSession({
+        access_token: token,
+        refresh_token: '', // Not needed for API operations
+      });
+    }
+
     const expenseData = req.body;
     console.log('Received expense data:', expenseData);
 
-    // Add user_id to expense data
+    // Add user_id to expense data, only include id if it exists
     const expenseWithUser = Array.isArray(expenseData) 
-      ? expenseData.map(expense => ({ ...expense, user_id: user.id }))
-      : { ...expenseData, user_id: user.id };
+      ? expenseData.map(expense => {
+          const mapped: any = { 
+            user_id: user.id,
+            category: expense.category,
+            amount: expense.amount,
+            date: expense.date,
+            description: expense.description
+          };
+          // Only include ID if it exists (for updates)
+          if (expense.id) {
+            mapped.id = expense.id;
+          }
+          // Include created_at if it exists (preserve original timestamp)
+          if (expense.created_at) {
+            mapped.created_at = expense.created_at;
+          }
+          return mapped;
+        })
+      : {
+          user_id: user.id,
+          category: expenseData.category,
+          amount: expenseData.amount,
+          date: expenseData.date,
+          description: expenseData.description,
+          ...(expenseData.id && { id: expenseData.id }),
+          ...(expenseData.created_at && { created_at: expenseData.created_at })
+        };
 
     // Upsert expenses by id
     const { data, error } = await supabase
       .from('expenses')
-      .upsert(expenseWithUser, { onConflict: 'id' });
+      .upsert(expenseWithUser, { onConflict: 'id' })
+      .select(); // Add select to return the inserted/updated data
 
     if (error) {
       throw new Error(`Database upsert error: ${error.message}`);

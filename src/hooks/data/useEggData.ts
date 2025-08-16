@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useDataFetch } from './useDataFetch';
-import { useEggEntries } from '../../contexts/DataContext';
+import { useOptimizedAppData } from '../../contexts/OptimizedDataProvider';
 import { apiService } from '../../services/api';
 import type { EggEntry } from '../../types';
 
@@ -29,12 +29,9 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
     cacheTime = 300000 // 5 minutes
   } = options;
 
-  // Use DataContext for cached data
-  const { 
-    eggEntries: contextEntries, 
-    isLoading: contextLoading, 
-    updateEggEntries 
-  } = useEggEntries();
+  // Use OptimizedDataProvider for cached data
+  const { data, isLoading: contextLoading, refreshData } = useOptimizedAppData();
+  const contextEntries = data.eggEntries;
 
   // Memoize the fetcher function to prevent infinite loops
   const fetcher = useCallback(() => apiService.production.getEggEntries(), []);
@@ -49,7 +46,7 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
     key: 'egg-entries',
     fetcher,
     cacheTime,
-    enabled: autoRefresh && !contextEntries.length
+    enabled: autoRefresh && (!contextEntries || contextEntries.length === 0)
   });
 
   // Use context data preferentially, fallback to fetched data
@@ -66,59 +63,45 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
       // Save to API without ID (let database generate UUID)
       await apiService.production.saveEggEntries([entry]);
       
-      // After successful save, add to local state with temporary ID for UI
-      const newEntry: EggEntry = {
-        ...entry,
-        id: `temp-${Date.now()}` // Temporary ID for local state only
-      };
-      
-      const updatedEntries = [...entries, newEntry];
-      updateEggEntries(updatedEntries);
+      // After successful save, refresh data from server to get updated state
+      await refreshData();
       
     } catch (err) {
-      // No optimistic update, so no need to revert
       throw err;
     }
-  }, [entries, updateEggEntries]);
+  }, [refreshData]);
 
   // Update existing egg entry
   const updateEntry = useCallback(async (id: string, updatedData: Partial<EggEntry>) => {
     const entryIndex = entries.findIndex(entry => entry.id === id);
     if (entryIndex === -1) return;
 
-    const updatedEntries = [...entries];
-    updatedEntries[entryIndex] = { ...updatedEntries[entryIndex], ...updatedData };
-    
-    // Optimistic update
-    updateEggEntries(updatedEntries);
+    const entryToUpdate = { ...entries[entryIndex], ...updatedData };
     
     try {
       // Save to API
-      await apiService.production.saveEggEntries([updatedEntries[entryIndex]]);
+      await apiService.production.saveEggEntries([entryToUpdate]);
+      
+      // After successful save, refresh data from server to get updated state
+      await refreshData();
     } catch (err) {
-      // Revert on error
-      updateEggEntries(entries);
       throw err;
     }
-  }, [entries, updateEggEntries]);
+  }, [entries, refreshData]);
 
   // Delete egg entry
   const deleteEntry = useCallback(async (id: string) => {
-    const updatedEntries = entries.filter(entry => entry.id !== id);
-    
-    // Optimistic update
-    updateEggEntries(updatedEntries);
-    
     try {
-      // Delete from API (assuming API has delete endpoint)
-      // Note: This might need to be implemented in the API service
-      await apiService.production.deleteEggEntry?.(id);
+      // Delete the entry by filtering it out and saving the updated array
+      const updatedEntries = entries.filter(entry => entry.id !== id);
+      await apiService.production.saveEggEntries(updatedEntries);
+      
+      // After successful delete, refresh data from server to get updated state
+      await refreshData();
     } catch (err) {
-      // Revert on error
-      updateEggEntries(entries);
       throw err;
     }
-  }, [entries, updateEggEntries]);
+  }, [entries, refreshData]);
 
   // Statistics calculations
   const statistics = useMemo(() => {

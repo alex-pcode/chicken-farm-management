@@ -1,14 +1,10 @@
 import { useState, useMemo } from 'react';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { LoadingSpinner } from './LoadingSpinner';
 import type { Expense } from '../types';
-import { apiService } from '../services/api';
-import { ApiServiceError, AuthenticationError, NetworkError, ServerError, getUserFriendlyErrorMessage } from '../types/api';
-import { useExpenses } from '../contexts/DataContext';
 import { AnimatedCoinPNG } from './AnimatedCoinPNG';
-import { v4 as uuidv4 } from 'uuid';
 import { 
   TextInput, 
   NumberInput, 
@@ -18,7 +14,6 @@ import {
   FormRow, 
   SubmitButton 
 } from './forms';
-import type { ValidationError } from '../types';
 import { useExpenseData } from '../hooks/data/useExpenseData';
 import { useExpenseForm } from '../hooks/forms/useExpenseForm';
 import { useExpensePagination } from '../hooks/pagination/useExpensePagination';
@@ -26,7 +21,6 @@ import { useToggle, useTimeoutToggle } from '../hooks/utils';
 import { 
   DataTable, 
   StatCard, 
-  ConfirmDialog,
   PaginationControls,
   GridContainer 
 } from './ui';
@@ -47,11 +41,8 @@ export const Expenses = () => {
   const { 
     expenses, 
     isLoading, 
-    addExpense, 
     deleteExpense, 
-    totalAmount, 
     thisMonthTotal, 
-    thisWeekTotal, 
     expensesByCategory 
   } = useExpenseData();
 
@@ -65,7 +56,6 @@ export const Expenses = () => {
         setDeleteConfirm(null);
       } catch (error) {
         console.error('Error deleting expense:', error);
-        // Error handling is done by the hook
       }
     } else {
       setDeleteConfirm(id);
@@ -140,12 +130,7 @@ export const Expenses = () => {
   const {
     paginatedExpenses,
     currentPage,
-    totalPages,
-    goToPage,
-    nextPage,
-    previousPage,
-    isFirstPage,
-    isLastPage
+    totalPages
   } = useExpensePagination({
     expenses,
     pageSize: 10,
@@ -187,7 +172,7 @@ export const Expenses = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="w-full"
+        className="w-full mb-0"
       >
         <AnimatedCoinPNG />
       </motion.div>
@@ -323,7 +308,7 @@ export const Expenses = () => {
                 />
                 <Bar
                   dataKey="total"
-                  fill="#6366f1"
+                  fill="#4F46E5"
                   name="Total"
                   radius={[4, 4, 0, 0]}
                 />

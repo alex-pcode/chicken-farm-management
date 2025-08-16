@@ -14,12 +14,24 @@ vi.mock('../../services/api', () => ({
 }))
 
 // Mock contexts
-vi.mock('../../contexts/DataContext', () => ({
-  useExpenses: () => ({
-    expenses: [],
+vi.mock('../../contexts/OptimizedDataProvider', () => ({
+  useOptimizedAppData: () => ({
+    data: {
+      expenses: [],
+      eggEntries: [],
+      feedInventory: [],
+      flockProfile: null,
+      flockEvents: [],
+      customers: [],
+      sales: [],
+      summary: undefined
+    },
     isLoading: false,
-    updateExpenses: vi.fn(),
+    error: null,
+    refreshData: vi.fn(),
+    lastFetched: null
   }),
+  useExpenses: () => [],
 }))
 
 // Mock components
@@ -54,7 +66,7 @@ describe('Expenses Component - API Integration', () => {
     render(<Expenses />)
 
     // Fill form and submit
-    const descriptionInput = screen.getByPlaceholderText(/enter description/i)
+    const descriptionInput = screen.getByPlaceholderText(/enter expense description/i)
     const amountInput = screen.getByPlaceholderText(/0.00/i)
     const submitButton = screen.getByRole('button', { name: /add expense/i })
 
@@ -88,7 +100,7 @@ describe('Expenses Component - API Integration', () => {
 
     render(<Expenses />)
 
-    const descriptionInput = screen.getByPlaceholderText(/enter description/i)
+    const descriptionInput = screen.getByPlaceholderText(/enter expense description/i)
     const amountInput = screen.getByPlaceholderText(/0.00/i)
     const submitButton = screen.getByRole('button', { name: /add expense/i })
 
@@ -109,7 +121,7 @@ describe('Expenses Component - API Integration', () => {
 
     render(<Expenses />)
 
-    const descriptionInput = screen.getByPlaceholderText(/enter description/i)
+    const descriptionInput = screen.getByPlaceholderText(/enter expense description/i)
     const amountInput = screen.getByPlaceholderText(/0.00/i)
     const submitButton = screen.getByRole('button', { name: /add expense/i })
 
@@ -130,7 +142,7 @@ describe('Expenses Component - API Integration', () => {
 
     render(<Expenses />)
 
-    const descriptionInput = screen.getByPlaceholderText(/enter description/i)
+    const descriptionInput = screen.getByPlaceholderText(/enter expense description/i)
     const amountInput = screen.getByPlaceholderText(/0.00/i)
     const submitButton = screen.getByRole('button', { name: /add expense/i })
 
@@ -148,7 +160,7 @@ describe('Expenses Component - API Integration', () => {
     mockSaveExpenses.mockResolvedValue(undefined)
 
     // Mock useExpenses to return an existing expense
-    vi.mocked(vi.importMock('../../contexts/DataContext')).useExpenses = () => ({
+    vi.mocked(vi.importMock('../../contexts/OptimizedDataProvider')).useExpenses = () => ({
       expenses: [
         {
           id: 'test-expense-1',
@@ -185,7 +197,7 @@ describe('Expenses Component - API Integration', () => {
     )
 
     // Mock useExpenses to return an existing expense
-    vi.mocked(vi.importMock('../../contexts/DataContext')).useExpenses = () => ({
+    vi.mocked(vi.importMock('../../contexts/OptimizedDataProvider')).useExpenses = () => ({
       expenses: [
         {
           id: 'test-expense-1',
@@ -228,7 +240,7 @@ describe('Expenses Component - API Integration', () => {
     render(<Expenses />)
 
     // Verify all form elements are present
-    expect(screen.getByPlaceholderText(/enter description/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/enter expense description/i)).toBeInTheDocument()
     expect(screen.getByPlaceholderText(/0.00/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /add expense/i })).toBeInTheDocument()
 
@@ -252,7 +264,7 @@ describe('Expenses Component - Form Behavior', () => {
 
     render(<Expenses />)
 
-    const descriptionInput = screen.getByPlaceholderText(/enter description/i) as HTMLInputElement
+    const descriptionInput = screen.getByPlaceholderText(/enter expense description/i) as HTMLInputElement
     const amountInput = screen.getByPlaceholderText(/0.00/i) as HTMLInputElement
     const submitButton = screen.getByRole('button', { name: /add expense/i })
 
@@ -276,7 +288,7 @@ describe('Expenses Component - Form Behavior', () => {
     const continueCheckbox = screen.getByLabelText(/continue adding/i)
     fireEvent.click(continueCheckbox)
 
-    const descriptionInput = screen.getByPlaceholderText(/enter description/i) as HTMLInputElement
+    const descriptionInput = screen.getByPlaceholderText(/enter expense description/i) as HTMLInputElement
     const amountInput = screen.getByPlaceholderText(/0.00/i) as HTMLInputElement
     const categorySelect = screen.getByDisplayValue(/Feed/i) as HTMLSelectElement
     const submitButton = screen.getByRole('button', { name: /add expense/i })

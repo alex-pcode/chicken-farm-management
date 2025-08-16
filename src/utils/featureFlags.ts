@@ -68,11 +68,11 @@ const DEFAULT_FLAGS: FeatureFlags = {
 }
 
 // Feature flag sources (priority order)
-type FeatureFlagSource = 
-  | 'environment'     // Environment variables (highest priority)
-  | 'localStorage'    // Local storage (development)
-  | 'remote'          // Remote config (future)
-  | 'default'         // Default values
+// type FeatureFlagSource = 
+//   | 'environment'     // Environment variables (highest priority)
+//   | 'localStorage'    // Local storage (development)
+//   | 'remote'          // Remote config (future)
+//   | 'default'         // Default values
 
 class FeatureFlagManager {
   private flags: FeatureFlags = { ...DEFAULT_FLAGS }

@@ -2,14 +2,26 @@
 import { describe, test, expect, vi } from 'vitest'
 import { mockFlockProfile } from '../../test/utils'
 
-// Mock the DataContext hook
-vi.mock('../../contexts/DataContext', () => ({
-  useEggEntries: () => ({
-    flockProfile: mockFlockProfile,
-    updateFlockProfile: vi.fn(),
-    loading: false,
+// Mock the OptimizedDataProvider hook
+vi.mock('../../contexts/OptimizedDataProvider', () => ({
+  useOptimizedAppData: () => ({
+    data: {
+      expenses: [],
+      eggEntries: [],
+      feedInventory: [],
+      flockProfile: mockFlockProfile,
+      flockEvents: [],
+      customers: [],
+      sales: [],
+      summary: undefined
+    },
+    isLoading: false,
     error: null,
+    refreshData: vi.fn(),
+    lastFetched: null
   }),
+  useEggEntries: () => [],
+  useFlockProfile: () => mockFlockProfile,
 }))
 
 // Mock Profile component for testing infrastructure validation
@@ -34,7 +46,7 @@ describe('Profile Component', () => {
 
   test('context mocking is functional', () => {
     // Verify our context mocking strategy works
-    const mockContext = vi.mocked(vi.importMock('../../contexts/DataContext'))
+    const mockContext = vi.mocked(vi.importMock('../../contexts/OptimizedDataProvider'))
     expect(mockContext).toBeDefined()
   })
 })

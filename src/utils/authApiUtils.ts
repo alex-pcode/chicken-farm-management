@@ -27,10 +27,10 @@ import {
 // Helper function to get authenticated headers with automatic token refresh
 export const getAuthHeaders = async () => {
   // First try to get the current session
-  let { data: { session }, error } = await supabase.auth.getSession();
+  let { data: { session }, error: sessionError } = await supabase.auth.getSession();
   
   // If no session or session is expired, try to refresh
-  if (error || !session || !session.access_token) {
+  if (sessionError || !session || !session.access_token) {
     console.log('No valid session found, attempting refresh...');
     const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
     

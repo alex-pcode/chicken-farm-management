@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import type { FeedEntry, FlockProfile } from '../types';
 import { apiService } from '../services/api';
 import { ApiServiceError, AuthenticationError, NetworkError, ServerError, getUserFriendlyErrorMessage } from '../types/api';
-import { useFeedInventory, useFlockProfile, useAppData } from '../contexts/DataContext';
+import { useOptimizedAppData } from '../contexts/OptimizedDataProvider';
 import { v4 as uuidv4 } from 'uuid';
 import AnimatedFeedPNG from './AnimatedFeedPNG';
 import { 
@@ -46,8 +46,8 @@ export const FeedTracker = () => {
     feedByType
   } = useFeedData();
   
-  const { flockProfile: cachedProfile, isLoading: profileLoading } = useFlockProfile();
-  const { data, updateExpenses } = useAppData();
+  const { data, isLoading: profileLoading, refreshData } = useOptimizedAppData();
+  const cachedProfile = data.flockProfile;
   
   // UI state hooks
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -58,26 +58,39 @@ export const FeedTracker = () => {
   const flockProfile = cachedProfile;
 
   const handleDelete = async (id: string) => {
+    console.log('🎯 handleDelete called with id:', id);
+    console.log('🔍 Current deleteConfirm:', deleteConfirm);
+    
     if (deleteConfirm === id) {
+      console.log('✅ Confirmed delete - proceeding...');
       try {
+        console.log('🚀 Calling deleteFeedEntry...');
         await deleteFeedEntry(id);
+        console.log('✅ deleteFeedEntry completed');
         setDeleteConfirm(null);
       } catch (error) {
-        console.error('Error deleting feed entry:', error);
+        console.error('❌ Error deleting feed entry:', error);
         setErrorMsg('Failed to delete feed entry. Please try again.');
       }
     } else {
+      console.log('⚠️ First click - setting confirmation for id:', id);
       setDeleteConfirm(id);
       setTimeout(() => setDeleteConfirm(null), 3000);
     }
   };
 
   const handleDepleteFeed = async (id: string) => {    
+    console.log('🚀 handleDepleteFeed called with id:', id);
     try {
+      const depletionDate = new Date().toISOString().split('T')[0];
+      console.log('📅 Setting depletion date to:', depletionDate);
+      
       // Use the hook's updateFeedEntry method
       await updateFeedEntry(id, { 
-        depletedDate: new Date().toISOString().split('T')[0] 
+        depletedDate: depletionDate 
       });
+      
+      console.log('✅ Feed depletion update successful');
     } catch (error) {
       console.error('Error saving feed depletion:', error);
       
@@ -367,7 +380,7 @@ export const FeedTracker = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="w-full mt-10 lg:mt-0 mb-8"
+        className="w-full mt-10 lg:mt-0 mb-0"
       >
         <AnimatedFeedPNG />
       </motion.div>

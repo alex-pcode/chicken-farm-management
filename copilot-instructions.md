@@ -129,7 +129,6 @@ This documentation outlines standards and instructions for the Chicken Manager p
   - `VITE_SUPABASE_URL` - Supabase project URL
   - `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key for auth
   - `SUPABASE_SERVICE_ROLE_KEY` - Service role key for backend API operations
-  - `VITE_USE_LOCAL_STORAGE` - Set to false for production (use Supabase)
 - **Development Server**: Use `npx vercel dev` for full API support during development
 - **Security**: Environment variables must never be committed to git (secured in `.gitignore`)
 

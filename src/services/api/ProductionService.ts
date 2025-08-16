@@ -1,6 +1,5 @@
 import { BaseApiService } from './BaseApiService';
 import { ProductionService as IProductionService, ApiResponse } from './types';
-import { isLocalStorageMode } from '../../utils/supabase';
 import type { EggEntry, FeedEntry, Expense } from '../../types';
 
 /**
@@ -20,18 +19,9 @@ export class ProductionService extends BaseApiService implements IProductionServ
   }
 
   /**
-   * Get egg entries from database or localStorage
+   * Get egg entries from database
    */
   public async getEggEntries(): Promise<ApiResponse> {
-    if (isLocalStorageMode()) {
-      const eggEntries = JSON.parse(localStorage.getItem('eggEntries') || '[]');
-      return {
-        success: true,
-        data: eggEntries,
-        message: 'Egg entries loaded from localStorage'
-      };
-    }
-
     // Use the existing getData endpoint and extract eggEntries
     const response = await this.get('/getData');
     if (response.data && typeof response.data === 'object' && 'eggEntries' in response.data) {
@@ -52,50 +42,23 @@ export class ProductionService extends BaseApiService implements IProductionServ
   }
 
   /**
-   * Save egg entries to database or localStorage
+   * Save egg entries to database
    */
   public async saveEggEntries(entries: EggEntry[]): Promise<ApiResponse> {
-    if (isLocalStorageMode()) {
-      localStorage.setItem('eggEntries', JSON.stringify(entries));
-      return {
-        success: true,
-        message: 'Egg entries saved locally',
-        data: { eggEntries: entries }
-      };
-    }
-
     return this.post('/saveEggEntries', entries);
   }
 
   /**
-   * Save feed inventory to database or localStorage
+   * Save feed inventory to database
    */
   public async saveFeedInventory(inventory: FeedEntry[]): Promise<ApiResponse> {
-    if (isLocalStorageMode()) {
-      localStorage.setItem('feedInventory', JSON.stringify(inventory));
-      return {
-        success: true,
-        message: 'Feed inventory saved locally',
-        data: { feedInventory: inventory }
-      };
-    }
-
     return this.post('/saveFeedInventory', inventory);
   }
 
   /**
-   * Get expenses from database or localStorage
+   * Get expenses from database
    */
   public async getExpenses(): Promise<ApiResponse> {
-    if (isLocalStorageMode()) {
-      const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
-      return {
-        success: true,
-        data: expenses,
-        message: 'Expenses loaded from localStorage'
-      };
-    }
-
     // Use the existing getData endpoint and extract expenses
     const response = await this.get('/getData');
     if (response.data && typeof response.data === 'object' && 'expenses' in response.data) {
@@ -116,19 +79,24 @@ export class ProductionService extends BaseApiService implements IProductionServ
   }
 
   /**
-   * Save expenses to database or localStorage
+   * Save expenses to database
    */
   public async saveExpenses(expenses: Expense[]): Promise<ApiResponse> {
-    if (isLocalStorageMode()) {
-      localStorage.setItem('expenses', JSON.stringify(expenses));
-      return {
-        success: true,
-        message: 'Expenses saved locally',
-        data: { expenses }
-      };
-    }
-
     return this.post('/saveExpenses', expenses);
+  }
+
+  /**
+   * Delete expense by ID
+   */
+  public async deleteExpense(expenseId: string): Promise<ApiResponse> {
+    return this.delete('/deleteExpense', { expenseId });
+  }
+
+  /**
+   * Delete feed inventory item
+   */
+  public async deleteFeedInventory(feedId: string): Promise<ApiResponse> {
+    return this.delete('/deleteFeedInventory', { feedId });
   }
 
   /**
@@ -136,63 +104,6 @@ export class ProductionService extends BaseApiService implements IProductionServ
    */
   public async getProductionAnalytics(dateRange?: { start: string; end: string }): Promise<ApiResponse> {
     const params = dateRange ? `?start=${dateRange.start}&end=${dateRange.end}` : '';
-    
-    if (isLocalStorageMode()) {
-      // Calculate basic analytics from localStorage data
-      const eggEntries = JSON.parse(localStorage.getItem('eggEntries') || '[]');
-      const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
-      
-      const analytics = this.calculateLocalAnalytics(eggEntries, expenses, dateRange);
-      return {
-        success: true,
-        data: analytics,
-        message: 'Analytics calculated from local data'
-      };
-    }
-
     return this.get(`/productionAnalytics${params}`);
-  }
-
-  /**
-   * Calculate basic analytics from local data
-   */
-  private calculateLocalAnalytics(
-    eggEntries: EggEntry[], 
-    expenses: Expense[], 
-    dateRange?: { start: string; end: string }
-  ) {
-    let filteredEggs = eggEntries;
-    let filteredExpenses = expenses;
-
-    if (dateRange) {
-      filteredEggs = eggEntries.filter(entry => 
-        entry.date >= dateRange.start && entry.date <= dateRange.end
-      );
-      filteredExpenses = expenses.filter(expense => 
-        expense.date >= dateRange.start && expense.date <= dateRange.end
-      );
-    }
-
-    const totalEggs = filteredEggs.reduce((sum, entry) => sum + entry.count, 0);
-    const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-    const avgEggsPerDay = filteredEggs.length > 0 ? totalEggs / filteredEggs.length : 0;
-
-    return {
-      totalEggs,
-      totalExpenses,
-      avgEggsPerDay,
-      totalDays: filteredEggs.length,
-      expenseCategories: this.groupExpensesByCategory(filteredExpenses)
-    };
-  }
-
-  /**
-   * Group expenses by category for analytics
-   */
-  private groupExpensesByCategory(expenses: Expense[]) {
-    return expenses.reduce((acc, expense) => {
-      acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
-      return acc;
-    }, {} as Record<string, number>);
   }
 }

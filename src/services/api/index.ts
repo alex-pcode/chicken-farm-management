@@ -22,6 +22,7 @@ export { AuthService } from './AuthService';
 export { DataService } from './DataService';
 export { ProductionService } from './ProductionService';
 export { FlockService } from './FlockService';
+export { CRMService } from './CRMService';
 
 // Types and interfaces
 export * from './types';
@@ -31,7 +32,16 @@ import { AuthService } from './AuthService';
 import { DataService } from './DataService';
 import { ProductionService } from './ProductionService';
 import { FlockService } from './FlockService';
-import type { EggEntry, FeedEntry, Expense, FlockProfile, FlockEvent } from '../../types';
+import { CRMService } from './CRMService';
+import type { 
+  EggEntry, 
+  FeedEntry, 
+  Expense, 
+  FlockProfile, 
+  FlockEvent, 
+  CustomerForm,
+  SaleForm 
+} from '../../types';
 
 /**
  * Unified API service interface
@@ -42,6 +52,7 @@ export const apiService = {
   data: DataService.getInstance(),
   production: ProductionService.getInstance(),
   flock: FlockService.getInstance(),
+  crm: CRMService.getInstance(),
 };
 
 /**
@@ -102,6 +113,32 @@ export const legacyApi = {
    * @deprecated Use apiService.auth.migrateUserData() instead
    */
   migrateUserData: () => apiService.auth.migrateUserData(),
+
+  // CRM legacy compatibility functions
+  /**
+   * @deprecated Use apiService.crm.getCustomers() instead
+   */
+  getCustomers: () => apiService.crm.getCustomers(),
+
+  /**
+   * @deprecated Use apiService.crm.saveCustomer() instead
+   */
+  saveCustomer: (customer: CustomerForm) => apiService.crm.saveCustomer(customer),
+
+  /**
+   * @deprecated Use apiService.crm.getSales() instead
+   */
+  getSales: () => apiService.crm.getSales(),
+
+  /**
+   * @deprecated Use apiService.crm.saveSale() instead
+   */
+  saveSale: (sale: SaleForm) => apiService.crm.saveSale(sale),
+
+  /**
+   * @deprecated Use apiService.crm.getCRMData() instead
+   */
+  getCRMData: () => apiService.crm.getCRMData(),
 };
 
 /**

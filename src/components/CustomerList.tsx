@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Customer, CustomerForm } from '../types/crm';
-import { getAuthHeaders } from '../utils/authApiUtils';
+import { apiService } from '../services/api';
 
 interface CustomerListProps {
   customers: Customer[];
@@ -32,35 +32,12 @@ export const CustomerList = ({ customers, onDataChange }: CustomerListProps) => 
     setError(null);
 
     try {
-      const headers = await getAuthHeaders();
-      
       if (editingCustomer) {
         // Update existing customer
-        const response = await fetch('/api/customers', {
-          method: 'PUT',
-          headers,
-          body: JSON.stringify({
-            id: editingCustomer.id,
-            ...formData
-          })
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to update customer');
-        }
+        await apiService.crm.updateCustomer(editingCustomer.id, formData);
       } else {
         // Create new customer
-        const response = await fetch('/api/customers', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(formData)
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create customer');
-        }
+        await apiService.crm.saveCustomer(formData);
       }
 
       resetForm();
@@ -89,24 +66,7 @@ export const CustomerList = ({ customers, onDataChange }: CustomerListProps) => 
     }
 
     try {
-      const headers = await getAuthHeaders();
-      const response = await fetch('/api/customers', {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify({
-          id: customer.id,
-          name: customer.name,
-          phone: customer.phone,
-          notes: customer.notes,
-          is_active: false
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to deactivate customer');
-      }
-
+      await apiService.crm.deleteCustomer(customer.id);
       onDataChange();
     } catch (err) {
       console.error('Error deactivating customer:', err);

@@ -15,16 +15,25 @@ vi.mock('../../services/api', () => ({
 }))
 
 // Mock contexts
-vi.mock('../../contexts/DataContext', () => ({
-  useFeedInventory: () => ({
-    feedInventory: [],
+vi.mock('../../contexts/OptimizedDataProvider', () => ({
+  useOptimizedAppData: () => ({
+    data: {
+      expenses: [],
+      eggEntries: [],
+      feedInventory: [],
+      flockProfile: { id: 'test-flock', flock_name: 'Test Flock' },
+      flockEvents: [],
+      customers: [],
+      sales: [],
+      summary: undefined
+    },
     isLoading: false,
-    updateFeedInventory: vi.fn(),
+    error: null,
+    refreshData: vi.fn(),
+    lastFetched: null
   }),
-  useFlockProfile: () => ({
-    flockProfile: { id: 'test-flock', flock_name: 'Test Flock' },
-    isLoading: false,
-  }),
+  useFeedInventory: () => [],
+  useFlockProfile: () => ({ id: 'test-flock', flock_name: 'Test Flock' }),
   useAppData: () => ({
     data: {},
     updateExpenses: vi.fn(),
@@ -160,7 +169,7 @@ describe('FeedTracker Component - API Integration', () => {
     mockSaveFeedInventory.mockResolvedValueOnce({ success: true })
 
     // Mock useFeedInventory to return existing feed
-    vi.mocked(vi.importMock('../../contexts/DataContext')).useFeedInventory = () => ({
+    vi.mocked(vi.importMock('../../contexts/OptimizedDataProvider')).useFeedInventory = () => ({
       feedInventory: [
         {
           id: 'feed-1',
@@ -200,7 +209,7 @@ describe('FeedTracker Component - API Integration', () => {
     )
 
     // Mock useFeedInventory to return existing feed
-    vi.mocked(vi.importMock('../../contexts/DataContext')).useFeedInventory = () => ({
+    vi.mocked(vi.importMock('../../contexts/OptimizedDataProvider')).useFeedInventory = () => ({
       feedInventory: [
         {
           id: 'feed-1',
@@ -231,7 +240,7 @@ describe('FeedTracker Component - API Integration', () => {
     mockSaveFeedInventory.mockResolvedValueOnce({ success: true })
 
     // Mock useFeedInventory to return existing feed
-    vi.mocked(vi.importMock('../../contexts/DataContext')).useFeedInventory = () => ({
+    vi.mocked(vi.importMock('../../contexts/OptimizedDataProvider')).useFeedInventory = () => ({
       feedInventory: [
         {
           id: 'feed-1',
@@ -269,7 +278,7 @@ describe('FeedTracker Component - API Integration', () => {
     )
 
     // Mock useFeedInventory to return existing feed
-    vi.mocked(vi.importMock('../../contexts/DataContext')).useFeedInventory = () => ({
+    vi.mocked(vi.importMock('../../contexts/OptimizedDataProvider')).useFeedInventory = () => ({
       feedInventory: [
         {
           id: 'feed-1',

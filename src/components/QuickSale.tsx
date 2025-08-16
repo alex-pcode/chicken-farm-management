@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Customer } from '../types/crm';
-import { getAuthHeaders } from '../utils/authApiUtils';
+import { apiService } from '../services/api';
 
 interface QuickSaleProps {
   customers: Customer[];
@@ -60,8 +60,6 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
     }
 
     try {
-      const headers = await getAuthHeaders();
-      
       // Convert to API format
       const saleData = {
         customer_id: formData.customer_id,
@@ -72,16 +70,7 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
         notes: formData.notes
       };
 
-      const response = await fetch('/api/sales', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(saleData)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to record sale');
-      }
+      await apiService.crm.saveSale(saleData);
 
       const customerName = customers.find(c => c.id === formData.customer_id)?.name || 'Customer';
       

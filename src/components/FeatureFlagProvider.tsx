@@ -101,8 +101,6 @@ export const Epic6Feature: React.FC<Omit<FeatureProps, 'flag'> & { feature: 'fea
 
 // Development utilities component
 export const FeatureFlagDebugPanel: React.FC = () => {
-  const { flags } = useFeatureFlags()
-  
   if (import.meta.env.PROD) {
     return null
   }

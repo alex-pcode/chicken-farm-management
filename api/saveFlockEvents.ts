@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   throw new Error('Missing required Supabase environment variables');
@@ -42,7 +42,7 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const { flockProfileId, event, eventId } = req.body;
-    console.log('Received event data:', { flockProfileId, event, eventId });
+    console.log('Received event data:', { flockProfileId, event, eventId, method: req.method });
 
     if (!flockProfileId || !event) {
       return res.status(400).json({ message: 'Missing required fields: flockProfileId and event' });
@@ -75,16 +75,52 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     let data, error;
 
     if (req.method === 'PUT' && eventId) {
-      // Update existing event
-      const result = await supabase
-        .from('flock_events')
-        .update(eventData)
-        .eq('id', eventId)
-        .select()
-        .single();
+      // Update existing event - ensure user owns the event
+      console.log('Updating event with ID:', eventId, 'type:', typeof eventId, 'for user:', user.id, 'user type:', typeof user.id);
       
-      data = result.data;
-      error = result.error;
+      // First check if the event exists
+      const { data: existingEvents, error: checkError } = await supabase
+        .from('flock_events')
+        .select('id, user_id')
+        .eq('id', eventId);
+      
+      console.log('Query result for event lookup:', { existingEvents, checkError });
+      
+      // Also check all events for this user to debug
+      const { data: allUserEvents, error: allEventsError } = await supabase
+        .from('flock_events')
+        .select('id, type, date, description')
+        .eq('user_id', user.id);
+      
+      console.log('All events for user:', allUserEvents);
+      
+      if (checkError) {
+        console.log('Error checking existing event:', checkError);
+        error = { message: `Database error: ${checkError.message}` };
+        data = null;
+      } else if (!existingEvents || existingEvents.length === 0) {
+        console.log('Event not found with ID:', eventId);
+        console.log('Available event IDs:', allUserEvents?.map(e => e.id));
+        error = { message: 'Event not found' };
+        data = null;
+      } else if (existingEvents[0].user_id !== user.id) {
+        console.log('Access denied: Event belongs to different user');
+        error = { message: 'Access denied - Event belongs to different user' };
+        data = null;
+      } else {
+        // Proceed with update
+        const result = await supabase
+          .from('flock_events')
+          .update(eventData)
+          .eq('id', eventId)
+          .eq('user_id', user.id)
+          .select()
+          .single();
+        
+        data = result.data;
+        error = result.error;
+        console.log('Update result:', { data, error });
+      }
     } else {
       // Insert new event
       const result = await supabase

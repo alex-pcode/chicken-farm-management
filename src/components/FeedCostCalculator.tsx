@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import type { FeedEntry, FlockProfile, FlockEvent } from '../types';
-import { useFeedInventory, useFlockProfile } from '../contexts/DataContext';
+import type { FeedEntry } from '../types';
+import { useOptimizedAppData } from '../contexts/OptimizedDataProvider';
 import { StatCard } from './testCom';
 
 interface FlockSizeAtDate {
@@ -27,8 +27,9 @@ interface FeedPeriod {
 }
 
 export const FeedCostCalculator = () => {
-  const { feedInventory } = useFeedInventory();
-  const { flockProfile } = useFlockProfile();
+  const { data } = useOptimizedAppData();
+  const flockProfile = data.flockProfile;
+  const feedInventory = data.feedInventory;
   
   const [flockHistory, setFlockHistory] = useState<FlockSizeAtDate[]>([]);
   const [feedPeriods, setFeedPeriods] = useState<FeedPeriod[]>([]);
