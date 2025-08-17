@@ -46,7 +46,7 @@ const formatValue = (value: string | number, format: string = 'number'): string 
 const getValueColorClass = (color: string = 'default') => {
   switch (color) {
     case 'success':
-      return 'text-green-600';
+      return { color: 'oklch(0.44 0.11 162.79)' };
     case 'warning':
       return 'text-yellow-600';
     case 'danger':
@@ -104,7 +104,10 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
               <span className={`text-gray-600 ${variant === 'compact' ? 'text-sm' : 'text-base'}`}>
                 {item.label}
               </span>
-              <span className={`font-semibold ${getValueColorClass(item.color)} ${variant === 'compact' ? 'text-sm' : 'text-base'}`}>
+              <span 
+                className={`font-semibold ${typeof getValueColorClass(item.color) === 'string' ? getValueColorClass(item.color) : ''} ${variant === 'compact' ? 'text-sm' : 'text-base'}`}
+                style={typeof getValueColorClass(item.color) === 'object' ? getValueColorClass(item.color) : undefined}
+              >
                 {formatValue(item.value, item.format)}
               </span>
             </div>

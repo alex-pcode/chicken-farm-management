@@ -22,28 +22,28 @@ interface ProgressCardProps extends BaseUIComponentProps {
 
 const colorClasses = {
   default: {
-    bg: 'bg-blue-600',
-    bgLight: 'bg-blue-100',
+    bg: '#4F39F6',
+    bgLight: '#E8E5FF',
     text: 'text-blue-600',
   },
   success: {
-    bg: 'bg-green-600',
-    bgLight: 'bg-green-100',
-    text: 'text-green-600',
+    bg: '#4F39F6',
+    bgLight: '#E8E5FF',
+    text: { color: 'oklch(0.44 0.11 162.79)' },
   },
   warning: {
-    bg: 'bg-yellow-600',
-    bgLight: 'bg-yellow-100',
+    bg: '#4F39F6',
+    bgLight: '#E8E5FF',
     text: 'text-yellow-600',
   },
   danger: {
-    bg: 'bg-red-600',
-    bgLight: 'bg-red-100',
+    bg: '#4F39F6',
+    bgLight: '#E8E5FF',
     text: 'text-red-600',
   },
   info: {
-    bg: 'bg-cyan-600',
-    bgLight: 'bg-cyan-100',
+    bg: '#4F39F6',
+    bgLight: '#E8E5FF',
     text: 'text-cyan-600',
   },
 };
@@ -91,7 +91,10 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
           {showPercentage && (
-            <span className={`text-sm font-medium ${colors.text}`}>
+            <span 
+              className={`text-sm font-medium ${typeof colors.text === 'string' ? colors.text : ''}`}
+              style={typeof colors.text === 'object' ? colors.text : undefined}
+            >
               {percentage.toFixed(1)}%
             </span>
           )}
@@ -106,9 +109,10 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({
       </div>
 
       <div className="space-y-2">
-        <div className={`w-full rounded-full h-3 ${colors.bgLight}`}>
+        <div className="w-full rounded-full h-3" style={{ backgroundColor: colors.bgLight }}>
           <motion.div
-            className={`h-3 rounded-full ${colors.bg}`}
+            className="h-3 rounded-full"
+            style={{ background: colors.bg }}
             initial={animated ? { width: 0 } : { width: `${percentage}%` }}
             animate={{ width: `${percentage}%` }}
             transition={{

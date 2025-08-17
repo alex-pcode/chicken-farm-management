@@ -25,9 +25,10 @@ const variantStyles = {
   },
   success: {
     icon: '✅',
-    iconColor: 'text-green-600',
-    buttonClass: 'bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors',
-    borderColor: 'border-green-200'
+    iconColor: { color: 'oklch(0.44 0.11 162.79)' },
+    buttonClass: 'px-4 py-2 rounded-md transition-colors text-white',
+    buttonStyle: { backgroundColor: 'oklch(0.44 0.11 162.79)' },
+    borderColor: 'border-emerald-200'
   },
   warning: {
     icon: '⚠️',
@@ -67,7 +68,10 @@ export const AlertDialog: React.FC<AlertDialogProps> = ({
     >
       <div className="space-y-4">
         <div className="flex items-start gap-3">
-          <div className={`text-2xl ${styles.iconColor}`}>
+          <div 
+            className={`text-2xl ${typeof styles.iconColor === 'string' ? styles.iconColor : ''}`}
+            style={typeof styles.iconColor === 'object' ? styles.iconColor : undefined}
+          >
             {styles.icon}
           </div>
           <div className="flex-1">
@@ -81,6 +85,7 @@ export const AlertDialog: React.FC<AlertDialogProps> = ({
           <button
             onClick={onClose}
             className={styles.buttonClass}
+            style={styles.buttonStyle || undefined}
             autoFocus
           >
             {buttonText}

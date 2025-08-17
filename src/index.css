@@ -70,6 +70,10 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
 }
 
+h1 {
+  margin-bottom: 0;
+}
+
 input, select, textarea, button {
   font-family: var(--font-fraunces);
 }
@@ -291,6 +295,7 @@ input, select, textarea, button {
 @media (max-width: 1024px) {
   .main-content {
     margin-left: 0;
+    padding-bottom: 100px !important;
   }
 }
 
@@ -319,8 +324,37 @@ input, select, textarea, button {
     0 8px 32px rgba(243, 229, 215, 0.1),
     inset 0 0 0 1px rgba(255, 255, 255, 0.5);
   border-radius: 1rem;
-  padding: 1.5rem;
+  padding: 15px;
 }
+
+.chart-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  box-shadow: 
+    0 8px 32px rgba(243, 229, 215, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  border-radius: 1rem;
+  padding: 0.75rem;
+  width: 100%;
+}
+
+/* Optimize chart spacing like the reference example */
+.chart-card .recharts-cartesian-axis-tick-value {
+  font-size: 12px;
+  fill: #666;
+}
+
+.chart-card .recharts-cartesian-grid-horizontal line,
+.chart-card .recharts-cartesian-grid-vertical line {
+  stroke-opacity: 0.3;
+}
+
+@media (min-width: 1024px) {
+  .chart-card {
+    padding: 1rem;
+  }
+}
+
 
 .stat-card {
   position: relative;
@@ -1227,6 +1261,10 @@ input, select, textarea, button {
   }
   body {
     @apply bg-background text-foreground;
+  }
+  .text-sm {
+    font-size: 0.9375rem; /* 15px instead of default 14px */
+    line-height: 1.375rem; /* 22px instead of default 20px */
   }
 }
 

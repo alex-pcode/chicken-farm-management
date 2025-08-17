@@ -52,17 +52,17 @@ const formatValue = (
 };
 
 const variantClasses = {
-  default: 'text-4xl',
-  large: 'text-6xl',
-  compact: 'text-2xl',
+  default: 'text-2xl lg:text-4xl',
+  large: 'text-4xl lg:text-6xl',
+  compact: 'text-xl lg:text-2xl',
 };
 
 const colorClasses = {
-  default: 'text-gray-900',
-  success: 'text-green-600',
-  warning: 'text-yellow-600',
-  danger: 'text-red-600',
-  info: 'text-blue-600',
+  default: 'bg-gradient-to-r from-indigo-700 to-violet-600 bg-clip-text text-transparent',
+  success: 'bg-gradient-to-r from-indigo-700 to-violet-600 bg-clip-text text-transparent',
+  warning: 'bg-gradient-to-r from-indigo-700 to-violet-600 bg-clip-text text-transparent',
+  danger: 'bg-gradient-to-r from-indigo-700 to-violet-600 bg-clip-text text-transparent',
+  info: 'bg-gradient-to-r from-indigo-700 to-violet-600 bg-clip-text text-transparent',
 };
 
 export const MetricDisplay: React.FC<MetricDisplayProps> = ({
@@ -109,7 +109,7 @@ export const MetricDisplay: React.FC<MetricDisplayProps> = ({
           </span>
         )}
       </div>
-      <div className="text-sm text-gray-600 font-medium">
+      <div className="text-black font-medium" style={{ fontSize: '18px' }}>
         {label}
       </div>
     </motion.div>

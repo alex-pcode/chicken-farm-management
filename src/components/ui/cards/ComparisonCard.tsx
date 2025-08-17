@@ -22,6 +22,7 @@ interface ComparisonCardProps extends BaseUIComponentProps {
   variant?: 'default' | 'compact';
   loading?: boolean;
   showArrow?: boolean;
+  icon?: string;
 }
 
 const formatValue = (value: string | number, format: string): string => {
@@ -48,7 +49,7 @@ const formatValue = (value: string | number, format: string): string => {
 const getChangeColor = (changeType?: string) => {
   switch (changeType) {
     case 'increase':
-      return 'text-green-600';
+      return { color: 'oklch(0.44 0.11 162.79)' };
     case 'decrease':
       return 'text-red-600';
     default:
@@ -77,6 +78,7 @@ export const ComparisonCard: React.FC<ComparisonCardProps> = ({
   variant = 'default',
   loading = false,
   showArrow = true,
+  icon,
   className = '',
   testId,
 }) => {
@@ -117,12 +119,22 @@ export const ComparisonCard: React.FC<ComparisonCardProps> = ({
         <h3 className={`font-semibold text-gray-900 ${variant === 'compact' ? 'text-base' : 'text-lg'}`}>
           {title}
         </h3>
-        {change !== undefined && (
-          <div className={`text-sm font-medium ${getChangeColor(changeType)}`}>
-            {getChangeIcon(changeType)} {changeType === 'increase' ? '+' : ''}
-            {change}%
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {change !== undefined && (
+            <div 
+              className={`text-sm font-medium ${typeof getChangeColor(changeType) === 'string' ? getChangeColor(changeType) : ''}`}
+              style={typeof getChangeColor(changeType) === 'object' ? getChangeColor(changeType) : undefined}
+            >
+              {changeType === 'increase' ? '+' : ''}
+              {change}%
+            </div>
+          )}
+          {icon && (
+            <div className="max-[480px]:hidden size-8 shrink-0 rounded-full bg-indigo-600/25 border border-indigo-600/50 flex items-center justify-center text-indigo-500">
+              <span className="text-lg">{icon}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4 items-center">

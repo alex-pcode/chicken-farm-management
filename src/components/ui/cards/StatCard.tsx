@@ -21,9 +21,9 @@ interface StatCardProps extends BaseUIComponentProps {
 }
 
 const variantClasses = {
-  default: 'glass-card p-6',
-  compact: 'bg-white rounded-lg p-4 border border-gray-200',
-  gradient: 'glass-card bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 p-6',
+  default: 'glass-card p-3 lg:p-5',
+  compact: 'glass-card p-3 lg:p-5',
+  gradient: 'glass-card bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 p-3 lg:p-5',
 };
 
 const cardVariants = {
@@ -57,7 +57,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   };
 
   const getChangeColor = () => {
-    if (changeType === 'increase') return 'text-green-600';
+    if (changeType === 'increase') return { color: 'oklch(0.44 0.11 162.79)' };
     if (changeType === 'decrease') return 'text-red-600';
     return 'text-gray-600';
   };
@@ -75,38 +75,41 @@ export const StatCard: React.FC<StatCardProps> = ({
   }
 
   const cardContent = (
-    <>
+    <div className="relative flex items-center gap-3">
+      {/* Icon Section */}
       {icon && (
-        <div className="text-2xl mb-2">{icon}</div>
+        <div className="max-[480px]:hidden size-8 shrink-0 rounded-full bg-indigo-600/25 border border-indigo-600/50 flex items-center justify-center text-indigo-500">
+          <span className="text-lg">{icon}</span>
+        </div>
       )}
-      <div className="flex items-center justify-between mb-2">
-        <h3 className={`font-semibold text-gray-900 ${variant === 'compact' ? 'text-sm' : 'text-lg'}`}>
+      
+      {/* Content Section */}
+      <div className="flex-1">
+        {/* Title */}
+        <div className="font-semibold text-gray-900 text-base lg:text-lg mb-1">
           {title}
-        </h3>
-        {getTrendIcon() && (
-          <span className="text-lg">{getTrendIcon()}</span>
-        )}
-      </div>
-      
-      <div className={`font-bold ${variant === 'compact' ? 'text-xl' : 'text-3xl'} mb-2 text-indigo-600`}>
-        {total}
-      </div>
-      
-      <div className="flex items-center justify-between">
-        {label && (
-          <div className={`text-gray-500 ${variant === 'compact' ? 'text-xs' : 'text-sm'}`}>
-            {label}
-          </div>
-        )}
+        </div>
         
-        {change !== undefined && (
-          <div className={`text-sm ${getChangeColor()}`}>
-            {changeType === 'increase' ? '+' : ''}
-            {change}%
-          </div>
-        )}
+        {/* Value */}
+        <div className="font-semibold mb-2 text-gray-900 text-2xl">
+          {total}
+        </div>
+        
+        {/* Label and Change */}
+        <div className="text-xs text-gray-500">
+          {change !== undefined && (
+            <span 
+              className={`font-medium ${typeof getChangeColor() === 'string' ? getChangeColor() : ''}`}
+              style={typeof getChangeColor() === 'object' ? getChangeColor() : undefined}
+            >
+              {changeType === 'increase' ? '↗' : changeType === 'decrease' ? '↘' : '→'} {changeType === 'increase' ? '+' : ''}{change}%
+            </span>
+          )}
+          {change !== undefined && label && <span> vs </span>}
+          {label && <span>{label}</span>}
+        </div>
       </div>
-    </>
+    </div>
   );
 
   if (onClick) {
