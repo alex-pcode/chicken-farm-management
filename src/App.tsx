@@ -35,6 +35,7 @@ const navigation = [
   { name: 'Feed Calculator', emoji: '🧮', href: '/feed-calculator' },
   { name: 'Savings', emoji: '📈', href: '/savings' },
   { name: 'Viability', emoji: '🧮', href: '/viability' },
+  { name: 'Cards', emoji: '🎨', href: '/cards' },
 ];
 
 // Primary mobile navigation - most critical daily tasks
@@ -53,6 +54,7 @@ const secondaryMobileNav = [
   { name: 'Feed Calculator', emoji: '🧮', href: '/feed-calculator' },
   { name: 'Savings', emoji: '📈', href: '/savings' },
   { name: 'Viability', emoji: '🧮', href: '/viability' },
+  { name: 'Cards', emoji: '🎨', href: '/cards' },
 ];
 
 const NavLink = ({ item }: { item: typeof navigation[0] }) => {
