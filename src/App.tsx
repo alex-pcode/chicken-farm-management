@@ -12,6 +12,7 @@ const CRM = lazy(() => import('./components/CRM').then(module => ({ default: mod
 const ChickenViability = lazy(() => import('./components/ChickenViability').then(module => ({ default: module.ChickenViability })));
 const FeedCostCalculator = lazy(() => import('./components/FeedCostCalculator').then(module => ({ default: module.FeedCostCalculator })));
 const FlockBatchManager = lazy(() => import('./components/FlockBatchManager').then(module => ({ default: module.FlockBatchManager })));
+const CardShowcase = lazy(() => import('./components/examples/CardShowcase').then(module => ({ default: module.default })));
 import { motion } from 'framer-motion'
 import { StatCard } from './components/testCom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
@@ -545,7 +546,7 @@ const MainApp = () => {
       )}
 
       {/* Main Content */}
-      <main className="main-content pb-24 lg:pb-0 mb-20 lg:mb-0">
+      <main className="main-content" style={{ paddingTop: 0, paddingLeft: 0, paddingRight: 0 }}>
         <Suspense fallback={<ComponentLoader />}>
           <Routes>
             <Route path="/" element={<Dashboard />} />
@@ -559,6 +560,7 @@ const MainApp = () => {
             <Route path="/feed-calculator" element={<FeedCostCalculator />} />
             <Route path="/savings" element={<Savings />} />
             <Route path="/viability" element={<ChickenViability />} />
+            <Route path="/cards" element={<CardShowcase />} />
           </Routes>
         </Suspense>
       </main>
