@@ -251,7 +251,7 @@ describe('Auth API Utils - Type Safety', () => {
 
   describe('Error Handling - Typed Errors', () => {
     test('throws AuthenticationError for auth failures', async () => {
-      const { saveEggEntries, AuthenticationError } = await import('../authApiUtils')
+      const { saveEggEntries } = await import('../authApiUtils')
       
       mockSupabase.auth.getSession.mockResolvedValue({
         data: { session: null },
@@ -269,7 +269,7 @@ describe('Auth API Utils - Type Safety', () => {
     })
 
     test('throws NetworkError for fetch failures', async () => {
-      const { saveEggEntries, NetworkError } = await import('../authApiUtils')
+      const { saveEggEntries } = await import('../authApiUtils')
       
       ;(global.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new TypeError('Failed to fetch'))
 
@@ -279,7 +279,7 @@ describe('Auth API Utils - Type Safety', () => {
     })
 
     test('throws ServerError for HTTP errors', async () => {
-      const { saveEggEntries, ServerError } = await import('../authApiUtils')
+      const { saveEggEntries } = await import('../authApiUtils')
       
       ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
@@ -301,7 +301,7 @@ describe('Auth API Utils - Type Safety', () => {
       
       try {
         await saveEggEntries(entries)
-      } catch (error) {
+      } catch {
         // Error expected
       }
       

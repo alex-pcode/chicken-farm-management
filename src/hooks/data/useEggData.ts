@@ -12,7 +12,7 @@ export interface UseEggDataOptions {
 export interface UseEggDataReturn {
   entries: EggEntry[];
   isLoading: boolean;
-  error: any;
+  error: unknown;
   refetch: () => Promise<void>;
   addEntry: (entry: Omit<EggEntry, 'id'>) => Promise<void>;
   updateEntry: (id: string, entry: Partial<EggEntry>) => Promise<void>;
@@ -21,6 +21,8 @@ export interface UseEggDataReturn {
   averageDaily: number;
   thisWeekTotal: number;
   thisMonthTotal: number;
+  previousWeekTotal: number;
+  previousMonthTotal: number;
 }
 
 export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn => {
@@ -33,10 +35,13 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
   const { data, isLoading: contextLoading, refreshData } = useOptimizedAppData();
   const contextEntries = data.eggEntries;
 
-  // Memoize the fetcher function to prevent infinite loops
-  const fetcher = useCallback(() => apiService.production.getEggEntries(), []);
+  // Memoize the fetcher function to prevent infinite loops  
+  const fetcher = useCallback(async (): Promise<EggEntry[]> => {
+    const response = await apiService.production.getEggEntries();
+    return response.data as EggEntry[];
+  }, []);
   
-  // Fallback data fetching hook (if DataContext fails)
+  // Fallback data fetching hook (only when context truly unavailable)
   const {
     data: fetchedEntries,
     isLoading: fetchLoading,
@@ -46,29 +51,26 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
     key: 'egg-entries',
     fetcher,
     cacheTime,
-    enabled: autoRefresh && (!contextEntries || contextEntries.length === 0)
+    enabled: autoRefresh && !contextEntries  // Only trigger if contextEntries is null/undefined, not empty array
   });
 
-  // Use context data preferentially, fallback to fetched data
-  // Ensure entries is always an array
-  const entries = Array.isArray(contextEntries) && contextEntries.length > 0 
-    ? contextEntries 
-    : (Array.isArray(fetchedEntries) ? fetchedEntries : []);
+  // Fixed data precedence: use context if it exists (even if empty array), only fallback if context is null/undefined
+  const entries = useMemo(() => {
+    return Array.isArray(contextEntries) 
+      ? contextEntries  // ✅ Primary: use context data (complete 8 fields)
+      : (Array.isArray(fetchedEntries) ? fetchedEntries : []);  // ⚠️ Fallback: minimal 3 fields
+  }, [contextEntries, fetchedEntries]);
   const isLoading = contextLoading || fetchLoading;
   const error = fetchError;
 
   // Add new egg entry
   const addEntry = useCallback(async (entry: Omit<EggEntry, 'id'>) => {
-    try {
-      // Save to API without ID (let database generate UUID)
-      await apiService.production.saveEggEntries([entry]);
-      
-      // After successful save, refresh data from server to get updated state
-      await refreshData();
-      
-    } catch (err) {
-      throw err;
-    }
+    // Add temporary ID for API compatibility (database will generate final UUID)
+    const entryWithId: EggEntry = { ...entry, id: `temp-${Date.now()}` };
+    await apiService.production.saveEggEntries([entryWithId]);
+    
+    // After successful save, refresh data from server to get updated state
+    await refreshData();
   }, [refreshData]);
 
   // Update existing egg entry
@@ -78,30 +80,21 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
 
     const entryToUpdate = { ...entries[entryIndex], ...updatedData };
     
-    try {
-      // Save to API
-      await apiService.production.saveEggEntries([entryToUpdate]);
-      
-      // After successful save, refresh data from server to get updated state
-      await refreshData();
-    } catch (err) {
-      throw err;
-    }
+    // Save to API
+    await apiService.production.saveEggEntries([entryToUpdate]);
+    
+    // After successful save, refresh data from server to get updated state
+    await refreshData();
   }, [entries, refreshData]);
 
   // Delete egg entry
   const deleteEntry = useCallback(async (id: string) => {
-    try {
-      // Delete the entry by filtering it out and saving the updated array
-      const updatedEntries = entries.filter(entry => entry.id !== id);
-      await apiService.production.saveEggEntries(updatedEntries);
-      
-      // After successful delete, refresh data from server to get updated state
-      await refreshData();
-    } catch (err) {
-      throw err;
-    }
-  }, [entries, refreshData]);
+    // Use the proper delete API endpoint
+    await apiService.production.deleteEggEntry(id);
+    
+    // After successful delete, refresh data from server to get updated state
+    await refreshData();
+  }, [refreshData]);
 
   // Statistics calculations
   const statistics = useMemo(() => {
@@ -121,6 +114,13 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
       .filter(entry => entry?.date && new Date(entry.date) >= oneWeekAgo)
       .reduce((sum, entry) => sum + (entry?.count || 0), 0);
     
+    // Calculate previous week's total
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+    const previousWeekTotal = validEntries
+      .filter(entry => entry?.date && new Date(entry.date) >= twoWeeksAgo && new Date(entry.date) < oneWeekAgo)
+      .reduce((sum, entry) => sum + (entry?.count || 0), 0);
+    
     // Calculate this month's total
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
@@ -128,11 +128,20 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
       .filter(entry => entry?.date && new Date(entry.date) >= oneMonthAgo)
       .reduce((sum, entry) => sum + (entry?.count || 0), 0);
     
+    // Calculate previous month's total
+    const twoMonthsAgo = new Date();
+    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+    const previousMonthTotal = validEntries
+      .filter(entry => entry?.date && new Date(entry.date) >= twoMonthsAgo && new Date(entry.date) < oneMonthAgo)
+      .reduce((sum, entry) => sum + (entry?.count || 0), 0);
+    
     return {
       totalEggs,
       averageDaily: Math.round(averageDaily * 100) / 100,
       thisWeekTotal,
-      thisMonthTotal
+      thisMonthTotal,
+      previousWeekTotal,
+      previousMonthTotal
     };
   }, [entries]);
 

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
+import { motion } from 'framer-motion';
 import type { FlockEvent } from '../../types';
 import { apiService } from '../../services/api';
 import { ApiServiceError, AuthenticationError, NetworkError, ServerError, getUserFriendlyErrorMessage } from '../../types/api';
@@ -8,11 +9,36 @@ import {
   DateInput, 
   SelectInput, 
   TextareaInput,
-  FormCard, 
   SubmitButton 
 } from '../forms';
+import { SectionContainer } from '../ui';
 import { useFormState } from '../../hooks/useFormState';
 import { useTimeoutToggle } from '../../hooks/utils';
+
+interface BaseUIComponentProps {
+  className?: string;
+  children?: React.ReactNode;
+  testId?: string;
+}
+
+// Type guard for API event response
+interface ApiEventData {
+  id: string | number;
+  date: string;
+  type: string;
+  description: string;
+  affected_birds?: number;
+  notes?: string;
+}
+
+function isValidEventData(obj: unknown): obj is ApiEventData {
+  return typeof obj === 'object' && 
+         obj !== null && 
+         'id' in obj && 
+         'date' in obj && 
+         'type' in obj && 
+         'description' in obj;
+}
 
 const EVENT_TYPES = {
   acquisition: '🐣 New Birds Acquired',
@@ -22,7 +48,7 @@ const EVENT_TYPES = {
   other: '📝 Other Event'
 };
 
-interface EventFormProps {
+interface EventFormProps extends BaseUIComponentProps {
   profileId: string | undefined;
   onEventAdded: (event: FlockEvent) => void;
   onEventUpdated: (event: FlockEvent) => void;
@@ -30,12 +56,14 @@ interface EventFormProps {
   onCancelEdit?: () => void;
 }
 
-export const EventForm = ({
+export const EventForm = memo(({
   profileId,
   onEventAdded,
   onEventUpdated,
   editingEvent,
-  onCancelEdit
+  onCancelEdit,
+  className = '',
+  testId
 }: EventFormProps) => {
   const success = useTimeoutToggle(false, 3000);
   const [error, setError] = useState<string | null>(null);
@@ -84,21 +112,25 @@ export const EventForm = ({
           editingEvent.id
         );
         
-        if (result && result.data && (result.data as any).event) {
-          const dbEvent = (result.data as any).event;
-          const eventForState: FlockEvent = {
-            id: dbEvent.id.toString(),
-            date: dbEvent.date,
-            type: dbEvent.type,
-            description: dbEvent.description,
-            affectedBirds: dbEvent.affected_birds,
-            notes: dbEvent.notes
-          };
+        if (result && result.data && typeof result.data === 'object' && 'event' in result.data) {
+          const responseEvent = result.data.event;
+          if (isValidEventData(responseEvent)) {
+            const eventForState: FlockEvent = {
+              id: String(responseEvent.id),
+              date: responseEvent.date,
+              type: responseEvent.type as FlockEvent['type'],
+              description: responseEvent.description,
+              affectedBirds: responseEvent.affected_birds,
+              notes: responseEvent.notes || ''
+            };
           
-          onEventUpdated(eventForState);
-          eventForm.resetValues();
-          success.setTrue();
-          onCancelEdit?.();
+            onEventUpdated(eventForState);
+            eventForm.resetValues();
+            success.setTrue();
+            onCancelEdit?.();
+          } else {
+            throw new Error('Invalid event data received from server');
+          }
         } else {
           throw new Error('Failed to update event');
         }
@@ -111,20 +143,24 @@ export const EventForm = ({
 
         const response = await apiService.flock.saveFlockEvent(profileId, event);
         
-        if (response && response.data && (response.data as any).event) {
-          const dbEvent = (response.data as any).event;
-          const eventForState: FlockEvent = {
-            id: dbEvent.id.toString(),
-            date: dbEvent.date,
-            type: dbEvent.type,
-            description: dbEvent.description,
-            affectedBirds: dbEvent.affected_birds,
-            notes: dbEvent.notes
-          };
+        if (response && response.data && typeof response.data === 'object' && 'event' in response.data) {
+          const responseEvent = response.data.event;
+          if (isValidEventData(responseEvent)) {
+            const eventForState: FlockEvent = {
+              id: String(responseEvent.id),
+              date: responseEvent.date,
+              type: responseEvent.type as FlockEvent['type'],
+              description: responseEvent.description,
+              affectedBirds: responseEvent.affected_birds,
+              notes: responseEvent.notes || ''
+            };
           
-          onEventAdded(eventForState);
-          eventForm.resetValues();
-          success.setTrue();
+            onEventAdded(eventForState);
+            eventForm.resetValues();
+            success.setTrue();
+          } else {
+            throw new Error('Invalid event data received from server');
+          }
         } else {
           throw new Error('Failed to save event');
         }
@@ -151,11 +187,36 @@ export const EventForm = ({
   };
 
   return (
-    <FormCard
+    <SectionContainer
       title={editingEvent ? 'Edit Event 📝' : 'Add Event 📝'}
-      success={success.value ? (editingEvent ? "Event updated successfully!" : "Event added successfully!") : undefined}
-      error={error || undefined}
+      variant="glass"
+      className={className}
+      testId={testId}
     >
+      {/* Success message */}
+      {success.value && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg"
+        >
+          <p className="text-green-800 text-sm">
+            {editingEvent ? "Event updated successfully!" : "Event added successfully!"}
+          </p>
+        </motion.div>
+      )}
+      
+      {/* Error message */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"
+        >
+          <p className="text-red-800 text-sm">{error}</p>
+        </motion.div>
+      )}
+      
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <SelectInput
@@ -212,6 +273,6 @@ export const EventForm = ({
           )}
         </div>
       </form>
-    </FormCard>
+    </SectionContainer>
   );
-};
+});

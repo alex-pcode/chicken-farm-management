@@ -85,7 +85,7 @@ export const AlertDialog: React.FC<AlertDialogProps> = ({
           <button
             onClick={onClose}
             className={styles.buttonClass}
-            style={styles.buttonStyle || undefined}
+            style={'buttonStyle' in styles ? styles.buttonStyle : undefined}
             autoFocus
           >
             {buttonText}

@@ -46,7 +46,6 @@ export const DateInput: React.FC<DateInputProps> = ({
         className="block text-gray-600 text-sm mb-2"
       >
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
       </label>
       
       <input

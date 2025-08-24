@@ -15,8 +15,9 @@ interface ConfirmDialogProps extends BaseUIComponentProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  variant?: 'default' | 'danger' | 'warning';
+  variant?: 'default' | 'danger' | 'warning' | 'success';
   loading?: boolean;
+  disabled?: boolean;
 }
 
 const variantStyles = {
@@ -34,6 +35,11 @@ const variantStyles = {
     confirmButton: 'bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md transition-colors',
     icon: '⚠️',
     iconColor: 'text-yellow-600'
+  },
+  success: {
+    confirmButton: 'bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors',
+    icon: '✅',
+    iconColor: 'text-green-600'
   }
 };
 
@@ -47,13 +53,14 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   cancelText = 'Cancel',
   variant = 'default',
   loading = false,
+  disabled = false,
   className = '',
   testId,
 }) => {
   const styles = variantStyles[variant];
 
   const handleConfirm = () => {
-    if (loading) return;
+    if (loading || disabled) return;
     onConfirm();
   };
 
@@ -79,17 +86,19 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         </div>
         
         <div className="flex justify-end gap-3 pt-4">
-          <button
-            onClick={onClose}
-            disabled={loading}
-            className="neu-button-secondary"
-          >
-            {cancelText}
-          </button>
+          {cancelText && (
+            <button
+              onClick={onClose}
+              disabled={loading || disabled}
+              className="neu-button-secondary"
+            >
+              {cancelText}
+            </button>
+          )}
           <button
             onClick={handleConfirm}
-            disabled={loading}
-            className={styles.confirmButton}
+            disabled={loading || disabled}
+            className={`${styles.confirmButton} ${(loading || disabled) ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {loading ? (
               <div className="flex items-center gap-2">

@@ -60,40 +60,93 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-// GET - Retrieve all flock batches for user
+// GET - Retrieve all flock batches for user or a specific batch
 async function handleGet(req: VercelRequest, res: VercelResponse, userId: string) {
   try {
-    const { data: batches, error } = await supabase
-      .from('flock_batches')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .order('acquisition_date', { ascending: false });
+    const { batchId } = req.query;
 
-    if (error) {
-      throw error;
+    if (batchId) {
+      // Get specific batch
+      const { data: batch, error } = await supabase
+        .from('flock_batches')
+        .select('*')
+        .eq('id', batchId)
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      if (!batch) {
+        return res.status(404).json({ error: 'Batch not found' });
+      }
+
+      // Transform single batch
+      const transformedBatch = {
+        id: batch.id,
+        batchName: batch.batch_name,
+        breed: batch.breed,
+        acquisitionDate: batch.acquisition_date,
+        initialCount: batch.initial_count,
+        currentCount: batch.current_count,
+        type: batch.type,
+        ageAtAcquisition: batch.age_at_acquisition,
+        expectedLayingStartDate: batch.expected_laying_start_date,
+        actualLayingStartDate: batch.actual_laying_start_date,
+        source: batch.source,
+        cost: batch.cost,
+        notes: batch.notes,
+        isActive: batch.is_active,
+        created_at: batch.created_at,
+        updated_at: batch.updated_at,
+        hensCount: batch.hens_count,
+        roostersCount: batch.roosters_count,
+        chicksCount: batch.chicks_count,
+        broodingCount: batch.brooding_count
+      };
+
+      return res.status(200).json({ success: true, data: { batch: transformedBatch } });
+    } else {
+      // Get all batches
+      const { data: batches, error } = await supabase
+        .from('flock_batches')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .order('acquisition_date', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      // Transform database fields to match TypeScript interface
+      const transformedBatches = batches?.map(batch => ({
+        id: batch.id,
+        batchName: batch.batch_name,
+        breed: batch.breed,
+        acquisitionDate: batch.acquisition_date,
+        initialCount: batch.initial_count,
+        currentCount: batch.current_count,
+        type: batch.type,
+        ageAtAcquisition: batch.age_at_acquisition,
+        expectedLayingStartDate: batch.expected_laying_start_date,
+        actualLayingStartDate: batch.actual_laying_start_date,
+        source: batch.source,
+        cost: batch.cost,
+        notes: batch.notes,
+        isActive: batch.is_active,
+        created_at: batch.created_at,
+        updated_at: batch.updated_at,
+        hensCount: batch.hens_count,
+        roostersCount: batch.roosters_count,
+        chicksCount: batch.chicks_count,
+        broodingCount: batch.brooding_count
+      }));
+
+      return res.status(200).json({ success: true, data: { batches: transformedBatches } });
     }
-
-    // Transform database fields to match TypeScript interface
-    const transformedBatches = batches?.map(batch => ({
-      id: batch.id,
-      batchName: batch.batch_name,
-      breed: batch.breed,
-      acquisitionDate: batch.acquisition_date,
-      initialCount: batch.initial_count,
-      currentCount: batch.current_count,
-      type: batch.type,
-      ageAtAcquisition: batch.age_at_acquisition,
-      expectedLayingStartDate: batch.expected_laying_start_date,
-      actualLayingStartDate: batch.actual_laying_start_date,
-      source: batch.source,
-      notes: batch.notes,
-      isActive: batch.is_active,
-      created_at: batch.created_at,
-      updated_at: batch.updated_at
-    }));
-
-    return res.status(200).json({ success: true, data: { batches: transformedBatches } });
   } catch (error) {
     console.error('Error fetching flock batches:', error);
     return res.status(500).json({ error: 'Failed to fetch flock batches' });
@@ -103,6 +156,8 @@ async function handleGet(req: VercelRequest, res: VercelResponse, userId: string
 // POST - Create new flock batch
 async function handlePost(req: VercelRequest, res: VercelResponse, userId: string) {
   try {
+    console.log('POST /api/flockBatches - Request body:', JSON.stringify(req.body, null, 2));
+    
     const { 
       batchName, 
       breed, 
@@ -112,13 +167,67 @@ async function handlePost(req: VercelRequest, res: VercelResponse, userId: strin
       ageAtAcquisition, 
       actualLayingStartDate,
       source, 
-      notes 
+      cost,
+      notes,
+      hensCount,
+      roostersCount,
+      chicksCount
     } = req.body;
 
+    console.log('Extracted fields:', {
+      batchName,
+      breed,
+      acquisitionDate,
+      initialCount,
+      type,
+      ageAtAcquisition,
+      actualLayingStartDate,
+      source,
+      cost,
+      notes,
+      hensCount,
+      roostersCount,
+      chicksCount
+    });
+
     // Validate required fields
-    if (!batchName || !breed || !acquisitionDate || !initialCount || !type || !ageAtAcquisition || !source) {
+    if (!batchName || !breed || !acquisitionDate || initialCount === undefined || initialCount === null || !type || !ageAtAcquisition || !source) {
+      console.log('Validation failed - missing required fields');
       return res.status(400).json({ error: 'Missing required fields' });
     }
+
+    // Parse and validate initialCount
+    const parsedInitialCount = parseInt(initialCount);
+    if (isNaN(parsedInitialCount) || parsedInitialCount <= 0) {
+      console.log('Validation failed - invalid initialCount:', initialCount);
+      return res.status(400).json({ error: 'Initial count must be a positive number' });
+    }
+
+    // Parse and validate individual counts
+    const parsedHensCount = parseInt(hensCount) || 0;
+    const parsedRoostersCount = parseInt(roostersCount) || 0;
+    const parsedChicksCount = parseInt(chicksCount) || 0;
+    
+    // Parse and validate cost
+    const parsedCost = parseFloat(cost) || 0;
+
+    // Validate that individual counts add up to initial count
+    const totalIndividualCount = parsedHensCount + parsedRoostersCount + parsedChicksCount;
+    if (totalIndividualCount !== parsedInitialCount) {
+      console.log(`Count mismatch - initial: ${parsedInitialCount}, individual total: ${totalIndividualCount}`);
+      return res.status(400).json({ 
+        error: 'Individual bird counts must add up to initial count',
+        details: `Hens: ${parsedHensCount}, Roosters: ${parsedRoostersCount}, Chicks: ${parsedChicksCount}, Total: ${totalIndividualCount}, Expected: ${parsedInitialCount}`
+      });
+    }
+
+    console.log('Parsed counts and cost:', {
+      initialCount: parsedInitialCount,
+      hensCount: parsedHensCount,
+      roostersCount: parsedRoostersCount,
+      chicksCount: parsedChicksCount,
+      cost: parsedCost
+    });
 
     // Validate laying start date if provided
     if (actualLayingStartDate) {
@@ -137,19 +246,69 @@ async function handlePost(req: VercelRequest, res: VercelResponse, userId: strin
         batch_name: batchName,
         breed,
         acquisition_date: acquisitionDate,
-        initial_count: initialCount,
-        current_count: initialCount, // Start with same as initial
+        initial_count: parsedInitialCount,
+        current_count: parsedInitialCount, // Start with same as initial
         type,
         age_at_acquisition: ageAtAcquisition,
         actual_laying_start_date: actualLayingStartDate || null,
         source,
-        notes
+        cost: parsedCost,
+        notes,
+        hens_count: parsedHensCount,
+        roosters_count: parsedRoostersCount,
+        chicks_count: parsedChicksCount
       })
       .select()
       .single();
 
     if (error) {
+      console.error('Supabase insert error:', {
+        error: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        requestData: {
+          user_id: userId,
+          batch_name: batchName,
+          breed,
+          acquisition_date: acquisitionDate,
+          initial_count: parsedInitialCount,
+          current_count: parsedInitialCount,
+          type,
+          age_at_acquisition: ageAtAcquisition,
+          actual_laying_start_date: actualLayingStartDate || null,
+          source,
+          cost: parsedCost,
+          notes,
+          hens_count: parsedHensCount,
+          roosters_count: parsedRoostersCount,
+          chicks_count: parsedChicksCount
+        }
+      });
       throw error;
+    }
+
+    // Create expense entry if cost > 0
+    if (parsedCost > 0) {
+      console.log('Creating expense entry for batch cost:', parsedCost);
+      
+      const { error: expenseError } = await supabase
+        .from('expenses')
+        .insert({
+          user_id: userId,
+          date: acquisitionDate,
+          category: 'Birds', // Category for chicken acquisitions
+          description: `Batch acquisition: ${batchName} (${parsedInitialCount} ${type})`,
+          amount: parsedCost
+        });
+
+      if (expenseError) {
+        console.error('Failed to create expense entry:', expenseError);
+        // Don't fail the batch creation if expense creation fails
+        // Just log the error and continue
+      } else {
+        console.log('Expense entry created successfully for batch cost');
+      }
     }
 
     // Transform response
@@ -165,16 +324,39 @@ async function handlePost(req: VercelRequest, res: VercelResponse, userId: strin
       expectedLayingStartDate: batch.expected_laying_start_date,
       actualLayingStartDate: batch.actual_laying_start_date,
       source: batch.source,
+      cost: batch.cost,
       notes: batch.notes,
       isActive: batch.is_active,
       created_at: batch.created_at,
-      updated_at: batch.updated_at
+      updated_at: batch.updated_at,
+      hensCount: batch.hens_count,
+      roostersCount: batch.roosters_count,
+      chicksCount: batch.chicks_count,
+      broodingCount: batch.brooding_count
     };
 
     return res.status(201).json({ success: true, data: { batch: transformedBatch } });
   } catch (error) {
     console.error('Error creating flock batch:', error);
-    return res.status(500).json({ error: 'Failed to create flock batch' });
+    
+    // Provide more specific error messages based on error type
+    if (error && typeof error === 'object' && 'code' in error) {
+      const dbError = error as { code: string; message: string };
+      if (dbError.code === '23505') { // Unique constraint violation
+        return res.status(409).json({ error: 'A batch with this name already exists' });
+      }
+      if (dbError.code === '23502') { // Not null violation
+        return res.status(400).json({ error: 'Missing required field', details: dbError.message });
+      }
+      if (dbError.code === '23514') { // Check constraint violation
+        return res.status(400).json({ error: 'Invalid data format', details: dbError.message });
+      }
+    }
+    
+    return res.status(500).json({ 
+      error: 'Failed to create flock batch',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 }
 
@@ -188,7 +370,26 @@ async function handlePut(req: VercelRequest, res: VercelResponse, userId: string
     }
 
     // Transform field names for database
-    const dbUpdateData: any = {};
+    const dbUpdateData: Partial<{
+      batch_name: string;
+      breed: string;
+      acquisition_date: string;
+      initial_count: number;
+      current_count: number;
+      type: string;
+      age_at_acquisition: string;
+      expected_laying_start_date: string;
+      actual_laying_start_date: string;
+      source: string;
+      cost: number;
+      notes: string;
+      is_active: boolean;
+      hens_count: number;
+      roosters_count: number;
+      chicks_count: number;
+      brooding_count: number;
+      updated_at: string;
+    }> = {};
     if (updateData.batchName !== undefined) dbUpdateData.batch_name = updateData.batchName;
     if (updateData.breed !== undefined) dbUpdateData.breed = updateData.breed;
     if (updateData.acquisitionDate !== undefined) dbUpdateData.acquisition_date = updateData.acquisitionDate;
@@ -201,6 +402,10 @@ async function handlePut(req: VercelRequest, res: VercelResponse, userId: string
     if (updateData.source !== undefined) dbUpdateData.source = updateData.source;
     if (updateData.notes !== undefined) dbUpdateData.notes = updateData.notes;
     if (updateData.isActive !== undefined) dbUpdateData.is_active = updateData.isActive;
+    if (updateData.hensCount !== undefined) dbUpdateData.hens_count = updateData.hensCount;
+    if (updateData.roostersCount !== undefined) dbUpdateData.roosters_count = updateData.roostersCount;
+    if (updateData.chicksCount !== undefined) dbUpdateData.chicks_count = updateData.chicksCount;
+    if (updateData.broodingCount !== undefined) dbUpdateData.brooding_count = updateData.broodingCount;
 
     dbUpdateData.updated_at = new Date().toISOString();
 
@@ -233,10 +438,15 @@ async function handlePut(req: VercelRequest, res: VercelResponse, userId: string
       expectedLayingStartDate: batch.expected_laying_start_date,
       actualLayingStartDate: batch.actual_laying_start_date,
       source: batch.source,
+      cost: batch.cost,
       notes: batch.notes,
       isActive: batch.is_active,
       created_at: batch.created_at,
-      updated_at: batch.updated_at
+      updated_at: batch.updated_at,
+      hensCount: batch.hens_count,
+      roostersCount: batch.roosters_count,
+      chicksCount: batch.chicks_count,
+      broodingCount: batch.brooding_count
     };
 
     return res.status(200).json({ success: true, data: { batch: transformedBatch } });

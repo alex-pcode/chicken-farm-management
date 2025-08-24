@@ -126,7 +126,7 @@ export const useSimpleDebounce = <T>(value: T, delay: number = 300): T => {
 };
 
 // Hook for debouncing function calls
-export const useDebouncedCallback = <T extends (...args: any[]) => any>(
+export const useDebouncedCallback = <T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number = 300,
   options: UseDebounceOptions = {}

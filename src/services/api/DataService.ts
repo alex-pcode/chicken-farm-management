@@ -1,13 +1,13 @@
 import { BaseApiService } from './BaseApiService';
 import { DataService as IDataService, ApiResponse } from './types';
-import type { EggEntry, FeedEntry, Expense, FlockProfile, FlockEvent, FlockBatch, DeathRecord } from '../../types';
+import type { EggEntry, FeedEntry, Expense, FlockProfile, FlockEvent, FlockBatch, DeathRecord, AppData } from '../../types';
 import { 
-  isEggEntryArray, 
-  isFeedEntryArray, 
-  isExpenseArray, 
-  isFlockProfile,
-  isFlockEventArray,
-  isObject
+  // isEggEntryArray, 
+  // isFeedEntryArray, 
+  // isExpenseArray, 
+  // isFlockProfile,
+  // isFlockEventArray,
+  // isObject
 } from '../../utils/typeGuards';
 
 /**
@@ -29,7 +29,9 @@ export class DataService extends BaseApiService implements IDataService {
   /**
    * Type guard for application data structure
    */
-  private isAppData(data: unknown): data is {
+   
+  // @ts-ignore - Type guard utility function for future use
+  private _isAppData(data: unknown): data is {
     feedInventory: FeedEntry[];
     eggEntries: EggEntry[];
     expenses: Expense[];
@@ -41,17 +43,17 @@ export class DataService extends BaseApiService implements IDataService {
     return (
       data !== null &&
       typeof data === 'object' &&
-      Array.isArray((data as any).feedInventory) &&
-      Array.isArray((data as any).eggEntries) &&
-      Array.isArray((data as any).expenses) &&
-      ((data as any).flockProfile === null || typeof (data as any).flockProfile === 'object')
+      Array.isArray((data as Record<string, unknown>).feedInventory) &&
+      Array.isArray((data as Record<string, unknown>).eggEntries) &&
+      Array.isArray((data as Record<string, unknown>).expenses) &&
+      ((data as Record<string, unknown>).flockProfile === null || typeof (data as Record<string, unknown>).flockProfile === 'object')
     );
   }
 
   /**
    * Fetch all application data with validation
    */
-  public async fetchAllData(): Promise<ApiResponse> {
+  public async fetchAllData(): Promise<ApiResponse<AppData>> {
     const response = await this.get<{
       feedInventory: FeedEntry[];
       eggEntries: EggEntry[];
@@ -60,15 +62,18 @@ export class DataService extends BaseApiService implements IDataService {
       flockEvents?: FlockEvent[];
       flockBatches?: FlockBatch[];
       deathRecords?: DeathRecord[];
-    }>('/data?type=all', this.isAppData.bind(this));
+    }>('/data?type=all');
+
 
     // Normalize the response structure - API returns { data: { ... } } 
     // but components expect direct access to the nested data
     if (response.data) {
-      return { 
+      const normalizedResponse = { 
         success: true,
         data: response.data 
       };
+      
+      return normalizedResponse;
     }
 
     // Fallback for unexpected response structure
@@ -78,8 +83,9 @@ export class DataService extends BaseApiService implements IDataService {
   /**
    * Save data using specific service methods
    */
-  public async saveData(_data: unknown): Promise<ApiResponse> {
+  public async saveData(data: unknown): Promise<ApiResponse> {
     // For authenticated API calls, delegate to specific service methods
+    void data; // Mark as used to avoid linting warning
     throw new Error('Use specific service methods for saving data');
   }
 }

@@ -37,8 +37,7 @@ describe('ProductionService', () => {
         { 
           id: '1', 
           date: '2025-01-01', 
-          egg_count: 12, 
-          user_id: 'user1', 
+          count: 12, 
           created_at: '2025-01-01T10:00:00Z' 
         }
       ];
@@ -67,7 +66,7 @@ describe('ProductionService', () => {
 
       const result = await service.getEggEntries();
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/getData', {
+      expect(global.fetch).toHaveBeenCalledWith('/api/data?type=production', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -78,7 +77,7 @@ describe('ProductionService', () => {
       expect(result).toEqual({
         success: true,
         data: mockEggEntries,
-        message: 'Egg entries extracted from full data response'
+        message: 'Egg entries fetched successfully'
       });
     });
 
@@ -121,8 +120,7 @@ describe('ProductionService', () => {
         { 
           id: '1', 
           date: '2025-01-01', 
-          egg_count: 12, 
-          user_id: 'user1', 
+          count: 12, 
           created_at: '2025-01-01T10:00:00Z' 
         }
       ];
@@ -147,7 +145,7 @@ describe('ProductionService', () => {
 
       const result = await service.saveEggEntries(eggEntries);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/saveEggEntries', {
+      expect(global.fetch).toHaveBeenCalledWith('/api/crud?operation=eggs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -168,9 +166,8 @@ describe('ProductionService', () => {
           type: 'layer_feed',
           quantity: 50,
           unit: 'kg',
-          cost_per_unit: 25.00,
-          purchase_date: '2025-01-01',
-          user_id: 'user1',
+          pricePerUnit: 25.00,
+          openedDate: '2025-01-01',
           created_at: '2025-01-01T10:00:00Z'
         }
       ];
@@ -195,7 +192,7 @@ describe('ProductionService', () => {
 
       const result = await service.saveFeedInventory(feedEntries);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/saveFeedInventory', {
+      expect(global.fetch).toHaveBeenCalledWith('/api/crud?operation=feed', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -216,7 +213,6 @@ describe('ProductionService', () => {
           category: 'feed',
           description: 'Feed purchase',
           amount: 100.00,
-          user_id: 'user1', 
           created_at: '2025-01-01T10:00:00Z' 
         }
       ];
@@ -245,7 +241,7 @@ describe('ProductionService', () => {
 
       const result = await service.getExpenses();
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/getData', {
+      expect(global.fetch).toHaveBeenCalledWith('/api/data?type=expenses', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -256,7 +252,7 @@ describe('ProductionService', () => {
       expect(result).toEqual({
         success: true,
         data: mockExpenses,
-        message: 'Expenses extracted from full data response'
+        message: 'Expenses fetched successfully'
       });
     });
 
@@ -302,7 +298,6 @@ describe('ProductionService', () => {
           category: 'feed',
           description: 'Feed purchase',
           amount: 100.00,
-          user_id: 'user1', 
           created_at: '2025-01-01T10:00:00Z' 
         }
       ];
@@ -327,7 +322,7 @@ describe('ProductionService', () => {
 
       const result = await service.saveExpenses(expenses);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/saveExpenses', {
+      expect(global.fetch).toHaveBeenCalledWith('/api/crud?operation=expenses', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -420,8 +415,13 @@ describe('ProductionService', () => {
         data: { session: null },
         error: { message: 'Not authenticated' }
       } as any);
+      
+      vi.mocked(supabase.auth.refreshSession).mockResolvedValue({
+        data: { session: null },
+        error: { message: 'Refresh failed' }
+      } as any);
 
-      await expect(service.getEggEntries()).rejects.toThrow('Authentication required');
+      await expect(service.getEggEntries()).rejects.toThrow('User not authenticated - please log in again');
     });
 
     it('should handle network errors', async () => {

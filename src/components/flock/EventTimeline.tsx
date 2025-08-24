@@ -1,7 +1,15 @@
 import { motion } from 'framer-motion';
+import { memo } from 'react';
 import type { FlockEvent } from '../../types';
 import { apiService } from '../../services/api';
 import { ApiServiceError, AuthenticationError, NetworkError, ServerError, getUserFriendlyErrorMessage } from '../../types/api';
+import { SectionContainer, EmptyState } from '../ui';
+
+interface BaseUIComponentProps {
+  className?: string;
+  children?: React.ReactNode;
+  testId?: string;
+}
 
 const EVENT_TYPES = {
   acquisition: '🐣 New Birds Acquired',
@@ -11,18 +19,20 @@ const EVENT_TYPES = {
   other: '📝 Other Event'
 };
 
-interface EventTimelineProps {
+interface EventTimelineProps extends BaseUIComponentProps {
   events: FlockEvent[];
   onEditEvent: (event: FlockEvent) => void;
   onDeleteEvent: (eventId: string) => void;
   isLoading: boolean;
 }
 
-export const EventTimeline = ({
+export const EventTimeline = memo(({
   events,
   onEditEvent,
   onDeleteEvent,
-  isLoading
+  isLoading,
+  className = '',
+  testId
 }: EventTimelineProps) => {
   const handleDeleteEvent = async (eventId: string) => {
     try {
@@ -30,36 +40,49 @@ export const EventTimeline = ({
       onDeleteEvent(eventId);
     } catch (error) {
       console.error('Error removing event:', error);
-      // Error handling could be improved by passing error state up to parent
+      
+      let errorMessage = 'Failed to remove event. Please try again.';
+      if (error instanceof AuthenticationError) {
+        errorMessage = 'Session expired. Please refresh the page to continue.';
+      } else if (error instanceof NetworkError) {
+        errorMessage = 'Network connection issue. Please check your internet and try again.';
+      } else if (error instanceof ServerError) {
+        errorMessage = 'Server error. Please try again in a few moments.';
+      } else if (error instanceof ApiServiceError) {
+        errorMessage = getUserFriendlyErrorMessage(error);
+      }
+      
+      // TODO: Pass error state up to parent for user feedback
+      // For now, at least provide console feedback with user-friendly message
+      console.warn('User-friendly error:', errorMessage);
     }
   };
 
   if (events.length === 0) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="neu-form"
+      <SectionContainer
+        title="📅 Events Timeline"
+        variant="glass"
+        className={className}
+        testId={testId}
       >
-        <h2 className="neu-title">📅 Events Timeline</h2>
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">📅</div>
-          <p className="text-gray-500">No events recorded yet. Add your first event above!</p>
-        </div>
-      </motion.div>
+        <EmptyState
+          icon="📅"
+          title="No events recorded yet"
+          message="Add your first event above to start tracking your flock's timeline!"
+          testId="events-empty-state"
+        />
+      </SectionContainer>
     );
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
-      className="neu-form"
+    <SectionContainer
+      title="📅 Events Timeline"
+      variant="glass"
+      className={className}
+      testId={testId}
     >
-      <h2 className="neu-title">📅 Events Timeline</h2>
-      
       <div className="relative">
         {/* Main timeline line */}
         <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-gray-400 to-transparent"></div>
@@ -225,6 +248,6 @@ export const EventTimeline = ({
           })}
         </div>
       </div>
-    </motion.div>
+    </SectionContainer>
   );
-};
+});

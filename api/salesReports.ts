@@ -1,6 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
+interface MonthlyTotal {
+  month: string;
+  total_sales: number;
+  total_revenue: number;
+  total_eggs: number;
+}
+
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -11,7 +18,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Helper function to get user from authorization header
-async function getAuthenticatedUser(req: VercelRequest, supabase: any) {
+async function getAuthenticatedUser(req: VercelRequest, supabaseClient: typeof supabase) {
   const authHeader = req.headers.authorization;
   
   if (!authHeader) {
@@ -21,9 +28,9 @@ async function getAuthenticatedUser(req: VercelRequest, supabase: any) {
   const token = authHeader.replace('Bearer ', '');
   
   try {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const { data: { user }, error } = await supabaseClient.auth.getUser(token);
     return error ? null : user;
-  } catch (err) {
+  } catch {
     return null;
   }
 }
@@ -39,7 +46,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     if (req.method === 'GET') {
-      const { type, period, customer_id } = req.query;
+      const { type, customer_id } = req.query;
 
       if (type === 'summary') {
         // Get overall sales summary
@@ -82,7 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (topCustomerData && topCustomerData.length > 0) {
           const customerTotals: Record<string, { name: string; total: number }> = topCustomerData.reduce((acc, sale) => {
             const customerId = sale.customer_id;
-            const customerName = (sale.customers as any)?.name || 'Unknown';
+            const customerName = (sale.customers as { name: string } | null)?.name || 'Unknown';
             if (!acc[customerId]) {
               acc[customerId] = { name: customerName, total: 0 };
             }
@@ -91,9 +98,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }, {} as Record<string, { name: string; total: number }>);
 
           const topCustomerEntry = Object.entries(customerTotals)
-            .sort(([,a], [,b]) => (b as any).total - (a as any).total)[0];
+            .sort(([,a], [,b]) => (b as { name: string; total: number }).total - (a as { name: string; total: number }).total)[0];
           
-          topCustomer = topCustomerEntry ? (topCustomerEntry[1] as any).name : null;
+          topCustomer = topCustomerEntry ? (topCustomerEntry[1] as { name: string; total: number }).name : null;
         }
 
         const summary = {
@@ -119,7 +126,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (error) throw error;
 
         // Group by month
-        const monthlyTotals: Record<string, any> = monthlyData.reduce((acc, sale) => {
+        const monthlyTotals: Record<string, MonthlyTotal> = monthlyData.reduce((acc, sale) => {
           const month = sale.sale_date.substring(0, 7); // YYYY-MM format
           const isPaidSale = parseFloat(sale.total_amount) > 0;
           
@@ -140,9 +147,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
           
           return acc;
-        }, {} as Record<string, any>);
+        }, {} as Record<string, MonthlyTotal>);
 
-        const monthlyArray = Object.values(monthlyTotals).sort((a: any, b: any) => a.month.localeCompare(b.month));
+        const monthlyArray = Object.values(monthlyTotals).sort((a: MonthlyTotal, b: MonthlyTotal) => a.month.localeCompare(b.month));
 
         return res.status(200).json(monthlyArray);
       }

@@ -1,21 +1,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { BaseApiService } from '../BaseApiService';
 import { ApiError } from '../../../types/api';
+import type { Session } from '@supabase/supabase-js';
 
 // Mock Supabase
-const mockSupabaseAuth = {
-  getSession: vi.fn(),
-  refreshSession: vi.fn(),
-  signOut: vi.fn(),
-};
-
-const mockSupabase = {
-  auth: mockSupabaseAuth,
-};
-
 vi.mock('../../../utils/supabase', () => ({
-  supabase: mockSupabase,
+  supabase: {
+    auth: {
+      getSession: vi.fn(),
+      refreshSession: vi.fn(),
+      signOut: vi.fn(),
+    },
+  },
 }));
+
+// Import the mocked module and create properly typed mocks
+import { supabase } from '../../../utils/supabase';
+const mockGetSession = vi.mocked(supabase.auth.getSession);
+const mockRefreshSession = vi.mocked(supabase.auth.refreshSession);
+const mockSignOut = vi.mocked(supabase.auth.signOut);
 
 // Global fetch mock
 const mockFetch = vi.fn();
@@ -71,8 +74,8 @@ describe('BaseApiService', () => {
         refresh_token: 'refresh-token',
       };
 
-      mockSupabase.auth.getSession.mockResolvedValue({
-        data: { session: mockSession },
+      mockGetSession.mockResolvedValue({
+        data: { session: mockSession as Session },
         error: null,
       });
 
@@ -91,19 +94,19 @@ describe('BaseApiService', () => {
         refresh_token: 'new-refresh-token',
       };
 
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: expiredSession },
         error: null,
       });
 
-      mockSupabase.auth.refreshSession.mockResolvedValue({
-        data: { session: refreshedSession },
+      mockRefreshSession.mockResolvedValue({
+        data: { session: refreshedSession as Session, user: null },
         error: null,
       });
 
       const headers = await service.testGetAuthHeaders();
 
-      expect(mockSupabase.auth.refreshSession).toHaveBeenCalled();
+      expect(mockRefreshSession).toHaveBeenCalled();
       expect(headers).toEqual({
         'Content-Type': 'application/json',
         'Authorization': 'Bearer new-token',
@@ -111,14 +114,14 @@ describe('BaseApiService', () => {
     });
 
     it('should throw ApiError when token refresh fails', async () => {
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: null },
         error: null,
       });
 
-      mockSupabase.auth.refreshSession.mockResolvedValue({
-        data: { session: null },
-        error: new Error('Refresh failed'),
+      mockRefreshSession.mockResolvedValue({
+        data: { session: null, user: null },
+        error: { message: 'Refresh failed', name: 'AuthError' } as never,
       });
 
       await expect(service.testGetAuthHeaders()).rejects.toThrow(ApiError);
@@ -150,15 +153,19 @@ describe('BaseApiService', () => {
     };
 
     beforeEach(() => {
-      mockSupabase.auth.getSession.mockResolvedValue({
-        data: { session: mockSession },
+      mockGetSession.mockResolvedValue({
+        data: { session: mockSession as Session },
         error: null,
       });
     });
 
     describe('GET requests', () => {
       it('should make successful GET request', async () => {
-        const mockResponse = { data: { test: 'data' } };
+        const mockResponse = { 
+          success: true,
+          data: { test: 'data' },
+          message: 'Success'
+        };
         mockFetch.mockResolvedValue({
           ok: true,
           json: () => Promise.resolve(mockResponse),
@@ -184,7 +191,7 @@ describe('BaseApiService', () => {
         });
 
         await expect(service.testGet('/test')).rejects.toThrow(ApiError);
-        expect(mockSupabase.auth.signOut).toHaveBeenCalled();
+        expect(mockSignOut).toHaveBeenCalled();
       });
 
       it('should handle non-401 HTTP errors', async () => {
@@ -202,7 +209,11 @@ describe('BaseApiService', () => {
     describe('POST requests', () => {
       it('should make successful POST request with data', async () => {
         const testData = { test: 'data' };
-        const mockResponse = { data: { success: true } };
+        const mockResponse = { 
+          success: true,
+          data: { success: true },
+          message: 'Created successfully'
+        };
         
         mockFetch.mockResolvedValue({
           ok: true,
@@ -226,7 +237,11 @@ describe('BaseApiService', () => {
     describe('PUT requests', () => {
       it('should make successful PUT request', async () => {
         const testData = { id: 1, test: 'updated data' };
-        const mockResponse = { data: { updated: true } };
+        const mockResponse = { 
+          success: true,
+          data: { updated: true },
+          message: 'Updated successfully'
+        };
         
         mockFetch.mockResolvedValue({
           ok: true,
@@ -249,7 +264,11 @@ describe('BaseApiService', () => {
 
     describe('DELETE requests', () => {
       it('should make successful DELETE request without data', async () => {
-        const mockResponse = { data: { deleted: true } };
+        const mockResponse = { 
+          success: true,
+          data: { deleted: true },
+          message: 'Deleted successfully'
+        };
         
         mockFetch.mockResolvedValue({
           ok: true,
@@ -271,7 +290,11 @@ describe('BaseApiService', () => {
 
       it('should make successful DELETE request with data', async () => {
         const deleteData = { reason: 'test deletion' };
-        const mockResponse = { data: { deleted: true } };
+        const mockResponse = { 
+          success: true,
+          data: { deleted: true },
+          message: 'Deleted successfully'
+        };
         
         mockFetch.mockResolvedValue({
           ok: true,
@@ -295,8 +318,8 @@ describe('BaseApiService', () => {
 
   describe('error handling', () => {
     beforeEach(() => {
-      mockSupabase.auth.getSession.mockResolvedValue({
-        data: { session: { access_token: 'test-token' } },
+      mockGetSession.mockResolvedValue({
+        data: { session: { access_token: 'test-token' } as Session },
         error: null,
       });
     });

@@ -2,20 +2,18 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { DataService } from '../DataService';
 
 // Mock Supabase
-const mockSupabase = {
-  auth: {
-    getSession: vi.fn(),
-    refreshSession: vi.fn(),
-  },
-};
-
-// Mock localStorage mode check
-const mockIsLocalStorageMode = vi.fn();
-
 vi.mock('../../../utils/supabase', () => ({
-  supabase: mockSupabase,
-  isLocalStorageMode: mockIsLocalStorageMode,
+  supabase: {
+    auth: {
+      getSession: vi.fn(),
+      refreshSession: vi.fn(),
+    },
+  },
 }));
+
+// Import the mocked module
+import { supabase } from '../../../utils/supabase';
+const mockSupabase = vi.mocked(supabase);
 
 // Mock localStorage
 const mockLocalStorage = {
@@ -50,12 +48,21 @@ describe('DataService', () => {
     });
   });
 
-  describe('fetchAllData - localStorage mode', () => {
+  describe('fetchAllData - basic API calls', () => {
     beforeEach(() => {
-      mockIsLocalStorageMode.mockReturnValue(true);
+      // Mock successful authentication for API calls
+      vi.mocked(mockSupabase.auth.getSession).mockResolvedValue({
+        data: { session: { access_token: 'test-token', user: { id: 'user1' } } },
+        error: null,
+      } as any);
+      
+      vi.mocked(mockSupabase.auth.refreshSession).mockResolvedValue({
+        data: { session: { access_token: 'test-token', user: { id: 'user1' } } },
+        error: null
+      } as any);
     });
 
-    it('should fetch data from localStorage', async () => {
+    it('should fetch data from API with all data types', async () => {
       const mockData = {
         feedInventory: [{ id: '1', brand: 'Test Feed' }],
         eggEntries: [{ id: '1', date: '2025-01-01', count: 12 }],
@@ -66,62 +73,10 @@ describe('DataService', () => {
         deathRecords: [{ id: '1', count: 1 }],
       };
 
-      mockLocalStorage.getItem.mockImplementation((key: string) => {
-        switch (key) {
-          case 'feedInventory': return JSON.stringify(mockData.feedInventory);
-          case 'eggEntries': return JSON.stringify(mockData.eggEntries);
-          case 'expenses': return JSON.stringify(mockData.expenses);
-          case 'flockProfile': return JSON.stringify(mockData.flockProfile);
-          case 'flockEvents': return JSON.stringify(mockData.flockEvents);
-          case 'flockBatches': return JSON.stringify(mockData.flockBatches);
-          case 'deathRecords': return JSON.stringify(mockData.deathRecords);
-          default: return null;
-        }
-      });
-
-      const result = await dataService.fetchAllData();
-
-      expect(result.data).toEqual(mockData);
-      expect(result.message).toBe('Data loaded from localStorage');
-      expect(result.timestamp).toBeDefined();
-    });
-
-    it('should handle missing localStorage data', async () => {
-      mockLocalStorage.getItem.mockReturnValue(null);
-
-      const result = await dataService.fetchAllData();
-
-      const expectedData = {
-        feedInventory: [],
-        eggEntries: [],
-        expenses: [],
-        flockProfile: null,
-        flockEvents: [],
-        flockBatches: [],
-        deathRecords: [],
-      };
-
-      expect(result.data).toEqual(expectedData);
-    });
-  });
-
-  describe('fetchAllData - API mode', () => {
-    beforeEach(() => {
-      mockIsLocalStorageMode.mockReturnValue(false);
-      mockSupabase.auth.getSession.mockResolvedValue({
-        data: { session: { access_token: 'test-token' } },
-        error: null,
-      });
-    });
-
-    it('should fetch data from API', async () => {
       const mockApiResponse = {
-        data: {
-          feedInventory: [{ id: '1', brand: 'API Feed' }],
-          eggEntries: [{ id: '1', date: '2025-01-01', count: 15 }],
-          expenses: [{ id: '1', category: 'feed', amount: 75 }],
-          flockProfile: { id: '1', hens: 20 },
-        }
+        success: true,
+        data: mockData,
+        message: 'All data fetched successfully'
       };
 
       mockFetch.mockResolvedValue({
@@ -131,47 +86,127 @@ describe('DataService', () => {
 
       const result = await dataService.fetchAllData();
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/getData', {
+      expect(mockFetch).toHaveBeenCalledWith('/api/data?type=all', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer test-token',
         },
       });
-      expect(result.data).toEqual(mockApiResponse.data);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockData);
     });
 
-    it('should handle API response without nested data structure', async () => {
-      const mockDirectResponse = {
-        feedInventory: [{ id: '1' }],
-        eggEntries: [{ id: '1' }],
+    it('should handle API response with empty data', async () => {
+      const emptyMockData = {
+        feedInventory: [],
+        eggEntries: [],
+        expenses: [],
+        flockProfile: null,
+        flockEvents: [],
+        flockBatches: [],
+        deathRecords: [],
+      };
+
+      const mockApiResponse = {
+        success: true,
+        data: emptyMockData,
+        message: 'No data found'
       };
 
       mockFetch.mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(mockDirectResponse),
+        json: () => Promise.resolve(mockApiResponse),
       });
 
       const result = await dataService.fetchAllData();
-      expect(result).toEqual(mockDirectResponse);
+
+      expect(result.data).toEqual(emptyMockData);
+    });
+  });
+
+  describe('fetchAllData - API mode', () => {
+    beforeEach(() => {
+      // API mode setup - mock successful authentication
+      vi.mocked(mockSupabase.auth.getSession).mockResolvedValue({
+        data: { session: { access_token: 'test-token', user: { id: 'user1' } } },
+        error: null,
+      } as any);
+      
+      vi.mocked(mockSupabase.auth.refreshSession).mockResolvedValue({
+        data: { session: { access_token: 'test-token', user: { id: 'user1' } } },
+        error: null
+      } as any);
+    });
+
+    it('should fetch data from API', async () => {
+      const mockApiData = {
+        feedInventory: [{ id: '1', brand: 'API Feed' }],
+        eggEntries: [{ id: '1', date: '2025-01-01', count: 15 }],
+        expenses: [{ id: '1', category: 'feed', amount: 75 }],
+        flockProfile: { id: '1', hens: 20 },
+        flockEvents: [],
+        flockBatches: [],
+        deathRecords: [],
+      };
+
+      const mockApiResponse = {
+        success: true,
+        data: mockApiData,
+        message: 'All data fetched successfully'
+      };
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockApiResponse),
+      });
+
+      const result = await dataService.fetchAllData();
+
+      expect(mockFetch).toHaveBeenCalledWith('/api/data?type=all', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer test-token',
+        },
+      });
+      expect(result.data).toEqual(mockApiData);
+    });
+
+    it('should handle API response with partial data structure', async () => {
+      const mockPartialData = {
+        feedInventory: [{ id: '1' }],
+        eggEntries: [{ id: '1' }],
+        expenses: [],
+        flockProfile: null,
+      };
+
+      const mockApiResponse = {
+        success: true,
+        data: mockPartialData,
+        message: 'Partial data fetched successfully'
+      };
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockApiResponse),
+      });
+
+      const result = await dataService.fetchAllData();
+      expect(result.data).toEqual(mockPartialData);
     });
   });
 
   describe('saveData', () => {
-    it('should save data to localStorage in localStorage mode', async () => {
-      mockIsLocalStorageMode.mockReturnValue(true);
+    it('should throw error for generic save operations', async () => {
+      // DataService now delegates to specific service methods
       const testData = { test: 'data' };
 
-      const result = await dataService.saveData(testData);
-
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith('genericData', JSON.stringify(testData));
-      expect(result.message).toBe('Data saved to localStorage');
-      expect(result.data).toEqual(testData);
+      await expect(dataService.saveData(testData)).rejects.toThrow('Use specific service methods for saving data');
     });
 
-    it('should throw error in API mode', async () => {
-      mockIsLocalStorageMode.mockReturnValue(false);
-      const testData = { test: 'data' };
+    it('should consistently throw error regardless of data type', async () => {
+      const testData = { feedInventory: [{ id: '1' }] };
 
       await expect(dataService.saveData(testData)).rejects.toThrow('Use specific service methods for saving data');
     });

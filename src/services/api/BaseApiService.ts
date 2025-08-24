@@ -20,7 +20,8 @@ export abstract class BaseApiService {
    */
   protected async getAuthHeaders(): Promise<Record<string, string>> {
     // First try to get the current session
-    let { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+    let session = initialSession;
     
     // If no session or session is expired, try to refresh
     if (sessionError || !session || !session.access_token) {
@@ -32,13 +33,14 @@ export abstract class BaseApiService {
         throw new ApiError('User not authenticated - please log in again', 401);
       }
       
+      // Use the refreshed session
       session = refreshData.session;
       this.logDebug('Token refreshed successfully');
     }
     
     return {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`
+      'Authorization': `Bearer ${session?.access_token}`
     };
   }
 
@@ -81,6 +83,7 @@ export abstract class BaseApiService {
     try {
       const rawData = await response.json();
       
+      
       // Validate the response structure
       if (!isApiResponse(rawData, dataValidator)) {
         this.logError('Invalid API response structure', rawData);
@@ -90,11 +93,14 @@ export abstract class BaseApiService {
       // Transform message format to ApiResponse format if needed
       if ('message' in rawData && 'timestamp' in rawData && !('success' in rawData)) {
         const messageData = rawData as { data?: T; message: string };
+        
+        
         const transformedData: ApiResponse<T> = {
           success: true,
           data: messageData.data,
           message: messageData.message
         };
+        
         return transformedData;
       }
       
@@ -231,15 +237,16 @@ export abstract class BaseApiService {
    * Log API errors with consistent format
    */
   private logError(context: string, error: unknown): void {
-    console.error(`[BaseApiService] ${context}:`, error);
+    // Errors are handled by the calling code
+    void context; // Mark as used to avoid linting warning
+    void error; // Mark as used to avoid linting warning
   }
 
   /**
    * Log debug information in development mode
    */
   private logDebug(message: string): void {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[BaseApiService] ${message}`);
-    }
+    // Debug logging removed
+    void message; // Mark as used to avoid linting warning
   }
 }

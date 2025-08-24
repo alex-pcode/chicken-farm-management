@@ -2,6 +2,12 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Customer, CustomerForm } from '../types/crm';
 import { apiService } from '../services/api';
+import { DataTable, TableColumn } from './ui/tables/DataTable';
+import { EmptyState } from './ui/tables/EmptyState';
+import { FormCard } from './ui/forms/FormCard';
+import { TextInput } from './forms/TextInput';
+import { TextareaInput } from './forms/TextareaInput';
+import { FormButton } from './ui/forms/FormButton';
 
 interface CustomerListProps {
   customers: Customer[];
@@ -74,169 +80,181 @@ export const CustomerList = ({ customers, onDataChange }: CustomerListProps) => 
     }
   };
 
+  // Define table columns for customers
+  const customerColumns: TableColumn<Customer>[] = [
+    {
+      key: 'name',
+      label: 'Customer Name',
+      sortable: true,
+      render: (_value, customer) => (
+        <div className="font-medium text-gray-900">
+          {customer.name}
+        </div>
+      )
+    },
+    {
+      key: 'phone',
+      label: 'Phone',
+      sortable: false,
+      render: (_value, customer) => customer.phone ? (
+        <span className="text-gray-600">📞 {customer.phone}</span>
+      ) : (
+        <span className="text-gray-400">-</span>
+      )
+    },
+    {
+      key: 'notes',
+      label: 'Notes',
+      sortable: false,
+      render: (_value, customer) => customer.notes ? (
+        <div className="max-w-xs">
+          <span className="text-gray-600 text-sm truncate block">📝 {customer.notes}</span>
+        </div>
+      ) : (
+        <span className="text-gray-400">-</span>
+      )
+    },
+    {
+      key: 'created_at',
+      label: 'Added',
+      sortable: true,
+      render: (_value, customer) => (
+        <span className="text-xs text-gray-500">
+          {new Date(customer.created_at).toLocaleDateString()}
+        </span>
+      )
+    },
+    {
+      key: 'id',
+      label: 'Actions',
+      sortable: false,
+      render: (_, customer) => (
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleEdit(customer)}
+            className="inline-flex items-center p-2 rounded-full text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+            title="Edit customer"
+          >
+            ✏️
+          </button>
+          <button
+            onClick={() => handleDeactivate(customer)}
+            className="inline-flex items-center p-2 rounded-full text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+            title="Deactivate customer"
+          >
+            🗑️
+          </button>
+        </div>
+      )
+    }
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header with Add Button */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800">Customers</h2>
-        <button
+        <h2 className="text-2xl font-bold text-gray-900">Customers</h2>
+        <FormButton
           onClick={() => setIsAddingCustomer(true)}
-          className="neu-button bg-green-100 text-green-700 hover:bg-green-200"
+          variant="primary"
           disabled={isAddingCustomer}
         >
           <span className="mr-2">+</span>
           Add Customer
-        </button>
+        </FormButton>
       </div>
 
       {/* Error Display */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-600">{error}</p>
-          <button
+          <FormButton
             onClick={() => setError(null)}
-            className="text-red-500 underline text-sm mt-2"
+            variant="secondary"
+            size="sm"
           >
             Dismiss
-          </button>
+          </FormButton>
         </div>
       )}
 
       {/* Add/Edit Customer Form */}
       {isAddingCustomer && (
-        <motion.form
+        <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          onSubmit={handleSubmit}
-          className="neu-card p-6 space-y-4"
         >
-          <h3 className="text-lg font-semibold text-gray-800">
-            {editingCustomer ? 'Edit Customer' : 'Add New Customer'}
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="form-label">
-                Customer Name *
-              </label>
-              <input
-                type="text"
+          <FormCard
+            title={editingCustomer ? 'Edit Customer' : 'Add New Customer'}
+            subtitle="Manage customer information and contact details"
+            onSubmit={handleSubmit}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <TextInput
+                label="Customer Name"
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="form-input"
-                required
+                onChange={(value) => setFormData(prev => ({ ...prev, name: value }))}
                 placeholder="Enter customer name"
+                required
               />
-            </div>
 
-            <div>
-              <label className="form-label">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                className="form-input"
+              <TextInput
+                label="Phone Number"
+                value={formData.phone || ''}
+                onChange={(value) => setFormData(prev => ({ ...prev, phone: value }))}
                 placeholder="Enter phone number"
               />
             </div>
-          </div>
 
-          <div>
-            <label className="form-label">
-              Notes
-            </label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              className="form-input resize-none"
-              rows={3}
+            <TextareaInput
+              label="Notes"
+              value={formData.notes || ''}
+              onChange={(value) => setFormData(prev => ({ ...prev, notes: value }))}
               placeholder="Any notes about this customer..."
+              rows={3}
             />
-          </div>
 
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={isSubmitting || !formData.name.trim()}
-              className="neu-button bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50"
-            >
-              {isSubmitting ? 'Saving...' : (editingCustomer ? 'Update Customer' : 'Add Customer')}
-            </button>
-            <button
-              type="button"
-              onClick={resetForm}
-              className="neu-button bg-gray-100 text-gray-700 hover:bg-gray-200"
-            >
-              Cancel
-            </button>
-          </div>
-        </motion.form>
+            <div className="flex gap-3 pt-4">
+              <FormButton
+                type="submit"
+                variant="primary"
+                disabled={isSubmitting || !formData.name.trim()}
+                loading={isSubmitting}
+                className="flex-1"
+              >
+                {editingCustomer ? 'Update Customer' : 'Add Customer'}
+              </FormButton>
+              <FormButton
+                type="button"
+                variant="secondary"
+                onClick={resetForm}
+              >
+                Cancel
+              </FormButton>
+            </div>
+          </FormCard>
+        </motion.div>
       )}
 
-      {/* Customer List */}
-      <div className="grid gap-4">
+      {/* Customer Table */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         {customers.length === 0 ? (
-          <div className="neu-card p-8 text-center">
-            <span className="text-6xl mb-4 block">👥</span>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">No Customers Yet</h3>
-            <p className="text-gray-600 mb-4">Add your first customer to start tracking sales</p>
-            <button
-              onClick={() => setIsAddingCustomer(true)}
-              className="neu-button bg-green-100 text-green-700 hover:bg-green-200"
-            >
-              Add First Customer
-            </button>
-          </div>
+          <EmptyState
+            icon="👥"
+            title="No Customers Yet"
+            message="Add your first customer to start tracking sales and building relationships."
+            action={{
+              text: 'Add First Customer',
+              onClick: () => setIsAddingCustomer(true)
+            }}
+          />
         ) : (
-          customers.map((customer) => (
-            <motion.div
-              key={customer.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="neu-card p-6"
-            >
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-1">
-                    {customer.name}
-                  </h3>
-                  {customer.phone && (
-                    <p className="text-gray-600 mb-1">
-                      📞 {customer.phone}
-                    </p>
-                  )}
-                  {customer.notes && (
-                    <p className="text-gray-600 text-sm mb-2">
-                      📝 {customer.notes}
-                    </p>
-                  )}
-                  <p className="text-xs text-gray-500">
-                    Added: {new Date(customer.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                
-                <div className="flex gap-2 ml-4">
-                  <button
-                    onClick={() => handleEdit(customer)}
-                    className="neu-button-sm bg-blue-100 text-blue-700 hover:bg-blue-200"
-                    title="Edit customer"
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    onClick={() => handleDeactivate(customer)}
-                    className="neu-button-sm bg-red-100 text-red-700 hover:bg-red-200"
-                    title="Deactivate customer"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          ))
+          <DataTable
+            data={customers}
+            columns={customerColumns}
+            sortable
+          />
         )}
       </div>
     </div>

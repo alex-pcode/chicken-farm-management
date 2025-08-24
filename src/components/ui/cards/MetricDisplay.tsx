@@ -59,10 +59,10 @@ const variantClasses = {
 
 const colorClasses = {
   default: 'bg-gradient-to-r from-indigo-700 to-violet-600 bg-clip-text text-transparent',
-  success: 'bg-gradient-to-r from-indigo-700 to-violet-600 bg-clip-text text-transparent',
-  warning: 'bg-gradient-to-r from-indigo-700 to-violet-600 bg-clip-text text-transparent',
-  danger: 'bg-gradient-to-r from-indigo-700 to-violet-600 bg-clip-text text-transparent',
-  info: 'bg-gradient-to-r from-indigo-700 to-violet-600 bg-clip-text text-transparent',
+  success: 'bg-gradient-to-r from-emerald-700 to-green-600 bg-clip-text text-transparent',
+  warning: 'bg-gradient-to-r from-amber-700 to-orange-600 bg-clip-text text-transparent',
+  danger: 'bg-gradient-to-r from-red-700 to-rose-600 bg-clip-text text-transparent',
+  info: 'bg-gradient-to-r from-blue-700 to-cyan-600 bg-clip-text text-transparent',
 };
 
 export const MetricDisplay: React.FC<MetricDisplayProps> = ({
@@ -77,7 +77,7 @@ export const MetricDisplay: React.FC<MetricDisplayProps> = ({
   className = '',
   testId,
 }) => {
-  const baseClasses = 'text-center space-y-2';
+  const baseClasses = 'glass-card p-4 text-center space-y-2';
   const valueClasses = `${variantClasses[variant]} font-bold ${colorClasses[color]}`;
   const combinedClassName = `${baseClasses} ${className}`;
 

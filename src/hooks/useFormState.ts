@@ -7,17 +7,17 @@ interface UseFormStateProps<T> {
 
 interface UseFormStateReturn<T> {
   values: T;
-  setValue: (field: keyof T, value: any) => void;
+  setValue: (field: keyof T, value: unknown) => void;
   setValues: (values: Partial<T>) => void;
   resetValues: () => void;
-  handleInputChange: (field: keyof T) => (value: any) => void;
+  handleInputChange: (field: keyof T) => (value: unknown) => void;
   handleSubmit: (e?: React.FormEvent) => Promise<void>;
   isDirty: boolean;
   isSubmitting: boolean;
   setSubmitting: (submitting: boolean) => void;
 }
 
-export const useFormState = <T extends Record<string, any>>({
+export const useFormState = <T extends Record<string, unknown>>({
   initialValues,
   onSubmit
 }: UseFormStateProps<T>): UseFormStateReturn<T> => {
@@ -27,7 +27,7 @@ export const useFormState = <T extends Record<string, any>>({
   // Track if form has been modified
   const isDirty = JSON.stringify(values) !== JSON.stringify(initialValues);
 
-  const setValue = useCallback((field: keyof T, value: any) => {
+  const setValue = useCallback((field: keyof T, value: unknown) => {
     setValuesState(prev => ({
       ...prev,
       [field]: value
@@ -46,7 +46,7 @@ export const useFormState = <T extends Record<string, any>>({
   }, [initialValues]);
 
   const handleInputChange = useCallback((field: keyof T) => {
-    return (value: any) => setValue(field, value);
+    return (value: unknown) => setValue(field, value);
   }, [setValue]);
 
   const setSubmitting = useCallback((submitting: boolean) => {

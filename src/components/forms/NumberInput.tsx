@@ -16,6 +16,7 @@ interface NumberInputProps {
   max?: number;
   step?: number;
   showSpinner?: boolean;
+  selectAllOnFocus?: boolean;
 }
 
 export const NumberInput: React.FC<NumberInputProps> = ({
@@ -31,7 +32,8 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   min,
   max,
   step = 1,
-  showSpinner = true
+  showSpinner = true,
+  selectAllOnFocus = false
 }) => {
   const fieldErrors = errors.filter(error => 
     error.field === id || error.field === label.toLowerCase().replace(/\s+/g, '_')
@@ -60,6 +62,16 @@ export const NumberInput: React.FC<NumberInputProps> = ({
     // If the value is NaN (invalid), don't call onChange to prevent corruption
   };
 
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (selectAllOnFocus) {
+      // Select all text when selectAllOnFocus is enabled
+      e.target.select();
+    } else if (value === 0 || value === '0') {
+      // Default behavior: only select all when value is 0
+      e.target.select();
+    }
+  };
+
   return (
     <div className={className}>
       <label 
@@ -75,6 +87,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
         type="number"
         value={value}
         onChange={handleChange}
+        onFocus={handleFocus}
         placeholder={placeholder}
         required={required}
         disabled={disabled}

@@ -1,9 +1,9 @@
 import { useState, useCallback, useMemo } from 'react';
-import type { ValidationError } from '../../types';
+// import type { ValidationError } from '../../types'; // unused
 
 export interface UseFormSubmitOptions<T> {
-  onSubmit: (data: T) => Promise<any>;
-  onSuccess?: (result: any) => void;
+  onSubmit: (data: T) => Promise<unknown>;
+  onSuccess?: (result: unknown) => void;
   onError?: (error: Error) => void;
   showSuccessFor?: number; // milliseconds
   resetOnSuccess?: boolean;

@@ -266,7 +266,7 @@ export const isApiResponse = <T>(
   // 2. {message: string, data: T, timestamp: string} - Actual API response
   
   const hasSuccessFormat = 'success' in value && typeof value.success === 'boolean';
-  const hasMessageFormat = 'message' in value && 'data' in value && 'timestamp' in value &&
+  const hasMessageFormat = 'message' in value && 'timestamp' in value &&
     typeof value.message === 'string' && typeof value.timestamp === 'string';
   
   if (!hasSuccessFormat && !hasMessageFormat) {

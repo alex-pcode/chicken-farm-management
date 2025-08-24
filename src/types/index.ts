@@ -26,6 +26,9 @@ export interface EggEntry {
   id: string;
   date: string;
   count: number;
+  size?: 'small' | 'medium' | 'large' | 'extra-large' | 'jumbo';
+  color?: 'white' | 'brown' | 'blue' | 'green' | 'speckled' | 'cream';
+  notes?: string;
   created_at?: string;
 }
 
@@ -70,10 +73,15 @@ export interface FlockBatch {
   expectedLayingStartDate?: string;
   actualLayingStartDate?: string;
   source: string; // hatchery, farm, store, etc.
+  cost?: number; // cost paid for acquiring this batch (0.00 if free)
   notes?: string;
   isActive: boolean;
   created_at?: string;
   updated_at?: string;
+  hensCount?: number;
+  roostersCount?: number;
+  chicksCount?: number;
+  broodingCount?: number;
 }
 
 /**
@@ -97,7 +105,7 @@ export interface BatchEvent {
   id: string;
   batchId: string;
   date: string;
-  type: 'health_check' | 'vaccination' | 'relocation' | 'breeding' | 'laying_start' | 'production_note' | 'other';
+  type: 'health_check' | 'vaccination' | 'relocation' | 'breeding' | 'laying_start' | 'brooding_start' | 'brooding_stop' | 'production_note' | 'other';
   description: string;
   affectedCount?: number;
   notes?: string;
@@ -114,6 +122,7 @@ export interface FlockSummary {
   totalHens: number;
   totalRoosters: number;
   totalChicks: number;
+  totalBrooding: number;
   activeBatches: number;
   expectedLayers: number; // hens that should be laying
   actualLayers?: number; // based on recent egg production
@@ -203,18 +212,6 @@ export interface FeedEntry {
   updated_at?: string;
 }
 
-/* ===== UTILITY AND TEST TYPES ===== */
-
-/**
- * Helper type for test data consolidation
- */
-export interface TestData {
-  eggEntries: EggEntry[];
-  chickenExpenses: Expense[];
-  flockProfile: FlockProfile;
-  feedInventory: FeedEntry[];
-}
-
 /* ===== BARREL EXPORTS ===== */
 
 /**
@@ -226,9 +223,41 @@ export * from './api';
  * Customer relationship management types
  */
 export * from './crm';
+export type { Customer, Sale, SaleWithCustomer, SalesSummary } from './crm';
 
 /**
  * Service interface definitions
  */
 export * from './services';
+
+/* ===== UTILITY AND TEST TYPES ===== */
+
+/**
+ * Complete application data structure returned by fetchAllData API
+ * Import types directly to avoid barrel export issues
+ */
+import type { Customer, SaleWithCustomer, SalesSummary } from './crm';
+
+export interface AppData {
+  eggEntries: EggEntry[];
+  expenses: Expense[];
+  feedInventory: FeedEntry[];
+  flockProfile: FlockProfile | null;
+  flockEvents?: FlockEvent[];
+  flockBatches?: FlockBatch[];
+  deathRecords?: DeathRecord[];
+  customers?: Customer[];
+  sales?: SaleWithCustomer[];
+  summary?: SalesSummary;
+}
+
+/**
+ * Helper type for test data consolidation
+ */
+export interface TestData {
+  eggEntries: EggEntry[];
+  chickenExpenses: Expense[];
+  flockProfile: FlockProfile;
+  feedInventory: FeedEntry[];
+}
 

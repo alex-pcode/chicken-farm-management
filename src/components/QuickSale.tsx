@@ -2,6 +2,12 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Customer } from '../types/crm';
 import { apiService } from '../services/api';
+import { FormCard } from './ui/forms/FormCard';
+import { NumberInput } from './forms/NumberInput';
+import { DateInput } from './forms/DateInput';
+import { NeumorphicSelect } from './forms/NeumorphicSelect';
+import { TextareaInput } from './forms/TextareaInput';
+import { FormButton } from './ui/forms/FormButton';
 
 interface QuickSaleProps {
   customers: Customer[];
@@ -103,59 +109,55 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-800 mb-2">Quick Sale</h2>
-        <p className="text-gray-600">Record a sale in seconds</p>
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">Quick Sale ⚡</h2>
+        <p className="text-gray-600">Record a sale in seconds with smart calculations</p>
       </div>
 
-      {/* Pricing Setup */}
-      <div className="neu-card p-4">
-        <h3 className="text-lg font-semibold text-gray-800 mb-3">Pricing</h3>
-        <div>
-          <label className="block text-gray-600 text-sm mb-2">Price per Egg ($)</label>
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            value={pricePerEgg}
-            onChange={(e) => {
-              const newPrice = parseFloat(e.target.value) || 0;
-              setPricePerEgg(newPrice);
-              updateTotalAmount(formData.eggs_count);
-            }}
-            className="neu-input"
-          />
-        </div>
-      </div>
 
       {/* Success Message */}
       {success && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="success-toast"
+          className="bg-green-50 border border-green-200 rounded-lg p-4"
         >
-          ✅ {success}
-          <button
-            onClick={() => setSuccess(null)}
-            className="text-green-500 underline text-sm mt-2 block"
-          >
-            Dismiss
-          </button>
+          <div className="flex items-start">
+            <span className="text-green-600 text-xl mr-3">✅</span>
+            <div className="flex-1">
+              <p className="text-green-700 font-medium">{success}</p>
+              <FormButton
+                onClick={() => setSuccess(null)}
+                variant="secondary"
+                size="sm"
+                className="mt-2"
+              >
+                Dismiss
+              </FormButton>
+            </div>
+          </div>
         </motion.div>
       )}
 
       {/* Error Message */}
       {error && (
-        <div className="error-toast">
-          {error}
-          <button
-            onClick={() => setError(null)}
-            className="text-red-500 underline text-sm mt-2 block"
-          >
-            Dismiss
-          </button>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-start">
+            <span className="text-red-600 text-xl mr-3">❌</span>
+            <div className="flex-1">
+              <p className="text-red-700 font-medium">{error}</p>
+              <FormButton
+                onClick={() => setError(null)}
+                variant="secondary"
+                size="sm"
+                className="mt-2"
+              >
+                Dismiss
+              </FormButton>
+            </div>
+          </div>
         </div>
       )}
 
@@ -163,141 +165,143 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="neu-form"
       >
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Customer Selection */}
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="customer">
-                Customer *
-              </label>
-              <select
-                id="customer"
-                value={formData.customer_id}
-                onChange={(e) => setFormData(prev => ({ ...prev, customer_id: e.target.value }))}
-                className="neu-input"
-                required
-              >
-                <option value="">Select a customer</option>
-                {customers.map(customer => (
-                  <option key={customer.id} value={customer.id}>
-                    {customer.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+        <FormCard
+          title="Record Sale"
+          subtitle="Enter sale details and pricing below"
+          onSubmit={handleSubmit}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <NumberInput
+              label="Price per Egg ($)"
+              value={pricePerEgg}
+              onChange={(value) => {
+                setPricePerEgg(value);
+                updateTotalAmount(formData.eggs_count);
+              }}
+              step={0.01}
+              min={0}
+              placeholder="0.30"
+            />
+            <NeumorphicSelect
+              label="Customer"
+              value={formData.customer_id}
+              onChange={(value) => setFormData(prev => ({ ...prev, customer_id: value }))}
+              options={[
+                { value: '', label: 'Select a customer' },
+                ...customers.map(customer => ({
+                  value: customer.id,
+                  label: customer.name
+                }))
+              ]}
+              required
+            />
 
-            {/* Date */}
-            <div>
-              <label className="block text-gray-600 text-sm mb-2" htmlFor="saleDate">
-                Sale Date
-              </label>
-              <input
-                id="saleDate"
-                type="date"
-                value={formData.sale_date}
-                onChange={(e) => setFormData(prev => ({ ...prev, sale_date: e.target.value }))}
-                max={new Date().toISOString().split('T')[0]}
-                className="neu-input"
-                required
-              />
-            </div>
+            <DateInput
+              label="Sale Date"
+              value={formData.sale_date}
+              onChange={(value) => setFormData(prev => ({ ...prev, sale_date: value }))}
+              max={new Date().toISOString().split('T')[0]}
+              required
+            />
           </div>
 
-          {/* Egg Count */}
+          {/* Egg Count with Quick Add */}
           <div>
-            <label className="block text-gray-600 text-sm mb-2" htmlFor="eggCount">
-              Number of Eggs
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                id="eggCount"
-                type="number"
-                min="0"
-                value={formData.eggs_count}
-                onChange={(e) => handleEggCountChange(parseInt(e.target.value) || 0)}
-                className="neu-input flex-1"
-                placeholder="Enter egg count"
-                required
-              />
-              <div className="flex gap-1">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex-1">
+                <NumberInput
+                  label="Number of Eggs"
+                  value={formData.eggs_count}
+                  onChange={handleEggCountChange}
+                  min={0}
+                  placeholder="Enter egg count"
+                  required
+                />
+              </div>
+              <div className="flex gap-1 mt-6">
                 {[1, 6, 12, 24].map(amount => (
-                  <button
+                  <FormButton
                     key={amount}
                     type="button"
                     onClick={() => quickAddEggs(amount)}
-                    className="neu-button bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 text-sm"
+                    variant="secondary"
+                    size="sm"
+                    className="px-3 py-2 text-sm"
                   >
                     +{amount}
-                  </button>
+                  </FormButton>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Total Amount */}
+          {/* Total Amount with Calculator */}
           <div>
-            <label className="block text-gray-600 text-sm mb-2" htmlFor="totalAmount">
-              Total Amount ($)
-            </label>
             <div className="flex items-center gap-2">
-              <input
-                id="totalAmount"
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.total_amount}
-                onChange={(e) => setFormData(prev => ({ ...prev, total_amount: parseFloat(e.target.value) || 0 }))}
-                className="neu-input flex-1"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => updateTotalAmount(formData.eggs_count)}
-                className="neu-button bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-3 py-2 text-sm"
-                title="Auto-calculate based on pricing"
-              >
-                🧮
-              </button>
+              <div className="flex-1">
+                <NumberInput
+                  label="Total Amount ($)"
+                  value={formData.total_amount}
+                  onChange={(value) => setFormData(prev => ({ ...prev, total_amount: value }))}
+                  step={0.01}
+                  min={0}
+                  required
+                />
+              </div>
+              <div title="Auto-calculate based on pricing">
+                <FormButton
+                  type="button"
+                  onClick={() => updateTotalAmount(formData.eggs_count)}
+                  variant="secondary"
+                  size="sm"
+                  className="mt-6 px-3 py-2"
+                >
+                  🧮
+                </FormButton>
+              </div>
             </div>
             {formData.eggs_count > 0 && (
-              <p className="text-sm text-gray-600 mt-1">
-                Suggested: ${(formData.eggs_count * pricePerEgg).toFixed(2)} 
-                {formData.total_amount === 0 && ' (Set to $0 for free eggs)'}
-              </p>
+              <div className="mt-2 text-sm text-gray-600">
+                <p>
+                  Suggested: <span className="font-medium">${(formData.eggs_count * pricePerEgg).toFixed(2)}</span>
+                  {formData.total_amount === 0 && (
+                    <span className="text-green-600 font-medium"> (Free eggs)</span>
+                  )}
+                </p>
+                {formData.eggs_count >= 12 && (
+                  <p className="text-gray-500">
+                    {Math.floor(formData.eggs_count / 12)} dozen + {formData.eggs_count % 12} individual
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
-          {/* Notes */}
-          <div>
-            <label className="block text-gray-600 text-sm mb-2" htmlFor="notes">
-              Notes (optional)
-            </label>
-            <textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              className="neu-input resize-none"
-              rows={2}
-              placeholder="Any notes about this sale..."
-            />
-          </div>
+          <TextareaInput
+            label="Notes (optional)"
+            value={formData.notes || ''}
+            onChange={(value) => setFormData(prev => ({ ...prev, notes: value }))}
+            placeholder="Any notes about this sale..."
+            rows={2}
+          />
 
           {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting || !formData.customer_id || formData.eggs_count === 0}
-            className="neu-button full-width bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50 py-4 text-lg font-semibold"
-          >
-            {isSubmitting 
-              ? 'Recording...' 
-              : formData.total_amount === 0 
+          <div className="pt-4">
+            <FormButton
+              type="submit"
+              variant="primary"
+              disabled={isSubmitting || !formData.customer_id || formData.eggs_count === 0}
+              loading={isSubmitting}
+              className="w-full py-4 text-lg font-semibold"
+            >
+              {formData.total_amount === 0 
                 ? 'Record Free Eggs 🥚' 
                 : `Record Sale - $${formData.total_amount.toFixed(2)}`
-            }
-          </button>
-        </form>
+              }
+            </FormButton>
+          </div>
+        </FormCard>
       </motion.div>
     </div>
   );

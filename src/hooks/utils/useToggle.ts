@@ -94,7 +94,7 @@ export const useMultiToggle = <T extends Record<string, boolean>>(
   const setAll = useCallback((value: boolean) => {
     const newState = {} as T;
     Object.keys(initialStates).forEach(key => {
-      newState[key as keyof T] = value;
+      newState[key as keyof T] = value as T[keyof T];
     });
     setValues(newState);
   }, [initialStates]);

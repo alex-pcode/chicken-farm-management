@@ -7,10 +7,8 @@ const Expenses = lazy(() => import('./components/Expenses').then(module => ({ de
 const FeedTracker = lazy(() => import('./components/FeedTracker').then(module => ({ default: module.FeedTracker })));
 const Savings = lazy(() => import('./components/Savings').then(module => ({ default: module.Savings })));
 const Profile = lazy(() => import('./components/Profile').then(module => ({ default: module.Profile })));
-const ExperimentProfile = lazy(() => import('./components/ExperimentProfile').then(module => ({ default: module.ExperimentProfile })));
 const CRM = lazy(() => import('./components/CRM').then(module => ({ default: module.CRM })));
 const ChickenViability = lazy(() => import('./components/ChickenViability').then(module => ({ default: module.ChickenViability })));
-const FeedCostCalculator = lazy(() => import('./components/FeedCostCalculator').then(module => ({ default: module.FeedCostCalculator })));
 const FlockBatchManager = lazy(() => import('./components/FlockBatchManager').then(module => ({ default: module.FlockBatchManager })));
 const CardShowcase = lazy(() => import('./components/examples/CardShowcase').then(module => ({ default: module.default })));
 import { motion } from 'framer-motion'
@@ -27,12 +25,10 @@ import { BarChart, Bar, Tooltip, ResponsiveContainer } from 'recharts'
 const navigation = [
   { name: 'Dashboard', emoji: '🏠', href: '/' },
   { name: 'Profile', emoji: '🐔', href: '/profile' },
-  { name: 'Experiment', emoji: '🧪', href: '/experiment' },
   { name: 'Production', emoji: '🥚', href: '/egg-counter' },
   { name: 'CRM', emoji: '💼', href: '/crm' },
   { name: 'Expenses', emoji: '💰', href: '/expenses' },
   { name: 'Feed Management', emoji: '🌾', href: '/feed-tracker' },
-  { name: 'Feed Calculator', emoji: '🧮', href: '/feed-calculator' },
   { name: 'Savings', emoji: '📈', href: '/savings' },
   { name: 'Viability', emoji: '🧮', href: '/viability' },
   { name: 'Cards', emoji: '🎨', href: '/cards' },
@@ -49,9 +45,7 @@ const primaryMobileNav = [
 // Secondary navigation - less frequent but important features  
 const secondaryMobileNav = [
   { name: 'Profile', emoji: '🐔', href: '/profile' },
-  { name: 'Experiment', emoji: '🧪', href: '/experiment' },
   { name: 'Feed Management', emoji: '🌾', href: '/feed-tracker' },
-  { name: 'Feed Calculator', emoji: '🧮', href: '/feed-calculator' },
   { name: 'Savings', emoji: '📈', href: '/savings' },
   { name: 'Viability', emoji: '🧮', href: '/viability' },
   { name: 'Cards', emoji: '🎨', href: '/cards' },
@@ -548,18 +542,16 @@ const MainApp = () => {
       )}
 
       {/* Main Content */}
-      <main className="main-content" style={{ paddingTop: 0, paddingLeft: 0, paddingRight: 0 }}>
+      <main className="main-content" style={{ paddingTop: 0, paddingLeft: '17px', paddingRight: '17px' }}>
         <Suspense fallback={<ComponentLoader />}>
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/experiment" element={<ExperimentProfile />} />
             <Route path="/flock-batches" element={<FlockBatchManager />} />
             <Route path="/egg-counter" element={<EggCounter />} />
             <Route path="/crm" element={<CRM />} />
             <Route path="/expenses" element={<Expenses />} />
             <Route path="/feed-tracker" element={<FeedTracker />} />
-            <Route path="/feed-calculator" element={<FeedCostCalculator />} />
             <Route path="/savings" element={<Savings />} />
             <Route path="/viability" element={<ChickenViability />} />
             <Route path="/cards" element={<CardShowcase />} />

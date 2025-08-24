@@ -8,8 +8,7 @@ import AnimatedCRMPNG from './AnimatedCRMPNG';
 import { useCRMData } from '../contexts/OptimizedDataProvider';
 
 // Basic utilities
-import { cn } from '../utils/shadcn/cn';
-import { StatCard } from './testCom';
+import { StatCard } from './ui/cards/StatCard';
 
 type CRMTab = 'customers' | 'sales' | 'quick-sale' | 'reports';
 
@@ -69,68 +68,74 @@ export const CRM = () => {
         <AnimatedCRMPNG />
       </motion.div>
 
-      {/* Enhanced Summary Stats with Epic 4 Cards */}
+      {/* Enhanced Summary Stats with Modern Cards */}
       {data.summary && (
         <div className="mt-6">
-          {/* Mobile-First Responsive Stat Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               title="Customers"
-              total={data.summary.customer_count}
-              label="active"
+              total={data.summary.customer_count.toString()}
+              label="active customers"
+              icon="👥"
+              variant="default"
             />
             <StatCard
               title="Sales"
-              total={data.summary.total_sales}
+              total={data.summary.total_sales.toString()}
               label="transactions"
+              icon="🧾"
+              variant="default"
             />
             <StatCard
               title="Revenue"
               total={`$${data.summary.total_revenue.toFixed(2)}`}
               label="total earnings"
+              icon="💰"
+              variant="gradient"
             />
             <StatCard
               title="Eggs Sold"
-              total={data.summary.total_eggs_sold}
-              label="units"
+              total={data.summary.total_eggs_sold.toString()}
+              label="units sold"
+              icon="🥚"
+              variant="default"
             />
             <StatCard
               title="Free Eggs"
-              total={data.summary.free_eggs_given || 0}
+              total={(data.summary.free_eggs_given || 0).toString()}
               label="given away"
+              icon="🎁"
+              variant="default"
             />
             <StatCard
               title="Top Customer"
               total={data.summary.top_customer || 'None'}
               label="highest purchaser"
+              icon="⭐"
+              variant="compact"
             />
           </div>
         </div>
       )}
 
-      {/* Enhanced Tab Navigation with Epic 4 Styling */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 mt-8">
-        {tabs.map((tab, index) => (
-          <motion.button
-            key={tab.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 + (index * 0.1) }}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              'neu-button',
-              "flex items-center justify-center gap-2 px-4 py-3 text-center transition-all duration-300",
-              "hover:scale-[1.02] active:scale-[0.98]",
-              "focus:outline-none focus-visible:ring-4 focus-visible:ring-blue-300",
-              activeTab === tab.id
-                ? 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-[0_4px_20px_rgba(99,102,241,0.3)]'
-                : 'hover:shadow-[0_4px_16px_rgba(0,0,0,0.1)]'
-            )}
-          >
-            <span role="img" aria-label={tab.label} className="text-lg">{tab.emoji}</span>
-            <span className="font-medium font-[Fraunces]">{tab.label}</span>
-          </motion.button>
-        ))}
+      {/* Tab Navigation */}
+      <div className="flex justify-center mb-8 mt-8">
+        <div className="glass-card p-2 flex gap-2 overflow-x-auto whitespace-nowrap max-w-full">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex-shrink-0 flex items-center gap-2 ${
+                activeTab === tab.id
+                  ? 'bg-indigo-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+              }`}
+            >
+              <span role="img" aria-label={tab.label} className="text-lg">{tab.emoji}</span>
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Tab Content */}

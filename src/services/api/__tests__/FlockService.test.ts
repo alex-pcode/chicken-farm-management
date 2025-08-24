@@ -66,7 +66,7 @@ describe('FlockService', () => {
 
       const result = await service.saveFlockProfile(flockProfile);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/saveFlockProfile', {
+      expect(global.fetch).toHaveBeenCalledWith('/api/crud?operation=flockProfile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ describe('FlockService', () => {
   });
 
   describe('saveFlockEvents', () => {
-    it('should call POST /saveFlockEvents endpoint with events array', async () => {
+    it('should call POST /crud?operation=flockEvents endpoint with events array', async () => {
       const flockEvents: FlockEvent[] = [
         {
           id: '1',
@@ -119,7 +119,7 @@ describe('FlockService', () => {
 
       const result = await service.saveFlockEvents(flockEvents);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/saveFlockEvents', {
+      expect(global.fetch).toHaveBeenCalledWith('/api/crud?operation=flockEvents', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -132,7 +132,7 @@ describe('FlockService', () => {
   });
 
   describe('saveFlockEvent', () => {
-    it('should call POST /saveFlockEvents for new event', async () => {
+    it('should call POST /crud?operation=flockEvents for new event', async () => {
       const flockProfileId = 'profile-1';
       const flockEvent: FlockEvent = {
         id: '1',
@@ -143,7 +143,7 @@ describe('FlockService', () => {
         notes: 'Isolated for now'
       };
       
-      const requestData = { flockProfileId, event: flockEvent };
+      const requestData = { date: flockEvent.date, type: flockEvent.type, description: flockEvent.description, affectedBirds: flockEvent.affectedBirds, notes: flockEvent.notes, flock_profile_id: flockProfileId };
       const mockResponse = { 
         success: true, 
         data: flockEvent 
@@ -164,7 +164,7 @@ describe('FlockService', () => {
 
       const result = await service.saveFlockEvent(flockProfileId, flockEvent);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/saveFlockEvents', {
+      expect(global.fetch).toHaveBeenCalledWith('/api/crud?operation=flockEvents', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -175,7 +175,7 @@ describe('FlockService', () => {
       expect(result).toEqual(mockResponse);
     });
 
-    it('should call PUT /saveFlockEvents for updating existing event', async () => {
+    it('should call POST /crud?operation=flockEvents for updating existing event', async () => {
       const flockProfileId = 'profile-1';
       const eventId = 'event-1';
       const flockEvent: FlockEvent = {
@@ -187,7 +187,7 @@ describe('FlockService', () => {
         notes: 'All healthy'
       };
       
-      const requestData = { flockProfileId, event: flockEvent, eventId };
+      const requestData = { ...flockEvent, flock_profile_id: flockProfileId, id: eventId };
       const mockResponse = { 
         success: true, 
         data: flockEvent 
@@ -208,8 +208,8 @@ describe('FlockService', () => {
 
       const result = await service.saveFlockEvent(flockProfileId, flockEvent, eventId);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/saveFlockEvents', {
-        method: 'PUT',
+      expect(global.fetch).toHaveBeenCalledWith('/api/crud?operation=flockEvents', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer mock-token'
@@ -221,7 +221,7 @@ describe('FlockService', () => {
   });
 
   describe('deleteFlockEvent', () => {
-    it('should call DELETE /deleteFlockEvent endpoint with event ID', async () => {
+    it('should call DELETE /crud?operation=flockEvents endpoint with event ID', async () => {
       const eventId = 'event-1';
       const mockResponse = { 
         success: true, 
@@ -243,20 +243,20 @@ describe('FlockService', () => {
 
       const result = await service.deleteFlockEvent(eventId);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/deleteFlockEvent', {
+      expect(global.fetch).toHaveBeenCalledWith('/api/crud?operation=flockEvents', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer mock-token'
         },
-        body: JSON.stringify({ eventId }),
+        body: JSON.stringify({ id: eventId }),
       });
       expect(result).toEqual(mockResponse);
     });
   });
 
   describe('saveFlockBatch', () => {
-    it('should call POST /saveFlockBatch endpoint with batch data', async () => {
+    it('should call POST /flockBatches endpoint with batch data', async () => {
       const flockBatch: FlockBatch = {
         id: 'batch-1',
         batchName: 'Spring 2025 Batch',
@@ -292,7 +292,7 @@ describe('FlockService', () => {
 
       const result = await service.saveFlockBatch(flockBatch);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/saveFlockBatch', {
+      expect(global.fetch).toHaveBeenCalledWith('/api/flockBatches', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -305,7 +305,7 @@ describe('FlockService', () => {
   });
 
   describe('saveDeathRecord', () => {
-    it('should call POST /saveDeathRecord endpoint with death record data', async () => {
+    it('should call POST /deathRecords endpoint with death record data', async () => {
       const deathRecord: DeathRecord = {
         id: 'death-1',
         batchId: 'batch-1',
@@ -336,7 +336,7 @@ describe('FlockService', () => {
 
       const result = await service.saveDeathRecord(deathRecord);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/saveDeathRecord', {
+      expect(global.fetch).toHaveBeenCalledWith('/api/deathRecords', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -395,6 +395,11 @@ describe('FlockService', () => {
         data: { session: null },
         error: { message: 'Not authenticated' }
       } as any);
+      
+      vi.mocked(supabase.auth.refreshSession).mockResolvedValue({
+        data: { session: null },
+        error: { message: 'Refresh failed' }
+      } as any);
 
       const flockProfile: FlockProfile = {
         hens: 10,
@@ -406,7 +411,7 @@ describe('FlockService', () => {
         events: []
       };
 
-      await expect(service.saveFlockProfile(flockProfile)).rejects.toThrow('Authentication required');
+      await expect(service.saveFlockProfile(flockProfile)).rejects.toThrow('User not authenticated - please log in again');
     });
 
     it('should handle network errors', async () => {

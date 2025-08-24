@@ -29,7 +29,7 @@ import {
   validatePricePerUnit,
   
   // Basic validators
-  validators,
+  // validators,
 } from '../validation';
 
 describe('Enhanced String Validation', () => {

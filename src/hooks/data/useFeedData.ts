@@ -13,7 +13,7 @@ export interface UseFeedDataOptions {
 export interface UseFeedDataReturn {
   feedEntries: FeedEntry[];
   isLoading: boolean;
-  error: any;
+  error: unknown;
   refetch: () => Promise<void>;
   addFeedEntry: (entry: Omit<FeedEntry, 'id'>) => Promise<void>;
   updateFeedEntry: (id: string, entry: Partial<FeedEntry>) => Promise<void>;
@@ -37,7 +37,10 @@ export const useFeedData = (options: UseFeedDataOptions = {}): UseFeedDataReturn
   const contextFeedInventory = data.feedInventory;
 
   // Memoize the fetcher function to prevent infinite loops
-  const fetcher = useCallback(() => apiService.production.getFeedInventory(), []);
+  const fetcher = useCallback(async (): Promise<FeedEntry[]> => {
+    const response = await apiService.production.getFeedInventory();
+    return response.data as FeedEntry[];
+  }, []);
   
   // Fallback data fetching hook (if DataContext fails)
   const {
@@ -53,12 +56,10 @@ export const useFeedData = (options: UseFeedDataOptions = {}): UseFeedDataReturn
   });
 
   // Use context data preferentially, fallback to fetched data
-  console.log('🔍 Data sources:');
-  console.log('📦 contextFeedInventory:', contextFeedInventory?.length || 0, 'items');
-  console.log('📡 fetchedFeedEntries:', fetchedFeedEntries?.length || 0, 'items');
-  
-  const allFeedEntries = (contextFeedInventory && contextFeedInventory.length > 0) ? contextFeedInventory : (fetchedFeedEntries || []);
-  console.log('✅ Using allFeedEntries:', allFeedEntries.length, 'items');
+  const allFeedEntries = useMemo(() => {
+    const result = (contextFeedInventory && contextFeedInventory.length > 0) ? contextFeedInventory : (fetchedFeedEntries || []);
+    return result;
+  }, [contextFeedInventory, fetchedFeedEntries]);
   
   // Filter by feed type if specified
   const feedEntries = useMemo(() => {
@@ -73,65 +74,40 @@ export const useFeedData = (options: UseFeedDataOptions = {}): UseFeedDataReturn
 
   // Add new feed entry
   const addFeedEntry = useCallback(async (entry: Omit<FeedEntry, 'id'>) => {
-    try {
-      // Save to API without ID (let database generate UUID)
-      await apiService.production.saveFeedInventory([entry]);
-      
-      // After successful save, refresh data from server to get updated state
-      await refreshData();
-      
-    } catch (err) {
-      throw err;
-    }
+    // Add temporary ID for API compatibility (database will generate final UUID)
+    const entryWithId: FeedEntry = { ...entry, id: `temp-${Date.now()}` };
+    await apiService.production.saveFeedInventory([entryWithId]);
+    
+    // After successful save, refresh data from server to get updated state
+    await refreshData();
   }, [refreshData]);
 
   // Update existing feed entry  
   const updateFeedEntry = useCallback(async (id: string, updatedData: Partial<FeedEntry>) => {
-    console.log('🎪 updateFeedEntry called with:', id, updatedData);
-    console.log('🎪 allFeedEntries length:', allFeedEntries.length);
-    console.log('🎪 contextFeedInventory length:', contextFeedInventory?.length || 0);
-    
     // Use the most current data available
     const currentEntries = contextFeedInventory && contextFeedInventory.length > 0 ? contextFeedInventory : allFeedEntries;
     
     const entryIndex = currentEntries.findIndex(entry => entry.id === id);
     if (entryIndex === -1) {
-      console.log('❌ Entry not found in currentEntries:', id);
-      console.log('📋 Available entries:', currentEntries.map(e => ({ id: e.id, brand: e.brand })));
       return;
     }
-    console.log('✅ Found entry at index:', entryIndex);
 
     const entryToUpdate = { ...currentEntries[entryIndex], ...updatedData };
     
-    try {
-      console.log('🔧 Sending to API:', JSON.stringify(entryToUpdate, null, 2));
-      
-      // Save only the updated entry to API (UPSERT will handle it properly)
-      const result = await apiService.production.saveFeedInventory([entryToUpdate]);
-      
-      console.log('🎯 API call completed successfully, result:', result);
-      
-      // After successful API call, refresh data from server to get updated state
-      await refreshData();
-    } catch (err) {
-      console.error('❌ API call failed:', err);
-      console.error('❌ Error details:', err.message, err.stack);
-      throw err;
-    }
+    // Save only the updated entry to API (UPSERT will handle it properly)
+    await apiService.production.saveFeedInventory([entryToUpdate]);
+    
+    // After successful API call, refresh data from server to get updated state
+    await refreshData();
   }, [allFeedEntries, contextFeedInventory, refreshData]);
 
   // Delete feed entry
   const deleteFeedEntry = useCallback(async (id: string) => {
-    try {
-      // Use proper delete API instead of saving filtered array
-      await apiService.production.deleteFeedInventory(id);
-      
-      // After successful delete, refresh data from server to get updated state
-      await refreshData();
-    } catch (err) {
-      throw err;
-    }
+    // Use proper delete API instead of saving filtered array
+    await apiService.production.deleteFeedInventory(id);
+    
+    // After successful delete, refresh data from server to get updated state
+    await refreshData();
   }, [refreshData]);
 
   // Statistics and analysis

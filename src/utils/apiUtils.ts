@@ -5,7 +5,7 @@ export const getApiUrl = (endpoint: string): string => {
 };
 
 // Helper function for making API calls with proper error handling
-export const apiCall = async (endpoint: string, data: any) => {
+export const apiCall = async (endpoint: string, data: unknown) => {
   const url = getApiUrl(endpoint);
   try {
     const response = await fetch(url, {
@@ -28,7 +28,7 @@ export const apiCall = async (endpoint: string, data: any) => {
 };
 
 // Helper function for DELETE API calls
-export const apiDelete = async (endpoint: string, data: any) => {
+export const apiDelete = async (endpoint: string, data: { id: string } | unknown) => {
   
   const url = getApiUrl(endpoint);
   try {

@@ -18,11 +18,12 @@ interface ComparisonCardProps extends BaseUIComponentProps {
   after: ComparisonData;
   change?: number;
   changeType?: 'increase' | 'decrease';
-  format?: 'number' | 'currency' | 'percentage';
+  format?: 'number' | 'currency' | 'percentage' | 'decimal';
   variant?: 'default' | 'compact';
   loading?: boolean;
   showArrow?: boolean;
   icon?: string;
+  onClick?: () => void;
 }
 
 const formatValue = (value: string | number, format: string): string => {
@@ -40,9 +41,12 @@ const formatValue = (value: string | number, format: string): string => {
     case 'percentage':
       return `${numValue}%`;
     
+    case 'decimal':
+      return numValue.toFixed(2);
+    
     case 'number':
     default:
-      return numValue.toLocaleString();
+      return new Intl.NumberFormat('en-US').format(numValue);
   }
 };
 
@@ -57,17 +61,6 @@ const getChangeColor = (changeType?: string) => {
   }
 };
 
-const getChangeIcon = (changeType?: string) => {
-  switch (changeType) {
-    case 'increase':
-      return '📈';
-    case 'decrease':
-      return '📉';
-    default:
-      return '➡️';
-  }
-};
-
 export const ComparisonCard: React.FC<ComparisonCardProps> = ({
   title,
   before,
@@ -79,11 +72,13 @@ export const ComparisonCard: React.FC<ComparisonCardProps> = ({
   loading = false,
   showArrow = true,
   icon,
+  onClick,
   className = '',
   testId,
 }) => {
   const baseClasses = 'glass-card p-6 space-y-4';
-  const combinedClassName = `${baseClasses} ${className}`;
+  const clickableClasses = onClick ? 'cursor-pointer' : '';
+  const combinedClassName = `${baseClasses} ${clickableClasses} ${className}`;
 
   if (loading) {
     return (
@@ -114,6 +109,7 @@ export const ComparisonCard: React.FC<ComparisonCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       className={combinedClassName}
       data-testid={testId}
+      onClick={onClick}
     >
       <div className="flex justify-between items-center">
         <h3 className={`font-semibold text-gray-900 ${variant === 'compact' ? 'text-base' : 'text-lg'}`}>
@@ -123,10 +119,10 @@ export const ComparisonCard: React.FC<ComparisonCardProps> = ({
           {change !== undefined && (
             <div 
               className={`text-sm font-medium ${typeof getChangeColor(changeType) === 'string' ? getChangeColor(changeType) : ''}`}
-              style={typeof getChangeColor(changeType) === 'object' ? getChangeColor(changeType) : undefined}
+              style={typeof getChangeColor(changeType) === 'object' ? getChangeColor(changeType) as React.CSSProperties : undefined}
             >
               {changeType === 'increase' ? '+' : ''}
-              {change}%
+              {change?.toFixed(1)}%
             </div>
           )}
           {icon && (

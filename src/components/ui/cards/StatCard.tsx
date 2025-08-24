@@ -15,15 +15,16 @@ interface StatCardProps extends BaseUIComponentProps {
   changeType?: 'increase' | 'decrease';
   trend?: 'up' | 'down' | 'neutral';
   loading?: boolean;
-  variant?: 'default' | 'compact' | 'gradient';
+  variant?: 'default' | 'compact' | 'gradient' | 'corner-gradient';
   icon?: string;
   onClick?: () => void;
 }
 
 const variantClasses = {
-  default: 'glass-card p-3 lg:p-5',
-  compact: 'glass-card p-3 lg:p-5',
-  gradient: 'glass-card bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 p-3 lg:p-5',
+  default: 'glass-card p-2 lg:p-3 relative overflow-hidden',
+  compact: 'glass-card p-2 lg:p-3',
+  gradient: 'glass-card bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 p-2 lg:p-3',
+  'corner-gradient': 'glass-card p-2 lg:p-3 relative overflow-hidden',
 };
 
 const cardVariants = {
@@ -33,13 +34,22 @@ const cardVariants = {
   },
 };
 
+{/* 
+COMPARISON CARD FOR DESIGN REFERENCE:
+<div class="stat-card">
+  <h3 class="text-lg font-medium text-white">Net Profit/Loss</h3>
+  <p class="text-4xl font-bold mt-2">-$91.09</p>
+  <p class="text-sm text-white/90 mt-1">period profit only</p>
+</div>
+*/}
+
 export const StatCard: React.FC<StatCardProps> = ({
   title,
   total,
   label,
   change,
   changeType,
-  trend,
+  // trend, // TODO: Implement trend functionality
   loading = false,
   variant = 'default',
   icon,
@@ -50,14 +60,8 @@ export const StatCard: React.FC<StatCardProps> = ({
   const baseClasses = variantClasses[variant];
   const combinedClassName = `${baseClasses} ${onClick ? 'cursor-pointer' : ''} ${className}`;
 
-  const getTrendIcon = () => {
-    if (trend === 'up') return '📈';
-    if (trend === 'down') return '📉';
-    return '';
-  };
-
   const getChangeColor = () => {
-    if (changeType === 'increase') return { color: 'oklch(0.44 0.11 162.79)' };
+    if (changeType === 'increase') return 'text-green-600';
     if (changeType === 'decrease') return 'text-red-600';
     return 'text-gray-600';
   };
@@ -75,41 +79,59 @@ export const StatCard: React.FC<StatCardProps> = ({
   }
 
   const cardContent = (
-    <div className="relative flex items-center gap-3">
-      {/* Icon Section */}
-      {icon && (
-        <div className="max-[480px]:hidden size-8 shrink-0 rounded-full bg-indigo-600/25 border border-indigo-600/50 flex items-center justify-center text-indigo-500">
-          <span className="text-lg">{icon}</span>
-        </div>
+    <>
+      {/* Corner Gradient Overlay */}
+      {variant === 'corner-gradient' && (
+        <>
+          <div 
+            className="absolute pointer-events-none transition-opacity duration-300"
+            style={{
+              top: '-25%',
+              right: '-15%',
+              width: '35%',
+              height: '30%',
+              borderRadius: '70%',
+              background: 'radial-gradient(circle, #4F39F6 0%, #191656 100%)',
+              filter: 'blur(60px)',
+              opacity: 1
+            }}
+          />
+        </>
       )}
       
-      {/* Content Section */}
-      <div className="flex-1">
-        {/* Title */}
-        <div className="font-semibold text-gray-900 text-base lg:text-lg mb-1">
-          {title}
-        </div>
+      <div className="relative flex items-center gap-3">
+        {/* Icon Section */}
+        {icon && (
+          <div className="max-[480px]:hidden size-8 shrink-0 rounded-full bg-indigo-600/25 border border-indigo-600/50 flex items-center justify-center text-indigo-500">
+            <span className="text-lg">{icon}</span>
+          </div>
+        )}
         
-        {/* Value */}
-        <div className="font-semibold mb-2 text-gray-900 text-2xl">
-          {total}
-        </div>
-        
-        {/* Label and Change */}
-        <div className="text-xs text-gray-500">
-          {change !== undefined && (
-            <span 
-              className={`font-medium ${typeof getChangeColor() === 'string' ? getChangeColor() : ''}`}
-              style={typeof getChangeColor() === 'object' ? getChangeColor() : undefined}
-            >
-              {changeType === 'increase' ? '↗' : changeType === 'decrease' ? '↘' : '→'} {changeType === 'increase' ? '+' : ''}{change}%
-            </span>
-          )}
-          {change !== undefined && label && <span> vs </span>}
-          {label && <span>{label}</span>}
+        {/* Content Section */}
+        <div className="flex-1">
+          {/* Title */}
+          <div className="font-semibold text-gray-900 text-base lg:text-lg mb-1">
+            {title}
+          </div>
+          
+          {/* Value */}
+          <div className="font-bold mb-2 text-gray-900 text-2xl">
+            {total}
+          </div>
+          
+          {/* Label and Change */}
+          <div className="text-xs text-gray-500">
+            {change !== undefined && (
+              <span className={`font-medium ${getChangeColor()}`}>
+                {changeType === 'increase' ? '↗' : changeType === 'decrease' ? '↘' : '→'} {changeType === 'increase' ? '+' : ''}{change}%
+              </span>
+            )}
+            {change !== undefined && label && <span> vs </span>}
+            {label && <span>{label}</span>}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 
   if (onClick) {

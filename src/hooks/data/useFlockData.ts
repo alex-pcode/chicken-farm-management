@@ -15,7 +15,7 @@ export interface UseFlockDataReturn {
   events: FlockEvent[];
   summary: FlockSummary | null;
   isLoading: boolean;
-  error: any;
+  error: unknown;
   refetch: () => Promise<void>;
   updateProfile: (profile: FlockProfile) => Promise<void>;
   addEvent: (event: Omit<FlockEvent, 'id'>) => Promise<void>;
@@ -31,13 +31,13 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
   const {
     autoRefresh = true,
     cacheTime = 300000, // 5 minutes
-    includeEvents = true
+    // includeEvents = true // TODO: Implement event filtering - commented to avoid unused variable
   } = options;
 
   // Use OptimizedDataProvider for cached data
   const { data, isLoading: contextLoading, refreshData } = useOptimizedAppData();
   const contextProfile = data.flockProfile;
-  const contextEvents = data.flockEvents;
+  // const contextEvents = data.flockEvents; // TODO: Use for event filtering - commented to avoid unused variable
 
   // Fallback data fetching hook for profile (if DataContext fails)
   const {
@@ -47,7 +47,10 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
     refetch: refetchProfile
   } = useDataFetch<FlockProfile>({
     key: 'flock-profile',
-    fetcher: () => apiService.flock.getFlockProfile(),
+    fetcher: async (): Promise<FlockProfile> => {
+      const response = await apiService.flock.getFlockProfile();
+      return response.data as FlockProfile;
+    },
     cacheTime,
     enabled: autoRefresh && !contextProfile
   });
@@ -60,14 +63,17 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
     refetch: refetchSummary
   } = useDataFetch<FlockSummary>({
     key: 'flock-summary',
-    fetcher: () => apiService.flock.getFlockSummary(),
+    fetcher: async (): Promise<FlockSummary> => {
+      const response = await apiService.flock.getFlockSummary();
+      return response.data as FlockSummary;
+    },
     cacheTime,
     enabled: autoRefresh
   });
 
   // Use context data preferentially, fallback to fetched data
   const profile = contextProfile || fetchedProfile || null;
-  const events = profile?.events || [];
+  const events = useMemo(() => profile?.events || [], [profile]);
   const isLoading = contextLoading || profileLoading || summaryLoading;
   const error = profileError || summaryError;
 
@@ -81,20 +87,17 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
 
   // Update flock profile
   const updateProfile = useCallback(async (updatedProfile: FlockProfile) => {
-    // Optimistic update
-    refreshData(updatedProfile);
-    
     try {
       // Save to API
       await apiService.flock.saveFlockProfile(updatedProfile);
+      // Refresh data after successful update
+      await refreshData();
     } catch (err) {
-      // Revert on error
-      if (contextProfile) {
-        refreshData(contextProfile);
-      }
+      // Refresh data to revert any optimistic updates
+      await refreshData();
       throw err;
     }
-  }, [contextProfile, refreshData]);
+  }, [refreshData]);
 
   // Add new flock event
   const addEvent = useCallback(async (eventData: Omit<FlockEvent, 'id'>) => {
@@ -105,23 +108,17 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
       id: `temp-${Date.now()}` // Temporary ID, will be replaced by API
     };
     
-    const updatedProfile = {
-      ...profile,
-      events: [...profile.events, newEvent]
-    };
-    
-    // Optimistic update
-    refreshData(updatedProfile);
-    
     try {
-      // Save to API
-      await apiService.flock.saveFlockEvent(newEvent);
+      // Save to API - saveFlockEvent requires profileId
+      await apiService.flock.saveFlockEvent(profile.id || '', newEvent);
+      // Refresh data after successful update
+      await refreshData();
     } catch (err) {
-      // Revert on error
-      refreshData(profile);
+      // Refresh data to revert any optimistic updates
+      await refreshData();
       throw err;
     }
-  }, [profile, refreshData]);
+  }, [refreshData]);
 
   // Update existing flock event
   const updateEvent = useCallback(async (id: string, eventData: Partial<FlockEvent>) => {
@@ -133,20 +130,14 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
     const updatedEvents = [...profile.events];
     updatedEvents[eventIndex] = { ...updatedEvents[eventIndex], ...eventData };
     
-    const updatedProfile = {
-      ...profile,
-      events: updatedEvents
-    };
-    
-    // Optimistic update
-    refreshData(updatedProfile);
-    
     try {
-      // Save to API
-      await apiService.flock.saveFlockEvent(updatedEvents[eventIndex]);
+      // Save to API - saveFlockEvent requires profileId and existing event ID
+      await apiService.flock.saveFlockEvent(profile.id || '', updatedEvents[eventIndex], id);
+      // Refresh data after successful update
+      await refreshData();
     } catch (err) {
-      // Revert on error
-      refreshData(profile);
+      // Refresh data to revert any optimistic updates
+      await refreshData();
       throw err;
     }
   }, [profile, refreshData]);
@@ -155,24 +146,17 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
   const deleteEvent = useCallback(async (id: string) => {
     if (!profile) return;
 
-    const updatedEvents = profile.events.filter(event => event.id !== id);
-    const updatedProfile = {
-      ...profile,
-      events: updatedEvents
-    };
-    
-    // Optimistic update
-    refreshData(updatedProfile);
-    
     try {
       // Delete from API
       await apiService.flock.deleteFlockEvent(id);
+      // Refresh data after successful deletion
+      await refreshData();
     } catch (err) {
-      // Revert on error
-      refreshData(profile);
+      // Refresh data to revert any optimistic updates
+      await refreshData();
       throw err;
     }
-  }, [profile, refreshData]);
+  }, [refreshData]);
 
   // Flock statistics and calculations
   const statistics = useMemo(() => {
@@ -208,7 +192,7 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
   return useMemo(() => ({
     profile,
     events,
-    summary,
+    summary: summary ?? null,
     isLoading,
     error,
     refetch,

@@ -15,19 +15,19 @@ export interface UseFormStateReturn<T> {
   isSubmitting: boolean;
   isDirty: boolean;
   isValid: boolean;
-  setValue: (field: keyof T, value: any) => void;
+  setValue: (field: keyof T, value: unknown) => void;
   setValues: (values: Partial<T>) => void;
   setError: (field: keyof T, message: string, type?: ValidationError['type']) => void;
   clearError: (field: keyof T) => void;
   clearAllErrors: () => void;
   reset: (newValues?: T) => void;
   handleSubmit: (e?: React.FormEvent) => Promise<void>;
-  handleChange: (field: keyof T) => (value: any) => void;
+  handleChange: (field: keyof T) => (value: unknown) => void;
   getFieldError: (field: keyof T) => string | undefined;
   hasError: (field: keyof T) => boolean;
 }
 
-export const useFormState = <T extends Record<string, any>>(
+export const useFormState = <T extends Record<string, unknown>>(
   options: UseFormStateOptions<T>
 ): UseFormStateReturn<T> => {
   const {
@@ -47,28 +47,15 @@ export const useFormState = <T extends Record<string, any>>(
   // Calculate if form is valid
   const isValid = useMemo(() => errors.length === 0, [errors]);
 
-  // Set a single field value
-  const setValue = useCallback((field: keyof T, value: any) => {
-    setValuesState(prev => {
-      const newValues = { ...prev, [field]: value };
-      setIsDirty(JSON.stringify(newValues) !== JSON.stringify(initialValues));
-      return newValues;
-    });
-    
-    // Clear field error when value changes
-    if (validateOnChange) {
-      clearError(field);
-    }
-  }, [initialValues, validateOnChange]);
+  // Clear field error
+  const clearError = useCallback((field: keyof T) => {
+    setErrors(prev => prev.filter(error => error.field !== String(field)));
+  }, []);
 
-  // Set multiple field values
-  const setValues = useCallback((newValues: Partial<T>) => {
-    setValuesState(prev => {
-      const updatedValues = { ...prev, ...newValues };
-      setIsDirty(JSON.stringify(updatedValues) !== JSON.stringify(initialValues));
-      return updatedValues;
-    });
-  }, [initialValues]);
+  // Clear all errors
+  const clearAllErrors = useCallback(() => {
+    setErrors([]);
+  }, []);
 
   // Set field error
   const setError = useCallback((field: keyof T, message: string, type: ValidationError['type'] = 'invalid') => {
@@ -83,15 +70,28 @@ export const useFormState = <T extends Record<string, any>>(
     });
   }, []);
 
-  // Clear field error
-  const clearError = useCallback((field: keyof T) => {
-    setErrors(prev => prev.filter(error => error.field !== String(field)));
-  }, []);
+  // Set a single field value
+  const setValue = useCallback((field: keyof T, value: unknown) => {
+    setValuesState(prev => {
+      const newValues = { ...prev, [field]: value };
+      setIsDirty(JSON.stringify(newValues) !== JSON.stringify(initialValues));
+      return newValues;
+    });
+    
+    // Clear field error when value changes
+    if (validateOnChange) {
+      clearError(field);
+    }
+  }, [initialValues, validateOnChange, clearError]);
 
-  // Clear all errors
-  const clearAllErrors = useCallback(() => {
-    setErrors([]);
-  }, []);
+  // Set multiple field values
+  const setValues = useCallback((newValues: Partial<T>) => {
+    setValuesState(prev => {
+      const updatedValues = { ...prev, ...newValues };
+      setIsDirty(JSON.stringify(updatedValues) !== JSON.stringify(initialValues));
+      return updatedValues;
+    });
+  }, [initialValues]);
 
   // Reset form
   const reset = useCallback((newValues?: T) => {
@@ -133,7 +133,7 @@ export const useFormState = <T extends Record<string, any>>(
 
   // Create field change handler
   const handleChange = useCallback((field: keyof T) => {
-    return (value: any) => setValue(field, value);
+    return (value: unknown) => setValue(field, value);
   }, [setValue]);
 
   // Get field error message

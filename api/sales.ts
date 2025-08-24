@@ -11,7 +11,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Helper function to get user from authorization header
-async function getAuthenticatedUser(req: VercelRequest, supabase: any) {
+async function getAuthenticatedUser(req: VercelRequest, supabaseClient: typeof supabase) {
   const authHeader = req.headers.authorization;
   
   if (!authHeader) {
@@ -21,9 +21,9 @@ async function getAuthenticatedUser(req: VercelRequest, supabase: any) {
   const token = authHeader.replace('Bearer ', '');
   
   try {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const { data: { user }, error } = await supabaseClient.auth.getUser(token);
     return error ? null : user;
-  } catch (err) {
+  } catch {
     return null;
   }
 }
@@ -148,7 +148,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
 
-      const updateData: any = {};
+      const updateData: Record<string, unknown> = {};
       if (customer_id !== undefined) updateData.customer_id = customer_id;
       if (sale_date !== undefined) updateData.sale_date = sale_date;
       if (dozen_count !== undefined) updateData.dozen_count = dozen_count;

@@ -1,13 +1,37 @@
 // Test setup file for Vitest + React Testing Library
 import '@testing-library/jest-dom'
+import React from 'react'
 import { afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 
 // Mock Framer Motion for tests (reduces complexity)
 vi.mock('framer-motion', () => ({
   motion: {
-    div: 'div',
-    button: 'button',
+    div: ({ children, ...props }: React.ComponentProps<'div'> & Record<string, unknown>) => {
+      // Filter out Framer Motion specific props to avoid React warnings
+      const { 
+        initial, animate, exit, transition, variants, whileHover, whileTap, 
+        whileFocus, whileInView, drag, dragConstraints, dragElastic,
+        ...htmlProps 
+      } = props;
+      // Suppress unused variable warnings for motion props
+      void initial; void animate; void exit; void transition; void variants;
+      void whileHover; void whileTap; void whileFocus; void whileInView;
+      void drag; void dragConstraints; void dragElastic;
+      return React.createElement('div', htmlProps, children);
+    },
+    button: ({ children, ...props }: React.ComponentProps<'button'> & Record<string, unknown>) => {
+      const { 
+        initial, animate, exit, transition, variants, whileHover, whileTap, 
+        whileFocus, whileInView, drag, dragConstraints, dragElastic,
+        ...htmlProps 
+      } = props;
+      // Suppress unused variable warnings for motion props
+      void initial; void animate; void exit; void transition; void variants;
+      void whileHover; void whileTap; void whileFocus; void whileInView;
+      void drag; void dragConstraints; void dragElastic;
+      return React.createElement('button', htmlProps, children);
+    },
     form: 'form',
     input: 'input',
     span: 'span',

@@ -71,12 +71,15 @@ async function handleGet(req: VercelRequest, res: VercelResponse, userId: string
     const totalHens = flockBatches?.reduce((sum, batch) => sum + (batch.hens_count || 0), 0) || 0;
     const totalRoosters = flockBatches?.reduce((sum, batch) => sum + (batch.roosters_count || 0), 0) || 0;
     const totalChicks = flockBatches?.reduce((sum, batch) => sum + (batch.chicks_count || 0), 0) || 0;
+    const totalBrooding = flockBatches?.reduce((sum, batch) => sum + (batch.brooding_count || 0), 0) || 0;
     const activeBatches = flockBatches?.length || 0;
     
-    // Count laying hens: hens that have actual_laying_start_date set
+    // Count laying hens: hens that have actual_laying_start_date set, minus brooding hens
     const expectedLayers = flockBatches?.reduce((sum, batch) => {
       if ((batch.hens_count || 0) > 0 && batch.actual_laying_start_date) {
-        return sum + (batch.hens_count || 0);
+        const hens = batch.hens_count || 0;
+        const brooding = batch.brooding_count || 0;
+        return sum + Math.max(0, hens - brooding); // Subtract brooding hens from laying hens
       }
       return sum;
     }, 0) || 0;
@@ -100,6 +103,7 @@ async function handleGet(req: VercelRequest, res: VercelResponse, userId: string
       total_hens: totalHens,
       total_roosters: totalRoosters,
       total_chicks: totalChicks,
+      total_brooding: totalBrooding,
       active_batches: activeBatches,
       expected_layers: expectedLayers,
       total_deaths: totalDeaths,
@@ -213,6 +217,7 @@ async function handleGet(req: VercelRequest, res: VercelResponse, userId: string
       totalHens: Number(summary.total_hens),
       totalRoosters: Number(summary.total_roosters),
       totalChicks: Number(summary.total_chicks),
+      totalBrooding: Number(summary.total_brooding),
       activeBatches: Number(summary.active_batches),
       expectedLayers: Number(summary.expected_layers),
       actualLayers: estimatedLayers,

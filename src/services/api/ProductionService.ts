@@ -49,6 +49,34 @@ export class ProductionService extends BaseApiService implements IProductionServ
   }
 
   /**
+   * Delete egg entry by ID
+   */
+  public async deleteEggEntry(entryId: string): Promise<ApiResponse> {
+    return this.delete('/crud?operation=eggs', { id: entryId });
+  }
+
+  /**
+   * Get feed inventory data
+   */
+  public async getFeedInventory(): Promise<ApiResponse> {
+    // Use the production data endpoint which returns { feedInventory: [...] }
+    const response = await this.get('/data?type=production');
+    if (response.data && typeof response.data === 'object' && 'feedInventory' in response.data) {
+      const responseData = response.data as { feedInventory: FeedEntry[] };
+      return {
+        success: true,
+        data: responseData.feedInventory,
+        message: 'Feed inventory extracted from full data response'
+      };
+    }
+    return {
+      success: true,
+      data: [],
+      message: 'No feed inventory found in response'
+    };
+  }
+
+  /**
    * Save feed inventory to database
    */
   public async saveFeedInventory(inventory: FeedEntry[]): Promise<ApiResponse> {

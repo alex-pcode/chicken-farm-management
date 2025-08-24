@@ -1,5 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type User } from '@supabase/supabase-js';
+import type { 
+  EggEntry, 
+  Expense, 
+  FeedEntry, 
+  FlockEvent, 
+  FlockProfile 
+} from '../src/types/index';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -68,7 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 
 // Handle save operations (create/update)
-async function handleSave(user: any, operation: string, table: string, body: any, res: VercelResponse) {
+async function handleSave(user: User, operation: string, table: string, body: unknown, res: VercelResponse) {
   switch (operation) {
     case 'eggs':
     case 'eggEntries':
@@ -88,13 +95,16 @@ async function handleSave(user: any, operation: string, table: string, body: any
 }
 
 // Handle delete operations
-async function handleDelete(user: any, operation: string, table: string, body: any, res: VercelResponse) {
+async function handleDelete(user: User, operation: string, table: string, body: { id: string }, res: VercelResponse) {
   const { id } = body;
   if (!id) {
     return res.status(400).json({ message: 'ID is required for delete operations' });
   }
 
   switch (operation) {
+    case 'eggs':
+    case 'eggEntries':
+      return await deleteEggEntry(user, id, res);
     case 'expenses':
       return await deleteExpense(user, id, res);
     case 'feed':
@@ -108,18 +118,24 @@ async function handleDelete(user: any, operation: string, table: string, body: a
 }
 
 // Save egg entries
-async function saveEggEntries(user: any, eggData: any, res: VercelResponse) {
+async function saveEggEntries(user: User, eggData: EggEntry | EggEntry[], res: VercelResponse) {
   const eggWithUser = Array.isArray(eggData) 
     ? eggData.map(egg => ({ 
         user_id: user.id,
         date: egg.date,
         count: egg.count,
+        ...(egg.size && { size: egg.size }),
+        ...(egg.color && { color: egg.color }),
+        ...(egg.notes && { notes: egg.notes }),
         ...(egg.id && { id: egg.id })
       }))
     : {
         user_id: user.id,
         date: eggData.date,
         count: eggData.count,
+        ...(eggData.size && { size: eggData.size }),
+        ...(eggData.color && { color: eggData.color }),
+        ...(eggData.notes && { notes: eggData.notes }),
         ...(eggData.id && { id: eggData.id })
       };
 
@@ -140,10 +156,10 @@ async function saveEggEntries(user: any, eggData: any, res: VercelResponse) {
 }
 
 // Save expenses
-async function saveExpenses(user: any, expenseData: any, res: VercelResponse) {
+async function saveExpenses(user: User, expenseData: Expense | Expense[], res: VercelResponse) {
   const expenseWithUser = Array.isArray(expenseData) 
     ? expenseData.map(expense => {
-        const mapped: any = { 
+        const mapped: Partial<Expense & { user_id: string }> = { 
           user_id: user.id,
           category: expense.category,
           amount: expense.amount,
@@ -181,7 +197,7 @@ async function saveExpenses(user: any, expenseData: any, res: VercelResponse) {
 }
 
 // Save feed inventory
-async function saveFeedInventory(user: any, feedData: any, res: VercelResponse) {
+async function saveFeedInventory(user: User, feedData: FeedEntry | FeedEntry[], res: VercelResponse) {
   const feedWithUser = Array.isArray(feedData) 
     ? feedData.map(feed => ({
         user_id: user.id,
@@ -225,7 +241,7 @@ async function saveFeedInventory(user: any, feedData: any, res: VercelResponse) 
 }
 
 // Save flock events
-async function saveFlockEvents(user: any, eventData: any, res: VercelResponse) {
+async function saveFlockEvents(user: User, eventData: FlockEvent | FlockEvent[], res: VercelResponse) {
   const eventWithUser = Array.isArray(eventData) 
     ? eventData.map(event => ({
         user_id: user.id,
@@ -265,7 +281,7 @@ async function saveFlockEvents(user: any, eventData: any, res: VercelResponse) {
 }
 
 // Save flock profile
-async function saveFlockProfile(user: any, profileData: any, res: VercelResponse) {
+async function saveFlockProfile(user: User, profileData: FlockProfile, res: VercelResponse) {
   const profileWithUser = {
     user_id: user.id,
     farm_name: profileData.farmName || profileData.farm_name,
@@ -300,7 +316,7 @@ async function saveFlockProfile(user: any, profileData: any, res: VercelResponse
 }
 
 // Delete expense
-async function deleteExpense(user: any, id: string, res: VercelResponse) {
+async function deleteExpense(user: User, id: string, res: VercelResponse) {
   const { error } = await supabase
     .from('expenses')
     .delete()
@@ -318,7 +334,7 @@ async function deleteExpense(user: any, id: string, res: VercelResponse) {
 }
 
 // Delete feed inventory
-async function deleteFeedInventory(user: any, id: string, res: VercelResponse) {
+async function deleteFeedInventory(user: User, id: string, res: VercelResponse) {
   const { error } = await supabase
     .from('feed_inventory')
     .delete()
@@ -336,7 +352,7 @@ async function deleteFeedInventory(user: any, id: string, res: VercelResponse) {
 }
 
 // Delete flock event
-async function deleteFlockEvent(user: any, id: string, res: VercelResponse) {
+async function deleteFlockEvent(user: User, id: string, res: VercelResponse) {
   const { error } = await supabase
     .from('flock_events')
     .delete()
@@ -349,6 +365,24 @@ async function deleteFlockEvent(user: any, id: string, res: VercelResponse) {
 
   res.status(200).json({
     message: 'Flock event deleted successfully',
+    timestamp: new Date().toISOString()
+  });
+}
+
+// Delete egg entry
+async function deleteEggEntry(user: User, id: string, res: VercelResponse) {
+  const { error } = await supabase
+    .from('egg_entries')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  if (error) {
+    throw new Error(`Database delete error: ${error.message}`);
+  }
+
+  res.status(200).json({
+    message: 'Egg entry deleted successfully',
     timestamp: new Date().toISOString()
   });
 }

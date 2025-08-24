@@ -1,9 +1,17 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { memo } from 'react';
 import type { FlockSummary, FlockProfile } from '../../types';
-import { StatCard } from '../ui';
+import { StatCard, SectionContainer, GridContainer } from '../ui';
+// import { EmptyState } from '../ui'; // Unused import
 
-interface FlockSummaryDisplayProps {
+interface BaseUIComponentProps {
+  className?: string;
+  children?: React.ReactNode;
+  testId?: string;
+}
+
+interface FlockSummaryDisplayProps extends BaseUIComponentProps {
   flockSummary: FlockSummary | null;
   profile: FlockProfile;
   batchLoading: boolean;
@@ -11,63 +19,63 @@ interface FlockSummaryDisplayProps {
   onRefreshSummary: () => void;
 }
 
-export const FlockSummaryDisplay = ({
+export const FlockSummaryDisplay = memo(({
   flockSummary,
   profile,
   batchLoading,
   hasLoadedOnce,
-  onRefreshSummary
+  onRefreshSummary,
+  className = '',
+  testId
 }: FlockSummaryDisplayProps) => {
   // Loading skeleton
   if (batchLoading && flockSummary === null) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
-        className="space-y-6"
-      >
-        <div className="neu-form">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="neu-title">🐔 Flock Overview</h2>
+      <div className={`space-y-6 ${className}`}>
+        <SectionContainer
+          title="🐔 Flock Overview"
+          variant="glass"
+          testId={testId ? `${testId}-loading` : undefined}
+        >
+          <div className="flex items-center justify-end mb-6">
             <div className="h-8 w-32 bg-gray-200 rounded animate-pulse"></div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <GridContainer columns={{ md: 2, lg: 4 }} gap="md">
             <StatCard title="🐔 Total Birds" total={0} label="active birds" loading={true} />
             <StatCard title="🐔 Hens" total={0} label="female birds" loading={true} />
             <StatCard title="🐓 Roosters" total={0} label="male birds" loading={true} />
             <StatCard title="🐥 Chicks" total={0} label="young birds" loading={true} />
-          </div>
+          </GridContainer>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+          <GridContainer columns={{ md: 2, lg: 3 }} gap="md" className="mt-6">
             <StatCard title="🥚 Laying Hens" total={0} label="productive birds" loading={true} />
             <StatCard title="📦 Active Batches" total={0} label="managed groups" loading={true} />
             <StatCard title="💀 Total Losses" total={0} label="loading..." loading={true} />
-          </div>
-        </div>
+          </GridContainer>
+        </SectionContainer>
 
-        <div className="neu-form">
-          <h2 className="neu-title">Batch Summary</h2>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Loading Batches...</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[...Array(3)].map((_, index) => (
-                <div key={index} className="bg-white rounded-lg p-4 border border-blue-200 animate-pulse">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-5 h-5 bg-gray-200 rounded"></div>
-                    <div className="h-4 bg-gray-200 rounded w-24"></div>
-                  </div>
-                  <div className="h-3 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-6 bg-gray-200 rounded w-20 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-32 mb-2"></div>
-                  <div className="h-5 w-16 bg-gray-200 rounded-full"></div>
+        <SectionContainer
+          title="Batch Summary"
+          variant="glass"
+        >
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Loading Batches...</h3>
+          <GridContainer columns={{ md: 2, lg: 3 }} gap="sm">
+            {[...Array(3)].map((_, index) => (
+              <div key={index} className="bg-white rounded-lg p-4 border border-blue-200 animate-pulse">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-5 h-5 bg-gray-200 rounded"></div>
+                  <div className="h-4 bg-gray-200 rounded w-24"></div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </motion.div>
+                <div className="h-3 bg-gray-200 rounded w-16 mb-1"></div>
+                <div className="h-6 bg-gray-200 rounded w-20 mb-1"></div>
+                <div className="h-3 bg-gray-200 rounded w-32 mb-2"></div>
+                <div className="h-5 w-16 bg-gray-200 rounded-full"></div>
+              </div>
+            ))}
+          </GridContainer>
+        </SectionContainer>
+      </div>
     );
   }
 
@@ -283,7 +291,7 @@ export const FlockSummaryDisplay = ({
   }
 
   // Migration notice
-  if (flockSummary && flockSummary.totalBirds === 0 && (profile.hens > 0 || profile.roosters > 0 || profile.chicks > 0)) {
+  if (flockSummary !== null && (flockSummary as FlockSummary).totalBirds === 0 && (profile.hens > 0 || profile.roosters > 0 || profile.chicks > 0)) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -314,4 +322,4 @@ export const FlockSummaryDisplay = ({
   }
 
   return null;
-};
+});

@@ -18,7 +18,7 @@ export interface UseDataFetchReturn<T> {
   refetch: () => Promise<void>;
 }
 
-// Simple in-memory cache
+// Simple in-memory cache with typed data
 const cache = new Map<string, { data: any; timestamp: number; staleTime: number }>();
 
 export const useDataFetch = <T>(options: UseDataFetchOptions<T>): UseDataFetchReturn<T> => {
@@ -36,21 +36,21 @@ export const useDataFetch = <T>(options: UseDataFetchOptions<T>): UseDataFetchRe
   const [isLoading, setIsLoading] = useState(enabled);
   const [isValidating, setIsValidating] = useState(false);
 
-  // Check cache for existing data
-  const getCachedData = useCallback((): T | null => {
-    const cached = cache.get(key);
-    if (cached && Date.now() - cached.timestamp < cacheTime) {
-      return cached.data;
-    }
-    return null;
-  }, [key, cacheTime]);
+  // Check cache for existing data - commented out as unused
+  // const getCachedData = useCallback((): T | null => {
+  //   const cached = cache.get(key);
+  //   if (cached && Date.now() - cached.timestamp < cacheTime) {
+  //     return cached.data as T;
+  //   }
+  //   return null;
+  // }, [key, cacheTime]);
 
-  // Check if data is stale
-  const isStale = useCallback((): boolean => {
-    const cached = cache.get(key);
-    if (!cached) return true;
-    return Date.now() - cached.timestamp > cached.staleTime;
-  }, [key]);
+  // Check if data is stale - commented out as unused
+  // const isStale = useCallback((): boolean => {
+  //   const cached = cache.get(key);
+  //   if (!cached) return true;
+  //   return Date.now() - cached.timestamp > cached.staleTime;
+  // }, [key]);
 
   // Fetch data from API
   const fetchData = useCallback(async (showLoading = true) => {

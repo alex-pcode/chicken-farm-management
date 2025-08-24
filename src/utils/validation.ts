@@ -14,7 +14,7 @@ import {
   createInvalidResult
 } from './typeGuards';
 
-export type ValidatorFunction = (value: any, formData?: Record<string, any>) => string | null;
+export type ValidatorFunction = (value: unknown, formData?: Record<string, unknown>) => string | null;
 
 /**
  * Enhanced validator that returns ValidationError objects
@@ -49,8 +49,8 @@ export const validators = {
 
   min: (min: number, message?: string): ValidatorFunction =>
     (value) => {
-      const num = typeof value === 'string' ? parseFloat(value) : value;
-      if (!isNaN(num) && num < min) {
+      const num = typeof value === 'string' ? parseFloat(value) : value as number;
+      if (typeof num === 'number' && !isNaN(num) && num < min) {
         return message || `Must be at least ${min}`;
       }
       return null;
@@ -58,8 +58,8 @@ export const validators = {
 
   max: (max: number, message?: string): ValidatorFunction =>
     (value) => {
-      const num = typeof value === 'string' ? parseFloat(value) : value;
-      if (!isNaN(num) && num > max) {
+      const num = typeof value === 'string' ? parseFloat(value) : value as number;
+      if (typeof num === 'number' && !isNaN(num) && num > max) {
         return message || `Must be no more than ${max}`;
       }
       return null;
@@ -118,7 +118,7 @@ export const validators = {
       return null;
     },
 
-  custom: (validatorFn: (value: any) => boolean, message: string): ValidatorFunction =>
+  custom: (validatorFn: (value: unknown) => boolean, message: string): ValidatorFunction =>
     (value) => {
       if (!validatorFn(value)) {
         return message;
@@ -535,7 +535,7 @@ export const validatePricePerUnitWithTypeGuards: TypeGuardValidator<number> = (v
 export const convertToLegacyValidator = <T>(
   typeGuardValidator: TypeGuardValidator<T>
 ): ValidatorFunction => {
-  return (value: any) => {
+  return (value: unknown) => {
     const result = typeGuardValidator(value);
     if (result.isValid) {
       return null; // No error
@@ -551,10 +551,10 @@ export const convertToLegacyValidator = <T>(
  */
 export const validateForm = (
   formData: Record<string, unknown>,
-  validators: Record<string, TypeGuardValidator<any>>
-): { isValid: boolean; errors: Record<string, ValidationError[]>; validData: Record<string, any> } => {
+  validators: Record<string, TypeGuardValidator<unknown>>
+): { isValid: boolean; errors: Record<string, ValidationError[]>; validData: Record<string, unknown> } => {
   const errors: Record<string, ValidationError[]> = {};
-  const validData: Record<string, any> = {};
+  const validData: Record<string, unknown> = {};
   let isValid = true;
 
   for (const [fieldName, validator] of Object.entries(validators)) {

@@ -54,7 +54,6 @@ export const SelectInput: React.FC<SelectInputProps> = ({
         className="block text-gray-600 text-sm mb-2"
       >
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
       </label>
       
       <select

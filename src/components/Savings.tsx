@@ -1,19 +1,54 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useOptimizedAppData } from '../contexts/OptimizedDataProvider';
-import { StatCard } from './testCom';
+import { 
+  StatCard, 
+  MetricDisplay, 
+  PageContainer, 
+  GridContainer 
+} from './ui';
 import { LoadingSpinner } from './LoadingSpinner';
 import AnimatedSavingsPNG from './AnimatedSavingsPNG';
+import { SelectInput, NumberInput, FormGroup } from './forms';
+import { apiService } from '../services/api';
+import type { EggEntry, Expense, FlockSummary } from '../types';
 
 type TimePeriod = 'all' | 'month' | 'year' | 'custom';
 
 export const Savings = () => {
   const { data, isLoading } = useOptimizedAppData();
+  const [flockSummary, setFlockSummary] = useState<FlockSummary | null>(null);
+  const [flockLoading, setFlockLoading] = useState(true);
   const [eggPrice, setEggPrice] = useState('0.30'); // Default price per egg
   const [startingCost, setStartingCost] = useState('0.00'); // Default starting cost
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+
+  // Fetch flock summary data
+  useEffect(() => {
+    const fetchFlockSummary = async () => {
+      if (!isLoading) {
+        try {
+          setFlockLoading(true);
+          const response = await apiService.flock.getFlockSummary();
+          if (response.success && response.data) {
+            const summaryData = response.data as { summary?: FlockSummary };
+            setFlockSummary(summaryData.summary || null);
+          } else {
+            setFlockSummary(null);
+          }
+        } catch (error) {
+          console.error('Error fetching flock summary:', error);
+          setFlockSummary(null);
+        } finally {
+          setFlockLoading(false);
+        }
+      }
+    };
+
+    fetchFlockSummary();
+  }, [isLoading]);
 
   // Memoized filter function
   const getFilteredData = useCallback((date: string) => {
@@ -57,11 +92,11 @@ export const Savings = () => {
 
     // Calculate filtered totals
     const totalEggs = data.eggEntries
-      .filter((entry: any) => getFilteredData(entry.date))
+      .filter((entry: EggEntry) => getFilteredData(entry.date))
       .reduce((sum: number, entry: { count: number }) => sum + entry.count, 0);
 
     const operatingExpenses = data.expenses
-      .filter((expense: any) => getFilteredData(expense.date))
+      .filter((expense: Expense) => getFilteredData(expense.date))
       .reduce((sum: number, expense: { amount: number }) => sum + expense.amount, 0);
 
     // Only include startup costs for "All Time" view, not for specific periods
@@ -78,46 +113,77 @@ export const Savings = () => {
     };
   }, [data, eggPrice, startingCost, getFilteredData, isLoading, timePeriod]);
 
-  // Memoized productivity calculations
+  // Memoized productivity calculations using FlockSummary data
   const productivityStats = useMemo(() => {
-    if (isLoading || !data.flockProfile || data.flockProfile.hens === 0) {
-      return { eggsPerHen: 0, dailyLayRate: 0, revenuePerHen: 0 };
+    if (isLoading || flockLoading || !flockSummary) {
+      return { 
+        eggsPerHen: 0, 
+        dailyLayRate: 0, 
+        revenuePerHen: 0,
+        layingHens: 0,
+        notLayingHens: 0,
+        broodingHens: 0
+      };
+    }
+
+    // Use laying hens specifically for calculations
+    const layingHens = flockSummary.expectedLayers || 0;
+    const notLayingHens = (flockSummary.totalHens || 0) - layingHens - (flockSummary.totalBrooding || 0);
+    const broodingHens = flockSummary.totalBrooding || 0;
+
+    if (layingHens === 0) {
+      return { 
+        eggsPerHen: 0, 
+        dailyLayRate: 0, 
+        revenuePerHen: 0,
+        layingHens,
+        notLayingHens,
+        broodingHens
+      };
     }
 
     // Use filtered eggs for the selected time period
     const filteredEggs = data.eggEntries
-      .filter((entry: any) => getFilteredData(entry.date))
+      .filter((entry: EggEntry) => getFilteredData(entry.date))
       .reduce((sum: number, entry: { count: number }) => sum + entry.count, 0);
 
-    // Calculate eggs per hen for the selected period
-    const eggsPerHen = filteredEggs / data.flockProfile.hens;
+    // Calculate eggs per laying hen for the selected period
+    const eggsPerHen = filteredEggs / layingHens;
 
     // Calculate daily lay rate for the selected period
     let dailyLayRate = 0;
-    const filteredEntries = data.eggEntries.filter((entry: any) => getFilteredData(entry.date));
+    const filteredEntries = data.eggEntries.filter((entry: EggEntry) => getFilteredData(entry.date));
     
     if (filteredEntries.length > 0) {
       // Get the date range of filtered entries
-      const dates = filteredEntries.map((entry: any) => new Date(entry.date));
+      const dates = filteredEntries.map((entry: EggEntry) => new Date(entry.date));
       const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
       const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
       const daysDiff = Math.max(1, Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
       
-      dailyLayRate = (filteredEggs / (daysDiff * data.flockProfile.hens)) * 100;
+      // Use laying hens for daily lay rate calculation
+      dailyLayRate = (filteredEggs / (daysDiff * layingHens)) * 100;
     }
 
-    // Calculate revenue per hen for the selected period
+    // Calculate revenue per laying hen for the selected period
     const revenuePerHen = eggsPerHen * parseFloat(eggPrice);
 
-    return { eggsPerHen, dailyLayRate, revenuePerHen };
-  }, [data, eggPrice, isLoading, getFilteredData]);
+    return { 
+      eggsPerHen, 
+      dailyLayRate, 
+      revenuePerHen,
+      layingHens,
+      notLayingHens,
+      broodingHens
+    };
+  }, [data, eggPrice, isLoading, flockLoading, flockSummary, getFilteredData]);
 
-  const handleEggPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEggPrice(e.target.value);
+  const handleEggPriceChange = (value: number) => {
+    setEggPrice(value.toString());
   };
 
-  const handleStartingCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setStartingCost(e.target.value);
+  const handleStartingCostChange = (value: number) => {
+    setStartingCost(value.toString());
   };
 
   // Format currency for display
@@ -129,79 +195,77 @@ export const Savings = () => {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="space-y-8 max-w-7xl mx-auto p-6"
-      style={{ margin: '0px auto', opacity: 1 }}
-    >
+    <PageContainer maxWidth="xl" padding="md" animated={true}>
       {/* Animated Savings Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="w-full mt-5 mb-0"
+        className="w-full mt-5 mb-12"
       >
         <AnimatedSavingsPNG />
       </motion.div>
 
-      {isLoading ? (
+      {isLoading || flockLoading ? (
         <div className="flex justify-center items-center min-h-[400px]">
           <LoadingSpinner />
         </div>
       ) : (
         <>
-          <div>
-        <div className="neu-form">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <label className="block text-gray-600 text-sm mb-2">Price per Egg</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <span className="text-gray-500">$</span>
-                </div>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={eggPrice}
-                  onChange={handleEggPriceChange}
-                  className="neu-input pl-8"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-gray-600 text-sm mb-2">
-                Total Starting Cost
-                {timePeriod !== 'all'}
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <span className="text-gray-500">$</span>
-                </div>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={startingCost}
-                  onChange={handleStartingCostChange}
-                  className={`neu-input pl-8 ${timePeriod !== 'all' ? 'opacity-60' : ''}`}
-                  title={timePeriod !== 'all' ? 'Starting costs are only included when viewing "All Time" data' : ''}
-                />
-              </div>
-            </div>
+          <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="neu-form mb-16"
+      >
+        <FormGroup 
+          title="Pricing Configuration"
+          description="Set your egg pricing and initial investment costs"
+          columns={2}
+          gap="lg"
+        >
+          <NumberInput
+            label="Price per Egg ($)"
+            value={parseFloat(eggPrice) || 0}
+            onChange={handleEggPriceChange}
+            step={0.01}
+            min={0}
+            placeholder="0.30"
+            showSpinner={false}
+            selectAllOnFocus={true}
+          />
+          
+          <NumberInput
+            label="Total Starting Cost ($)"
+            value={parseFloat(startingCost) || 0}
+            onChange={handleStartingCostChange}
+            step={0.01}
+            min={0}
+            placeholder="0.00"
+            showSpinner={false}
+            disabled={timePeriod !== 'all'}
+            className={timePeriod !== 'all' ? 'opacity-60' : ''}
+          />
+        </FormGroup>
+        
+        {timePeriod !== 'all' && (
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm" style={{ color: '#602AE9' }}>
+              <strong>Note:</strong> Starting costs are only included when viewing "All Time" data.
+            </p>
           </div>
-        </div>
-      </div>
+        )}
+      </motion.div>
 
-      <div>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Financial Summary</h2>
-          <div className="flex gap-2">
-            <select
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-900" style={{ marginBottom: '10px' }}>Financial Summary</h2>
+          <div className="w-48">
+            <SelectInput
+              label=""
               value={timePeriod}
-              onChange={(e) => {
-                const newPeriod = e.target.value as TimePeriod;
+              onChange={(value) => {
+                const newPeriod = value as TimePeriod;
                 setTimePeriod(newPeriod);
                 
                 // Set default date range when switching to custom
@@ -214,13 +278,13 @@ export const Savings = () => {
                   setCustomEndDate(today.toISOString().split('T')[0]);
                 }
               }}
-              className="neu-input px-4 py-2"
-            >
-              <option value="month">This Month</option>
-              <option value="year">This Year</option>
-              <option value="custom">Custom Period</option>
-              <option value="all">All Time</option>
-            </select>
+              options={[
+                { value: 'month', label: 'This Month' },
+                { value: 'year', label: 'This Year' },
+                { value: 'custom', label: 'Custom Period' },
+                { value: 'all', label: 'All Time' }
+              ]}
+            />
           </div>
         </div>
 
@@ -253,164 +317,191 @@ export const Savings = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="glass-card backdrop-blur-md border border-white/20"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="stat-card">
-              <h3 className="text-lg font-medium text-white">Total Eggs</h3>
-              <p className="text-4xl font-bold mt-2">{savingsData.totalEggs}</p>
-              <p className="text-sm text-white/90 mt-1">collected eggs</p>
-            </div>
+          <GridContainer columns={4} gap="lg">
+            <StatCard
+              title="Total Eggs"
+              total={savingsData.totalEggs}
+              label="collected eggs"
+              icon="🥚"
+              variant="corner-gradient"
+            />
             
-            <div className="stat-card">
-              <h3 className="text-lg font-medium text-white">Egg Value</h3>
-              <p className="text-4xl font-bold mt-2">
-                {formatCurrency(savingsData.totalEggs * savingsData.eggPrice)}
-              </p>
-              <p className="text-sm text-white/90 mt-1">total potential revenue</p>
-            </div>
+            <StatCard
+              title="Egg Value"
+              total={formatCurrency(savingsData.totalEggs * savingsData.eggPrice)}
+              label="total potential revenue"
+              icon="💰"
+              variant="corner-gradient"
+            />
 
-            <div className="stat-card">
-              <h3 className="text-lg font-medium text-white">Operating Expenses</h3>
-              <p className="text-4xl font-bold mt-2">
-                {formatCurrency(savingsData.totalExpenses)}
-              </p>
-              <p className="text-sm text-white/90 mt-1">
-                {timePeriod === 'all' ? 'including startup costs' : 'period expenses only'}
-              </p>
-            </div>
+            <StatCard
+              title="Operating Expenses"
+              total={formatCurrency(savingsData.totalExpenses)}
+              label={timePeriod === 'all' ? 'including startup costs' : 'period expenses only'}
+              icon="📊"
+              variant="corner-gradient"
+            />
 
-            <div className="stat-card">
-              <h3 className="text-lg font-medium text-white">Net Profit/Loss</h3>
-              <p className="text-4xl font-bold mt-2">
-                {formatCurrency(savingsData.netSavings)}
-              </p>
-              <p className="text-sm text-white/90 mt-1">
-                {timePeriod === 'all' ? 'including startup costs' : 'period profit only'}
-              </p>
-            </div>
-          </div>
+            <StatCard
+              title="Net Profit/Loss"
+              total={formatCurrency(savingsData.netSavings)}
+              label={timePeriod === 'all' ? 'including startup costs' : 'period profit only'}
+              icon={savingsData.netSavings >= 0 ? '📈' : '📉'}
+              variant="corner-gradient"
+            />
+          </GridContainer>
         </motion.div>
       </div>
 
-      <div>
-        <h2 className="text-2xl font-bold mb-6 text-gray-900">Productivity Analysis</h2>
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900" style={{ marginBottom: '10px' }}>Productivity Analysis</h2>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="glass-card"
+          className="space-y-12"
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="neu-stat">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Eggs per Hen</h3>
-              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
-                {productivityStats.eggsPerHen.toFixed(1)}
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                {timePeriod === 'all' ? 'lifetime' : timePeriod} eggs per hen
-              </p>
-            </div>
-
-            <div className="neu-stat">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Lay Rate</h3>
-              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
-                {productivityStats.dailyLayRate.toFixed(1)}%
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                average daily lay rate
-              </p>
-            </div>
-
-            <div className="neu-stat">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Revenue per Hen</h3>
-              <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
-                ${productivityStats.revenuePerHen.toFixed(2)}
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                {timePeriod === 'all' ? 'lifetime' : timePeriod} revenue per hen
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-12">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Flock Composition</h3>
-            {data.flockProfile ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard title="🐔 Productive Hens" total={data.flockProfile.hens} label="hens" />
-                <StatCard title="🐓 Roosters" total={data.flockProfile.roosters} label="roosters" />
-                <StatCard title="🐥 Growing Chicks" total={data.flockProfile.chicks} label="chicks" />
+          <div className="mb-12">
+            {flockSummary ? (
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <StatCard 
+                  title="Laying Hens" 
+                  total={productivityStats.layingHens} 
+                  label={`${Math.ceil((flockSummary.batchSummary?.filter(b => b.isLayingAge).length || 0))} batches laying`}
+                  icon="🐔"
+                  variant="corner-gradient"
+                  testId="laying-hens-stat"
+                />
+                <StatCard 
+                  title="Not Laying" 
+                  total={productivityStats.notLayingHens} 
+                  label={`${Math.ceil((flockSummary.batchSummary?.filter(b => !b.isLayingAge && b.type === 'hens').length || 0))} batches not laying`}
+                  icon="⏳"
+                  variant="corner-gradient"
+                  testId="not-laying-hens-stat"
+                />
+                <StatCard 
+                  title="Brooding Hens" 
+                  total={productivityStats.broodingHens} 
+                  label={`${Math.ceil((flockSummary.batchSummary?.filter(b => b.type === 'brooding').length || 0))} batches brooding`}
+                  icon="🪺"
+                  variant="corner-gradient"
+                  testId="brooding-hens-stat"
+                />
+                <StatCard 
+                  title="Roosters" 
+                  total={flockSummary.totalRoosters} 
+                  label={`${Math.ceil((flockSummary.batchSummary?.filter(b => b.type === 'roosters').length || 0))} batches`}
+                  icon="🐓"
+                  variant="corner-gradient"
+                  testId="roosters-stat"
+                />
+                <StatCard 
+                  title="Chicks" 
+                  total={flockSummary.totalChicks} 
+                  label={`${Math.ceil((flockSummary.batchSummary?.filter(b => b.type === 'chicks').length || 0))} batches`}
+                  icon="🐥"
+                  variant="corner-gradient"
+                  testId="chicks-stat"
+                />
               </div>
             ) : (
               <div className="text-gray-500 text-center py-6">
-                No flock profile data available. Please set up your profile first.
+                No flock data available. Please set up your batches in the Flock Management section first.
               </div>
             )}
           </div>
+
+          <GridContainer columns={3} gap="lg">
+            <MetricDisplay
+              value={productivityStats.eggsPerHen.toFixed(1)}
+              label={`${timePeriod === 'all' ? 'lifetime' : timePeriod} eggs per hen`}
+              format="decimal"
+              precision={1}
+              variant="default"
+              color="default"
+            />
+
+            <MetricDisplay
+              value={productivityStats.dailyLayRate.toFixed(1)}
+              label="average daily lay rate"
+              format="percentage"
+              precision={1}
+              variant="default"
+              color="default"
+            />
+
+            <MetricDisplay
+              value={productivityStats.revenuePerHen}
+              label={`${timePeriod === 'all' ? 'lifetime' : timePeriod} revenue per hen`}
+              format="currency"
+              precision={2}
+              variant="default"
+              color="default"
+            />
+          </GridContainer>
         </motion.div>
       </div>
 
-      <div>
-        <h2 className="text-2xl font-bold mb-6 text-gray-900">Profitability Analysis</h2>
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900" style={{ marginBottom: '10px' }}>Profitability Analysis</h2>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="glass-card"
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="glass-card bg-white/50">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Cost per Egg</h3>
-              {savingsData.totalEggs > 0 ? (
-                <div>
-                  <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
-                    {formatCurrency(savingsData.totalExpenses / savingsData.totalEggs)}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    total cost per egg (incl. startup)
-                  </p>
-                </div>
-              ) : (
+          <GridContainer columns={3} gap="lg">
+            {savingsData.totalEggs > 0 ? (
+              <MetricDisplay
+                value={savingsData.totalExpenses / savingsData.totalEggs}
+                label="total cost per egg (incl. startup)"
+                format="currency"
+                precision={3}
+                variant="default"
+                color="info"
+              />
+            ) : (
+              <div className="glass-card p-6 text-center">
                 <p className="text-sm text-gray-500">No egg production data available</p>
-              )}
-            </div>
+              </div>
+            )}
 
-            <div className="glass-card bg-white/50">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Profit Margin per Egg</h3>
-              {savingsData.totalEggs > 0 ? (
-                <div>
-                  <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
-                    {formatCurrency(savingsData.eggPrice - (savingsData.totalExpenses / savingsData.totalEggs))}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    net profit per egg (incl. startup)
-                  </p>
-                </div>
-              ) : (
+            {savingsData.totalEggs > 0 ? (
+              <MetricDisplay
+                value={savingsData.eggPrice - (savingsData.totalExpenses / savingsData.totalEggs)}
+                label="net profit per egg (incl. startup)"
+                format="currency"
+                precision={3}
+                variant="default"
+                color={savingsData.eggPrice - (savingsData.totalExpenses / savingsData.totalEggs) >= 0 ? "success" : "danger"}
+              />
+            ) : (
+              <div className="glass-card p-6 text-center">
                 <p className="text-sm text-gray-500">No egg production data available</p>
-              )}
-            </div>
+              </div>
+            )}
 
-            <div className="glass-card bg-white/50">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Break-even Point</h3>
-              {savingsData.totalExpenses > 0 && savingsData.eggPrice > 0 ? (
-                <div>
-                  <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
-                    {Math.ceil(savingsData.totalExpenses / savingsData.eggPrice)} eggs
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    to cover all costs (incl. startup)
-                  </p>
-                </div>
-              ) : (
+            {savingsData.totalExpenses > 0 && savingsData.eggPrice > 0 ? (
+              <MetricDisplay
+                value={Math.ceil(savingsData.totalExpenses / savingsData.eggPrice)}
+                label="eggs to cover all costs (incl. startup)"
+                format="number"
+                precision={0}
+                variant="default"
+                color="warning"
+                unit="eggs"
+              />
+            ) : (
+              <div className="glass-card p-6 text-center">
                 <p className="text-sm text-gray-500">Insufficient data for break-even analysis</p>
-              )}
-            </div>
-          </div>
+              </div>
+            )}
+          </GridContainer>
         </motion.div>
       </div>
         </>
       )}
-    </motion.div>
+    </PageContainer>
   );
 };

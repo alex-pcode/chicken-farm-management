@@ -31,7 +31,7 @@ import {
   // Array validation utilities
   isArrayOf,
   isEggEntryArray,
-  isExpenseArray,
+  // isExpenseArray,
 
   // Validation result utilities
   createValidResult,
@@ -42,7 +42,7 @@ import {
   validateEggEntry,
   validateExpense,
   validateCustomer,
-  validateSale,
+  // validateSale,
 } from '../typeGuards';
 
 describe('Basic Type Utilities', () => {

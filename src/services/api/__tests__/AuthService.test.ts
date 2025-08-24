@@ -1,19 +1,36 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AuthService } from '../AuthService';
+import type { AuthError, Session, User } from '@supabase/supabase-js';
 
 // Mock Supabase
-const mockSupabase = {
-  auth: {
-    getSession: vi.fn(),
-    refreshSession: vi.fn(),
-    getUser: vi.fn(),
-    signOut: vi.fn(),
-  },
-};
-
 vi.mock('../../../utils/supabase', () => ({
-  supabase: mockSupabase,
+  supabase: {
+    auth: {
+      getSession: vi.fn(),
+      refreshSession: vi.fn(),
+      getUser: vi.fn(),
+      signOut: vi.fn(),
+    },
+  },
 }));
+
+// Import the mocked module and properly type it
+import { supabase } from '../../../utils/supabase';
+
+// Get properly typed mock functions
+const mockGetSession = vi.mocked(supabase.auth.getSession);
+const mockRefreshSession = vi.mocked(supabase.auth.refreshSession);  
+const mockGetUser = vi.mocked(supabase.auth.getUser);
+const mockSignOut = vi.mocked(supabase.auth.signOut);
+
+// Helper to create AuthError-like object
+const createAuthError = (message: string): AuthError => {
+  const error = new Error(message) as Error & { code: string; status: number };
+  error.name = 'AuthError';
+  error.code = 'auth_error';
+  error.status = 400;
+  return error as AuthError;
+};
 
 // Mock fetch
 const mockFetch = vi.fn();
@@ -41,12 +58,23 @@ describe('AuthService', () => {
 
   describe('getAuthHeaders', () => {
     it('should return valid auth headers', async () => {
-      const mockSession = {
+      const mockSession: Session = {
         access_token: 'valid-token',
         refresh_token: 'refresh-token',
+        expires_in: 3600,
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        token_type: 'bearer',
+        user: { 
+          id: 'user-id', 
+          email: 'test@example.com', 
+          aud: 'authenticated', 
+          created_at: '2025-01-01T00:00:00.000Z',
+          app_metadata: {},
+          user_metadata: {}
+        }
       };
 
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: mockSession },
         error: null,
       });
@@ -62,19 +90,37 @@ describe('AuthService', () => {
 
   describe('refreshToken', () => {
     it('should refresh token successfully', async () => {
-      mockSupabase.auth.refreshSession.mockResolvedValue({
-        data: { session: { access_token: 'new-token' } },
+      const newSession: Session = {
+        access_token: 'new-token',
+        refresh_token: 'refresh-token',
+        expires_in: 3600,
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        token_type: 'bearer',
+        user: {
+          id: 'user-id',
+          email: 'test@example.com',
+          aud: 'authenticated',
+          created_at: '2025-01-01T00:00:00.000Z',
+          app_metadata: {},
+          user_metadata: {}
+        }
+      };
+      mockRefreshSession.mockResolvedValue({
+        data: { 
+          session: newSession,
+          user: null 
+        },
         error: null,
       });
 
       await expect(authService.refreshToken()).resolves.not.toThrow();
-      expect(mockSupabase.auth.refreshSession).toHaveBeenCalled();
+      expect(mockRefreshSession).toHaveBeenCalled();
     });
 
     it('should throw error when refresh fails', async () => {
-      const refreshError = new Error('Refresh failed');
-      mockSupabase.auth.refreshSession.mockResolvedValue({
-        data: { session: null },
+      const refreshError = createAuthError('Refresh failed');
+      mockRefreshSession.mockResolvedValue({
+        data: { session: null, user: null },
         error: refreshError,
       });
 
@@ -84,8 +130,23 @@ describe('AuthService', () => {
 
   describe('isAuthenticated', () => {
     it('should return true for valid session', async () => {
-      mockSupabase.auth.getSession.mockResolvedValue({
-        data: { session: { access_token: 'valid-token' } },
+      const validSession: Session = {
+        access_token: 'valid-token',
+        refresh_token: 'refresh-token',
+        expires_in: 3600,
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        token_type: 'bearer',
+        user: {
+          id: 'user-id',
+          email: 'test@example.com',
+          aud: 'authenticated',
+          created_at: '2025-01-01T00:00:00.000Z',
+          app_metadata: {},
+          user_metadata: {}
+        }
+      };
+      mockGetSession.mockResolvedValue({
+        data: { session: validSession },
         error: null,
       });
 
@@ -94,7 +155,7 @@ describe('AuthService', () => {
     });
 
     it('should return false for invalid session', async () => {
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: null },
         error: null,
       });
@@ -104,9 +165,9 @@ describe('AuthService', () => {
     });
 
     it('should return false when session check fails', async () => {
-      mockSupabase.auth.getSession.mockResolvedValue({
+      mockGetSession.mockResolvedValue({
         data: { session: null },
-        error: new Error('Session check failed'),
+        error: createAuthError('Session check failed'),
       });
 
       const result = await authService.isAuthenticated();
@@ -114,7 +175,7 @@ describe('AuthService', () => {
     });
 
     it('should handle exceptions gracefully', async () => {
-      mockSupabase.auth.getSession.mockRejectedValue(new Error('Network error'));
+      mockGetSession.mockRejectedValue(new Error('Network error'));
 
       const result = await authService.isAuthenticated();
       expect(result).toBe(false);
@@ -123,8 +184,22 @@ describe('AuthService', () => {
 
   describe('getCurrentSession', () => {
     it('should return current session', async () => {
-      const mockSession = { access_token: 'token', user: { id: '123' } };
-      mockSupabase.auth.getSession.mockResolvedValue({
+      const mockSession: Session = { 
+        access_token: 'token', 
+        refresh_token: 'refresh_token',
+        expires_in: 3600,
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        token_type: 'bearer',
+        user: { 
+          id: '123',
+          email: 'test@example.com',
+          app_metadata: {},
+          user_metadata: {},
+          aud: 'authenticated',
+          created_at: '2025-01-01T00:00:00.000Z'
+        }
+      };
+      mockGetSession.mockResolvedValue({
         data: { session: mockSession },
         error: null,
       });
@@ -134,8 +209,8 @@ describe('AuthService', () => {
     });
 
     it('should throw error when session retrieval fails', async () => {
-      const sessionError = new Error('Session retrieval failed');
-      mockSupabase.auth.getSession.mockResolvedValue({
+      const sessionError = createAuthError('Session retrieval failed');
+      mockGetSession.mockResolvedValue({
         data: { session: null },
         error: sessionError,
       });
@@ -146,8 +221,15 @@ describe('AuthService', () => {
 
   describe('getCurrentUser', () => {
     it('should return current user', async () => {
-      const mockUser = { id: '123', email: 'test@example.com' };
-      mockSupabase.auth.getUser.mockResolvedValue({
+      const mockUser: User = { 
+        id: '123', 
+        email: 'test@example.com',
+        app_metadata: {},
+        user_metadata: {},
+        aud: 'authenticated',
+        created_at: '2025-01-01T00:00:00.000Z'
+      };
+      mockGetUser.mockResolvedValue({
         data: { user: mockUser },
         error: null,
       });
@@ -157,8 +239,8 @@ describe('AuthService', () => {
     });
 
     it('should throw error when user retrieval fails', async () => {
-      const userError = new Error('User retrieval failed');
-      mockSupabase.auth.getUser.mockResolvedValue({
+      const userError = createAuthError('User retrieval failed');
+      mockGetUser.mockResolvedValue({
         data: { user: null },
         error: userError,
       });
@@ -169,17 +251,17 @@ describe('AuthService', () => {
 
   describe('signOut', () => {
     it('should sign out successfully', async () => {
-      mockSupabase.auth.signOut.mockResolvedValue({
+      mockSignOut.mockResolvedValue({
         error: null,
       });
 
       await expect(authService.signOut()).resolves.not.toThrow();
-      expect(mockSupabase.auth.signOut).toHaveBeenCalled();
+      expect(mockSignOut).toHaveBeenCalled();
     });
 
     it('should throw error when sign out fails', async () => {
-      const signOutError = new Error('Sign out failed');
-      mockSupabase.auth.signOut.mockResolvedValue({
+      const signOutError = createAuthError('Sign out failed');
+      mockSignOut.mockResolvedValue({
         error: signOutError,
       });
 
@@ -189,13 +271,31 @@ describe('AuthService', () => {
 
   describe('migrateUserData', () => {
     it('should make successful migration request', async () => {
-      const mockSession = { access_token: 'token' };
-      mockSupabase.auth.getSession.mockResolvedValue({
+      const mockSession: Session = { 
+        access_token: 'token',
+        refresh_token: 'refresh_token',
+        expires_in: 3600,
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        token_type: 'bearer',
+        user: { 
+          id: 'user-id',
+          email: 'test@example.com',
+          app_metadata: {},
+          user_metadata: {},
+          aud: 'authenticated',
+          created_at: '2025-01-01T00:00:00.000Z'
+        }
+      };
+      mockGetSession.mockResolvedValue({
         data: { session: mockSession },
         error: null,
       });
 
-      const mockResponse = { data: { migrated: true } };
+      const mockResponse = { 
+        success: true, 
+        data: { migrated: true },
+        message: 'User data migrated successfully'
+      };
       mockFetch.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve(mockResponse),

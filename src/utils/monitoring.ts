@@ -6,7 +6,7 @@ export const measurePerformance = (name: string) => {
   return Sentry.startSpan({ name }, (span) => {
     return {
       finish: () => span?.end(),
-      addData: (key: string, value: any) => span?.setAttributes({ [key]: value }),
+      addData: (key: string, value: string | number | boolean | undefined) => span?.setAttributes({ [key]: value }),
     }
   })
 }
@@ -118,7 +118,7 @@ export const trackPerformanceRegression = (metric: {
 export const initializeWebVitalsMonitoring = () => {
   if (typeof window !== 'undefined') {
     import('web-vitals').then(({ onCLS, onINP, onFCP, onLCP, onTTFB }) => {
-      const sendVitalToSentry = (metric: any) => {
+      const sendVitalToSentry = (metric: { name: string; value: number; rating?: string }) => {
         Sentry.addBreadcrumb({
           category: 'web-vital',
           message: metric.name,

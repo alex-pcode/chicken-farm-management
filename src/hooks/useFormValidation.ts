@@ -3,20 +3,20 @@ import type { ValidationError } from '../types';
 
 interface ValidationRule {
   field: string;
-  validator: (value: any, formData?: Record<string, any>) => string | null;
+  validator: (value: unknown, formData?: Record<string, unknown>) => string | null;
   required?: boolean;
 }
 
 interface UseFormValidationProps {
   rules: ValidationRule[];
-  onValidSubmit?: (formData: Record<string, any>) => void | Promise<void>;
+  onValidSubmit?: (formData: Record<string, unknown>) => void | Promise<void>;
 }
 
 interface UseFormValidationReturn {
   errors: ValidationError[];
   isValid: boolean;
-  validate: (formData: Record<string, any>) => boolean;
-  validateField: (field: string, value: any, formData?: Record<string, any>) => void;
+  validate: (formData: Record<string, unknown>) => boolean;
+  validateField: (field: string, value: unknown, formData?: Record<string, unknown>) => void;
   clearErrors: (fields?: string[]) => void;
   addError: (field: string, message: string, type?: ValidationError['type']) => void;
   hasFieldError: (field: string) => boolean;
@@ -24,8 +24,8 @@ interface UseFormValidationReturn {
 }
 
 export const useFormValidation = ({ 
-  rules, 
-  onValidSubmit 
+  rules 
+  // onValidSubmit // unused parameter 
 }: UseFormValidationProps): UseFormValidationReturn => {
   const [errors, setErrors] = useState<ValidationError[]>([]);
 
@@ -45,7 +45,7 @@ export const useFormValidation = ({
     });
   }, []);
 
-  const validateField = useCallback((field: string, value: any, formData?: Record<string, any>) => {
+  const validateField = useCallback((field: string, value: unknown, formData?: Record<string, unknown>) => {
     const rule = rules.find(r => r.field === field);
     if (!rule) return;
 
@@ -70,7 +70,7 @@ export const useFormValidation = ({
     }
   }, [rules, addError]);
 
-  const validate = useCallback((formData: Record<string, any>): boolean => {
+  const validate = useCallback((formData: Record<string, unknown>): boolean => {
     clearErrors();
     let isFormValid = true;
 

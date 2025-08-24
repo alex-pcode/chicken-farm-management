@@ -1,8 +1,18 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { FlockBatch, DeathRecord, FlockSummary } from '../types';
-import { StatCard } from './ui';
-import { useAuth } from '../contexts/AuthContext';
+import { BatchDetailView } from './BatchDetailView';
+
+import { FormCard } from './ui/forms/FormCard';
+import { FormField } from './ui/forms/FormField';
+import { FormButton } from './ui/forms/FormButton';
+import { FormModal } from './ui/modals/FormModal';
+import { MetricDisplay } from './ui/cards/MetricDisplay';
+import { StatCard } from './ui/cards/StatCard';
+import { DataTable, TableColumn } from './ui/tables/DataTable';
+import { EmptyState } from './ui/tables/EmptyState';
+import { PageContainer } from './ui/layout/PageContainer';
+// import { useAuth } from '../contexts/AuthContext'; // Unused import
 import { apiService } from '../services/api';
 
 interface FlockBatchManagerProps {
@@ -10,8 +20,8 @@ interface FlockBatchManagerProps {
 }
 
 export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'batches' | 'deaths' | 'add-batch'>('batches');
+  const [selectedBatch, setSelectedBatch] = useState<FlockBatch | null>(null);
   const [batches, setBatches] = useState<FlockBatch[]>([]);
   const [deathRecords, setDeathRecords] = useState<DeathRecord[]>([]);
   const [flockSummary, setFlockSummary] = useState<FlockSummary | null>(null);
@@ -27,9 +37,11 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
     hens: '',
     roosters: '',
     chicks: '',
+    brooding: '',
     ageAtAcquisition: 'adult' as 'chick' | 'juvenile' | 'adult',
     layingStartDate: '', // Manual laying start date
     source: '',
+    cost: '', // Cost of acquiring the batch
     notes: ''
   });
 
@@ -43,47 +55,49 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
     notes: ''
   });
 
-  // API Helper function
-  const makeAuthenticatedRequest = async (url: string, options: RequestInit = {}) => {
-    if (!user) throw new Error('User not authenticated');
+  // Edit laying date modal state
+  const [showLayingDateModal, setShowLayingDateModal] = useState(false);
+  const [editingBatch, setEditingBatch] = useState<FlockBatch | null>(null);
+  const [layingDateForm, setLayingDateForm] = useState('');
 
-    const headers = await apiService.auth.getAuthHeaders();
-    
-    return fetch(url, {
-      ...options,
-      headers: {
-        ...headers,
-        ...options.headers,
-      },
-    });
-  };
-
-  // Load all data
+  // Load all data using specific API endpoints
   const loadData = async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Load in parallel for better performance
+      // Load flock data in parallel for better performance
       const [batchesRes, deathsRes, summaryRes] = await Promise.all([
-        makeAuthenticatedRequest('/api/flockBatches'),
-        makeAuthenticatedRequest('/api/deathRecords'),
-        makeAuthenticatedRequest('/api/flockSummary')
+        fetch('/api/flockBatches', {
+          headers: await apiService.auth.getAuthHeaders(),
+        }),
+        fetch('/api/deathRecords', {
+          headers: await apiService.auth.getAuthHeaders(),
+        }),
+        apiService.flock.getFlockSummary()
       ]);
 
-      if (!batchesRes.ok || !deathsRes.ok || !summaryRes.ok) {
-        throw new Error('Failed to load flock data');
+      // Handle batch data
+      if (!batchesRes.ok) {
+        throw new Error('Failed to load batch data');
       }
+      const batchesData = await batchesRes.json();
+      setBatches(batchesData.data?.batches || []);
 
-      const [batchesData, deathsData, summaryData] = await Promise.all([
-        batchesRes.json(),
-        deathsRes.json(),
-        summaryRes.json()
-      ]);
+      // Handle death records
+      if (!deathsRes.ok) {
+        throw new Error('Failed to load death records');
+      }
+      const deathsData = await deathsRes.json();
+      setDeathRecords(deathsData.data?.records || []);
 
-      setBatches(batchesData.data.batches || []);
-      setDeathRecords(deathsData.data.records || []);
-      setFlockSummary(summaryData.data.summary || null);
+      // Handle flock summary
+      if (summaryRes.success) {
+        const summaryData = summaryRes.data as { summary?: FlockSummary };
+        setFlockSummary(summaryData.summary || null);
+      } else {
+        setFlockSummary(null);
+      }
     } catch (err) {
       console.error('Error loading flock data:', err);
       setError('Failed to load flock data. Please try again.');
@@ -102,53 +116,61 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
     const hensCount = parseInt(newBatch.hens) || 0;
     const roostersCount = parseInt(newBatch.roosters) || 0;
     const chicksCount = parseInt(newBatch.chicks) || 0;
-    const totalCount = hensCount + roostersCount + chicksCount;
+    const broodingCount = parseInt(newBatch.brooding) || 0;
+    const totalCount = hensCount + roostersCount + chicksCount + broodingCount;
 
     // Validation
     if (totalCount === 0) {
-      setError('Please enter at least one bird (hens, roosters, or chicks)');
+      setError('Please enter at least one bird (hens, roosters, chicks, or brooding hens)');
       setIsLoading(false);
       return;
     }
 
     // Determine batch type
     let batchType: 'hens' | 'roosters' | 'chicks' | 'mixed';
-    if (hensCount > 0 && roostersCount === 0 && chicksCount === 0) {
+    const totalHensAndBrooding = hensCount + broodingCount;
+    if (totalHensAndBrooding > 0 && roostersCount === 0 && chicksCount === 0) {
       batchType = 'hens';
-    } else if (roostersCount > 0 && hensCount === 0 && chicksCount === 0) {
+    } else if (roostersCount > 0 && totalHensAndBrooding === 0 && chicksCount === 0) {
       batchType = 'roosters';
-    } else if (chicksCount > 0 && hensCount === 0 && roostersCount === 0) {
+    } else if (chicksCount > 0 && totalHensAndBrooding === 0 && roostersCount === 0) {
       batchType = 'chicks';
     } else {
       batchType = 'mixed';
     }
 
     try {
-      const response = await makeAuthenticatedRequest('/api/flockBatches', {
-        method: 'POST',
-        body: JSON.stringify({
-          batchName: newBatch.batchName,
-          breed: newBatch.breed,
-          acquisitionDate: newBatch.acquisitionDate,
-          initialCount: totalCount,
-          type: batchType,
-          ageAtAcquisition: newBatch.ageAtAcquisition,
-          actualLayingStartDate: newBatch.layingStartDate || null, // Use manual date
-          source: newBatch.source,
-          notes: newBatch.notes,
-          // Include individual counts for future use
-          hensCount,
-          roostersCount,
-          chicksCount
-        })
-      });
+      const cost = parseFloat(newBatch.cost) || 0;
+      
+      const batchData: FlockBatch = {
+        id: '', // Will be generated by the API
+        batchName: newBatch.batchName,
+        breed: newBatch.breed,
+        acquisitionDate: newBatch.acquisitionDate,
+        initialCount: totalCount,
+        currentCount: totalCount, // Initially same as initialCount
+        type: batchType,
+        ageAtAcquisition: newBatch.ageAtAcquisition,
+        actualLayingStartDate: newBatch.layingStartDate || undefined, // Use manual date
+        source: newBatch.source,
+        cost,
+        notes: newBatch.notes,
+        isActive: true, // New batches are active by default
+        // Add individual counts for database constraint
+        hensCount,
+        roostersCount,
+        chicksCount,
+        broodingCount
+      } as FlockBatch;
 
-      if (!response.ok) {
+      const response = await apiService.flock.saveFlockBatch(batchData);
+      
+      if (!response.success) {
         throw new Error('Failed to add batch');
       }
 
-      const result = await response.json();
-      setBatches(prev => [result.data.batch, ...prev]);
+      const responseData = response.data as { batch: FlockBatch };
+      setBatches(prev => [responseData.batch, ...prev]);
       
       // Reset form
       setNewBatch({
@@ -158,13 +180,15 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
         hens: '',
         roosters: '',
         chicks: '',
+        brooding: '',
         ageAtAcquisition: 'adult',
         layingStartDate: '',
         source: '',
+        cost: '',
         notes: ''
       });
 
-      setSuccess(`Batch added successfully! (${totalCount} birds: ${hensCount} hens, ${roostersCount} roosters, ${chicksCount} chicks)`);
+      setSuccess(`Batch added successfully! (${totalCount} birds: ${hensCount} hens, ${roostersCount} roosters, ${chicksCount} chicks${broodingCount > 0 ? `, ${broodingCount} brooding` : ''})`);
       setActiveTab('batches');
       
       // Reload summary to get updated counts
@@ -177,17 +201,37 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
     }
   };
 
-  // Update batch laying start date
-  const updateBatchLayingDate = async (batchId: string, layingDate: string) => {
-    setIsLoading(true);
+  // Removed unused updateBatchLayingDate function
+
+  // Open laying date modal
+  const openLayingDateModal = (batch: FlockBatch) => {
+    setEditingBatch(batch);
+    setLayingDateForm(batch.actualLayingStartDate || '');
+    setShowLayingDateModal(true);
+  };
+
+  // Close laying date modal
+  const closeLayingDateModal = () => {
+    setShowLayingDateModal(false);
+    setEditingBatch(null);
+    setLayingDateForm('');
+  };
+
+  // Save laying date changes
+  const saveLayingDate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingBatch) return;
+    
     setError(null);
 
     try {
-      const response = await makeAuthenticatedRequest('/api/flockBatches', {
+      const headers = await apiService.auth.getAuthHeaders();
+      const response = await fetch('/api/flockBatches', {
         method: 'PUT',
+        headers,
         body: JSON.stringify({
-          batchId,
-          actualLayingStartDate: layingDate || null
+          batchId: editingBatch.id,
+          actualLayingStartDate: layingDateForm || undefined
         })
       });
 
@@ -196,27 +240,21 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
         throw new Error(errorData.error || 'Failed to update laying date');
       }
 
-      const result = await response.json();
-      
       // Update local state
       setBatches(prev => prev.map(batch => 
-        batch.id === batchId 
-          ? { ...batch, actualLayingStartDate: layingDate || null }
+        batch.id === editingBatch.id 
+          ? { ...batch, actualLayingStartDate: layingDateForm || undefined }
           : batch
       ));
 
-      setSuccess(layingDate 
-        ? `Laying start date updated to ${new Date(layingDate).toLocaleDateString()}`
+      setSuccess(layingDateForm 
+        ? `Laying start date updated to ${new Date(layingDateForm).toLocaleDateString()}`
         : 'Laying start date cleared'
       );
-      
-      // Reload summary to get updated counts
-      loadData();
+      closeLayingDateModal();
     } catch (err) {
       console.error('Error updating laying date:', err);
       setError(err instanceof Error ? err.message : 'Failed to update laying date. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -227,25 +265,24 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
     setError(null);
 
     try {
-      const response = await makeAuthenticatedRequest('/api/deathRecords', {
-        method: 'POST',
-        body: JSON.stringify({
-          batchId: newDeath.batchId,
-          date: newDeath.date,
-          count: parseInt(newDeath.count),
-          cause: newDeath.cause,
-          description: newDeath.description,
-          notes: newDeath.notes
-        })
-      });
+      const deathData: DeathRecord = {
+        id: '', // Will be generated by the API
+        batchId: newDeath.batchId,
+        date: newDeath.date,
+        count: parseInt(newDeath.count),
+        cause: newDeath.cause,
+        description: newDeath.description,
+        notes: newDeath.notes
+      };
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to log death');
+      const response = await apiService.flock.saveDeathRecord(deathData);
+      
+      if (!response.success) {
+        throw new Error('Failed to log death');
       }
 
-      const result = await response.json();
-      setDeathRecords(prev => [result.data.record, ...prev]);
+      const responseData = response.data as { record: DeathRecord };
+      setDeathRecords(prev => [responseData.record, ...prev]);
       
       // Reset form
       setNewDeath({
@@ -269,6 +306,14 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
     }
   };
 
+  // Handle batch update from detail view
+  const handleBatchUpdate = (updatedBatch: FlockBatch) => {
+    setBatches(prev => prev.map(batch => 
+      batch.id === updatedBatch.id ? updatedBatch : batch
+    ));
+    setSelectedBatch(updatedBatch); // Update the selected batch as well
+  };
+
   // Clear messages
   useEffect(() => {
     if (success) {
@@ -289,25 +334,318 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
     loadData();
   }, []);
 
+
+  // Define columns for batch DataTable
+  const batchColumns: TableColumn<FlockBatch>[] = [
+    {
+      key: 'batchName',
+      label: 'Batch Name',
+      sortable: true,
+      render: (_, batch) => (
+        <button
+          onClick={() => setSelectedBatch(batch)}
+          className="flex items-center gap-3 text-left hover:bg-gray-50 p-2 rounded-lg transition-colors w-full"
+        >
+          <span className="text-xl">
+            {batch.type === 'hens' ? '🐔' : 
+             batch.type === 'roosters' ? '🐓' : 
+             batch.type === 'chicks' ? '🐥' : '🐔'}
+          </span>
+          <div>
+            <div className="font-semibold text-gray-900 hover:text-indigo-600">{batch.batchName}</div>
+            <div className="text-sm text-gray-600">{batch.breed}</div>
+          </div>
+        </button>
+      )
+    },
+    {
+      key: 'currentCount',
+      label: 'Current Count',
+      sortable: true,
+      render: (_, batch) => (
+        <div className="text-lg font-bold text-indigo-600">{batch.currentCount}</div>
+      )
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      sortable: false,
+      render: (_, batch) => (
+        <div>
+          {(batch.type === 'hens' || batch.type === 'mixed') && (
+            <span className={`text-xs px-2 py-1 rounded-full font-medium inline-flex items-center gap-1 w-fit ${
+              batch.actualLayingStartDate 
+                ? 'bg-green-100 text-green-700 border border-green-200' 
+                : 'bg-amber-100 text-amber-700 border border-amber-200'
+            }`}>
+              {batch.actualLayingStartDate ? (
+                <>
+                  🥚 <span>Laying</span>
+                </>
+              ) : (
+                <>
+                  ⏳ <span>Not Laying</span>
+                </>
+              )}
+            </span>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'initialCount',
+      label: 'Started With',
+      sortable: true,
+      render: (_, batch) => <div className="font-semibold text-gray-700">{batch.initialCount}</div>
+    },
+    {
+      key: 'acquisitionDate',
+      label: 'Acquired',
+      sortable: true,
+      render: (_, batch) => (
+        <div className="text-sm text-gray-700">
+          {new Date(batch.acquisitionDate).toLocaleDateString()}
+        </div>
+      )
+    },
+    {
+      key: 'source',
+      label: 'Source',
+      sortable: true,
+      render: (value) => <div className="text-sm text-gray-600">{value as string}</div>
+    },
+    {
+      key: 'actualLayingStartDate',
+      label: 'Laying Since',
+      sortable: true,
+      render: (value, batch) => (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-700">
+            {(batch.type === 'hens' || batch.type === 'mixed') ? (
+              value 
+                ? new Date(value as string).toLocaleDateString()
+                : 'Not set'
+            ) : (
+              // For roosters/chicks, show age but still allow editing
+              batch.ageAtAcquisition.charAt(0).toUpperCase() + batch.ageAtAcquisition.slice(1)
+            )}
+          </span>
+          <button
+            onClick={() => openLayingDateModal(batch)}
+            className="text-blue-500 hover:text-blue-700 text-sm"
+            title="Edit laying date"
+          >
+            📅
+          </button>
+        </div>
+      )
+    }
+  ];
+
+  // Define columns for death records DataTable
+  const deathRecordsColumns: TableColumn<DeathRecord>[] = [
+    {
+      key: 'date',
+      label: 'Date',
+      sortable: true,
+      render: (value) => (
+        <div className="text-sm text-gray-700">
+          {new Date(value as string).toLocaleDateString()}
+        </div>
+      )
+    },
+    {
+      key: 'batchId',
+      label: 'Batch',
+      render: (batchId) => {
+        const batch = batches.find(b => b.id === batchId);
+        return (
+          <div className="flex items-center gap-2">
+            <span className="text-red-500">😢</span>
+            <span className="font-medium text-gray-900">
+              {batch?.batchName || 'Unknown Batch'}
+            </span>
+          </div>
+        );
+      }
+    },
+    {
+      key: 'count',
+      label: 'Birds Lost',
+      sortable: true,
+      render: (value) => (
+        <div className="font-semibold text-red-600">{value as number}</div>
+      )
+    },
+    {
+      key: 'cause',
+      label: 'Cause',
+      sortable: true,
+      render: (value) => (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+          {(value as string).charAt(0).toUpperCase() + (value as string).slice(1)}
+        </span>
+      )
+    },
+    {
+      key: 'description',
+      label: 'Description',
+      render: (value) => (
+        <div className="text-sm text-gray-600 max-w-xs truncate" title={value as string}>
+          {value as string}
+        </div>
+      )
+    }
+  ];
+
   const tabs = [
     { id: 'batches', label: '🐔 Batches', icon: '🐔' },
-    { id: 'deaths', label: '💀 Losses', icon: '💀' },
+    { id: 'deaths', label: '😢 Losses', icon: '😢' },
     { id: 'add-batch', label: '➕ Add Batch', icon: '➕' }
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className={`space-y-6 max-w-7xl mx-auto ${className || ''}`}
-    >
+    <PageContainer maxWidth="xl" className={`space-y-6 ${className || ''}`}>
       {/* Header */}
-      <div className="header">
-        <h1 className="text-2xl lg:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
+      <header className="header">
+        <h1 
+          className="text-2xl lg:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent"
+          role="heading"
+          aria-level={1}
+        >
           🐔 Flock Batch Manager
         </h1>
-        <p className="text-gray-600 mt-2">Organize chickens into batches, track losses, and manage flock groups</p>
-      </div>
+        <p className="text-gray-600 mt-2" role="doc-subtitle">
+          Organize chickens into batches, track losses, and manage flock groups
+        </p>
+      </header>
+
+      {/* Batch Statistics */}
+      {!isLoading && flockSummary && (
+        <section 
+          className="grid grid-cols-2 lg:grid-cols-4 gap-3"
+          aria-label="Flock batch statistics"
+          role="region"
+        >
+          <div className="glass-card p-6">
+            <MetricDisplay
+              value={batches.length}
+              label="Total Batches"
+              format="number"
+              precision={0}
+              variant="default"
+              color="default"
+              loading={isLoading}
+              testId="total-batches-metric"
+            />
+          </div>
+          <div className="glass-card p-6">
+            <MetricDisplay
+              value={flockSummary.totalBirds || 0}
+              label="Total Birds"
+              format="number"
+              precision={0}
+              variant="default"
+              color="success"
+              loading={isLoading}
+              testId="total-birds-metric"
+            />
+          </div>
+          <div className="glass-card p-6">
+            <MetricDisplay
+              value={batches.filter(b => b.actualLayingStartDate).length}
+              label="Laying Batches"
+              format="number"
+              precision={0}
+              variant="default"
+              color="info"
+              loading={isLoading}
+              testId="laying-batches-metric"
+            />
+          </div>
+          <div className="glass-card p-6">
+            <MetricDisplay
+              value={deathRecords.reduce((sum, record) => sum + (record.count || 0), 0)}
+              label="Total Losses"
+              format="number"
+              precision={0}
+              variant="default"
+              color="danger"
+              loading={isLoading}
+              testId="total-losses-metric"
+            />
+          </div>
+        </section>
+      )}
+
+      {/* Flock Overview */}
+      {!isLoading && batches.length > 0 && (
+        <section 
+          aria-label="Flock overview by bird type"
+          role="region"
+        >
+          <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            <span className="text-xl">🐔</span>
+            Flock Overview
+          </h2>
+          <div className={`grid grid-cols-2 md:grid-cols-${batches.some(b => (b.broodingCount || 0) > 0) ? '5' : '4'} gap-4`}>
+            <StatCard
+              title="Laying Hens"
+              total={batches
+                .filter(batch => batch.actualLayingStartDate) // Only batches that are laying
+                .reduce((sum, batch) => {
+                  const hens = batch.hensCount || 0;
+                  const brooding = batch.broodingCount || 0;
+                  return sum + Math.max(0, hens - brooding); // Subtract brooding hens from laying hens
+                }, 0)}
+              label={`${batches.filter(b => b.actualLayingStartDate && (b.hensCount || 0) > 0).length} batches laying`}
+              icon="🐔"
+              variant="corner-gradient"
+              testId="laying-hens-stat"
+            />
+            <StatCard
+              title="Not Laying"
+              total={batches
+                .filter(batch => !batch.actualLayingStartDate && ((batch.hensCount || 0) > 0 || batch.type === 'hens')) // Batches not laying that have hens or are hen batches
+                .reduce((sum, batch) => {
+                  const hens = batch.hensCount || 0;
+                  const brooding = batch.broodingCount || 0;
+                  return sum + Math.max(0, hens - brooding); // Subtract brooding hens from not laying hens
+                }, 0)}
+              label={`${batches.filter(b => !b.actualLayingStartDate && ((b.hensCount || 0) > 0 || b.type === 'hens')).length} batches not laying`}
+              icon="⏳"
+              variant="corner-gradient"
+              testId="not-laying-hens-stat"
+            />
+            {batches.some(b => (b.broodingCount || 0) > 0) && (
+              <StatCard
+                title="Brooding Hens"
+                total={batches.reduce((sum, batch) => sum + (batch.broodingCount || 0), 0)}
+                label={`${batches.filter(b => (b.broodingCount || 0) > 0).length} batches brooding`}
+                icon="🪺"
+                variant="corner-gradient"
+                testId="brooding-hens-stat"
+              />
+            )}
+            <StatCard
+              title="Roosters"
+              total={batches.reduce((sum, batch) => sum + (batch.roostersCount || 0), 0)}
+              label={`${batches.filter(b => (b.roostersCount || 0) > 0).length} batches`}
+              icon="🐓"
+              variant="corner-gradient"
+              testId="roosters-stat"
+            />
+            <StatCard
+              title="Chicks"
+              total={batches.reduce((sum, batch) => sum + (batch.chicksCount || 0), 0)}
+              label={`${batches.filter(b => (b.chicksCount || 0) > 0).length} batches`}
+              icon="🐥"
+              variant="corner-gradient"
+              testId="chicks-stat"
+            />
+          </div>
+        </section>
+      )}
 
       {/* Messages */}
       <AnimatePresence>
@@ -334,24 +672,51 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
       </AnimatePresence>
 
       {/* Tab Navigation */}
-      <div className="neu-form">
-        <div className="flex flex-wrap gap-2 p-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as 'batches' | 'deaths' | 'add-batch')}
-              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                activeTab === tab.id
-                  ? 'bg-indigo-500 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              <span className="mr-2">{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <nav 
+        className="glass-card p-2 flex gap-2 overflow-x-auto whitespace-nowrap max-w-full"
+        role="tablist"
+        aria-label="Flock batch management sections"
+      >
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as 'batches' | 'deaths' | 'add-batch')}
+            className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex-shrink-0 flex items-center gap-2 ${
+              activeTab === tab.id
+                ? 'bg-indigo-600 text-white shadow-lg'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+            }`}
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            aria-controls={`${tab.id}-panel`}
+            id={`${tab.id}-tab`}
+            tabIndex={activeTab === tab.id ? 0 : -1}
+          >
+            <span className="text-lg" aria-hidden="true">{tab.icon}</span>
+            <span>{tab.label.replace(/^.+ /, '')}</span>
+            {tab.id === 'batches' && batches.length > 0 && (
+              <span 
+                className={`ml-2 px-2 py-1 rounded-full text-xs font-bold ${
+                  activeTab === tab.id ? 'bg-white/20' : 'bg-gray-200 text-gray-700'
+                }`}
+                aria-label={`${batches.length} batches`}
+              >
+                {batches.length}
+              </span>
+            )}
+            {tab.id === 'deaths' && deathRecords.length > 0 && (
+              <span 
+                className={`ml-2 px-2 py-1 rounded-full text-xs font-bold ${
+                  activeTab === tab.id ? 'bg-white/20' : 'bg-gray-200 text-gray-700'
+                }`}
+                aria-label={`${deathRecords.length} death records`}
+              >
+                {deathRecords.length}
+              </span>
+            )}
+          </button>
+        ))}
+      </nav>
 
       {/* Tab Content */}
       <AnimatePresence mode="wait">
@@ -362,85 +727,52 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             className="space-y-6"
+            role="tabpanel"
+            id="batches-panel"
+            aria-labelledby="batches-tab"
           >
             <div className="neu-form">
               <h2 className="neu-title">Manage Batches</h2>
+              {!selectedBatch && batches.length > 0 && (
+                <p className="text-sm text-gray-600 mb-4">
+                  💡 Click on any batch name to view details, composition, and timeline
+                </p>
+              )}
               {batches.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="text-6xl mb-4">📦</div>
-                  <p className="text-gray-500">No batches yet. Add your first batch!</p>
-                  <button
-                    onClick={() => setActiveTab('add-batch')}
-                    className="neu-button mt-4"
-                  >
-                    Add First Batch
-                  </button>
-                </div>
+                <EmptyState
+                  icon="📦"
+                  title="No Batches Yet"
+                  message="Start organizing your flock by adding your first batch"
+                  action={{
+                    text: "Add First Batch",
+                    onClick: () => setActiveTab('add-batch')
+                  }}
+                />
+              ) : selectedBatch ? (
+                <BatchDetailView
+                  batch={selectedBatch}
+                  onBack={() => setSelectedBatch(null)}
+                  onBatchUpdate={handleBatchUpdate}
+                />
               ) : (
-                <div className="space-y-4">
-                  {batches.map((batch) => (
-                    <div key={batch.id} className="bg-gray-50 rounded-lg p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className="text-2xl">
-                              {batch.type === 'hens' ? '🐔' : 
-                               batch.type === 'roosters' ? '🐓' : 
-                               batch.type === 'chicks' ? '🐥' : '🐔'}
-                            </span>
-                            <div className="flex-1">
-                              <h3 className="text-lg font-bold text-gray-900">{batch.batchName}</h3>
-                              <p className="text-sm text-gray-600">{batch.breed} • {batch.source}</p>
-                            </div>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                            <div>
-                              <p className="text-xs text-gray-500">Current Count</p>
-                              <p className="text-lg font-bold text-indigo-600">{batch.currentCount}</p>
-                              {(batch.type === 'hens' || batch.type === 'mixed') && (
-                                <span className={`text-xs px-2 py-1 rounded-full ${
-                                  batch.actualLayingStartDate 
-                                    ? 'bg-green-100 text-green-600' 
-                                    : 'bg-yellow-100 text-yellow-600'
-                                }`}>
-                                  {batch.actualLayingStartDate ? '🥚 Laying' : '⏳ Not laying yet'}
-                                </span>
-                              )}
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500">Started With</p>
-                              <p className="text-lg font-bold text-gray-700">{batch.initialCount}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500">Acquired</p>
-                              <p className="text-sm text-gray-700">
-                                {new Date(batch.acquisitionDate).toLocaleDateString()}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500">
-                                {batch.actualLayingStartDate ? 'Started Laying' : 'Age at Acquisition'}
-                              </p>
-                              <p className="text-sm text-gray-700">
-                                {batch.actualLayingStartDate 
-                                  ? new Date(batch.actualLayingStartDate).toLocaleDateString()
-                                  : batch.ageAtAcquisition.charAt(0).toUpperCase() + batch.ageAtAcquisition.slice(1)
-                                }
-                              </p>
-                            </div>
-                          </div>
-
-                          {batch.notes && (
-                            <div className="mt-4 p-3 bg-white rounded border-l-4 border-gray-200">
-                              <p className="text-sm text-gray-600">{batch.notes}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <DataTable<FlockBatch>
+                  data={batches}
+                  columns={batchColumns}
+                  loading={isLoading}
+                  sortable={true}
+                  onSort={(column, direction) => {
+                    const sortedBatches = [...batches].sort((a, b) => {
+                      const aValue = a[column as keyof FlockBatch];
+                      const bValue = b[column as keyof FlockBatch];
+                      if (direction === 'asc') {
+                        return String(aValue).localeCompare(String(bValue));
+                      }
+                      return String(bValue).localeCompare(String(aValue));
+                    });
+                    setBatches(sortedBatches);
+                  }}
+                  responsive={true}
+                />
               )}
             </div>
           </motion.div>
@@ -455,144 +787,132 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
             className="space-y-6"
           >
             {/* Quick Death Logging Form */}
-            <div className="neu-form">
-              <h2 className="neu-title">Log New Loss</h2>
-              <form onSubmit={logDeath} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-gray-600 text-sm mb-2">
-                      Batch
-                    </label>
-                    <select
-                      value={newDeath.batchId}
-                      onChange={(e) => setNewDeath({ ...newDeath, batchId: e.target.value })}
-                      className="neu-input"
-                      required
-                    >
-                      <option value="">Select batch...</option>
-                      {batches.filter(b => b.currentCount > 0).map((batch) => (
-                        <option key={batch.id} value={batch.id}>
-                          {batch.batchName} ({batch.currentCount} birds)
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-gray-600 text-sm mb-2">
-                      Date
-                    </label>
-                    <input
-                      type="date"
-                      value={newDeath.date}
-                      onChange={(e) => setNewDeath({ ...newDeath, date: e.target.value })}
-                      className="neu-input"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-600 text-sm mb-2">
-                      Number Lost
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={newDeath.count}
-                      onChange={(e) => setNewDeath({ ...newDeath, count: e.target.value })}
-                      className="neu-input"
-                      placeholder="Number of birds"
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-gray-600 text-sm mb-2">
-                      Cause
-                    </label>
-                    <select
-                      value={newDeath.cause}
-                      onChange={(e) => setNewDeath({ ...newDeath, cause: e.target.value as 'predator' | 'disease' | 'age' | 'injury' | 'unknown' | 'culled' | 'other' })}
-                      className="neu-input"
-                      required
-                    >
-                      <option value="unknown">Unknown</option>
-                      <option value="predator">Predator Attack</option>
-                      <option value="disease">Disease/Illness</option>
-                      <option value="age">Old Age</option>
-                      <option value="injury">Injury</option>
-                      <option value="culled">Culled</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-gray-600 text-sm mb-2">
-                      Description
-                    </label>
-                    <input
-                      type="text"
-                      value={newDeath.description}
-                      onChange={(e) => setNewDeath({ ...newDeath, description: e.target.value })}
-                      className="neu-input"
-                      placeholder="Brief description..."
-                      required
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm mb-2">
-                    Additional Notes
-                  </label>
-                  <textarea
-                    value={newDeath.notes}
-                    onChange={(e) => setNewDeath({ ...newDeath, notes: e.target.value })}
-                    className="neu-input min-h-[80px]"
-                    placeholder="Additional details..."
-                    rows={3}
+            <FormCard
+              title="Log New Loss"
+              subtitle="Record bird losses to track flock health"
+              onSubmit={logDeath}
+              loading={isLoading}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <FormField label="Batch" required>
+                  <select
+                    value={newDeath.batchId}
+                    onChange={(e) => setNewDeath({ ...newDeath, batchId: e.target.value })}
+                    className="neu-input"
+                    required
+                  >
+                    <option value="">Select batch...</option>
+                    {batches.filter(b => b.currentCount > 0).map((batch) => (
+                      <option key={batch.id} value={batch.id}>
+                        {batch.batchName} ({batch.currentCount} birds)
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+                <FormField label="Date" required>
+                  <input
+                    type="date"
+                    value={newDeath.date}
+                    onChange={(e) => setNewDeath({ ...newDeath, date: e.target.value })}
+                    className="neu-input"
+                    required
                   />
-                </div>
-                <button type="submit" className="neu-button" disabled={isLoading}>
-                  {isLoading ? 'Logging...' : 'Log Loss'}
-                </button>
-              </form>
-            </div>
+                </FormField>
+                <FormField label="Number Lost" required>
+                  <input
+                    type="number"
+                    min="1"
+                    value={newDeath.count}
+                    onChange={(e) => setNewDeath({ ...newDeath, count: e.target.value })}
+                    className="neu-input"
+                    placeholder="Number of birds"
+                    required
+                  />
+                </FormField>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField label="Cause" required>
+                  <select
+                    value={newDeath.cause}
+                    onChange={(e) => setNewDeath({ ...newDeath, cause: e.target.value as 'predator' | 'disease' | 'age' | 'injury' | 'unknown' | 'culled' | 'other' })}
+                    className="neu-input"
+                    required
+                  >
+                    <option value="unknown">Unknown</option>
+                    <option value="predator">Predator Attack</option>
+                    <option value="disease">Disease/Illness</option>
+                    <option value="age">Old Age</option>
+                    <option value="injury">Injury</option>
+                    <option value="culled">Culled</option>
+                    <option value="other">Other</option>
+                  </select>
+                </FormField>
+                <FormField label="Description" required>
+                  <input
+                    type="text"
+                    value={newDeath.description}
+                    onChange={(e) => setNewDeath({ ...newDeath, description: e.target.value })}
+                    className="neu-input"
+                    placeholder="Brief description..."
+                    required
+                  />
+                </FormField>
+              </div>
+              
+              <FormField label="Additional Notes">
+                <textarea
+                  value={newDeath.notes}
+                  onChange={(e) => setNewDeath({ ...newDeath, notes: e.target.value })}
+                  className="neu-input min-h-[80px]"
+                  placeholder="Additional details..."
+                  rows={3}
+                />
+              </FormField>
+              
+              <FormButton 
+                type="submit" 
+                loading={isLoading}
+                fullWidth
+              >
+                Log Loss
+              </FormButton>
+            </FormCard>
 
             {/* Death Records History */}
             <div className="neu-form">
               <h2 className="neu-title">Loss History</h2>
               {deathRecords.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="text-6xl mb-4">📝</div>
-                  <p className="text-gray-500">No losses recorded yet.</p>
-                </div>
+                <EmptyState
+                  icon="📝"
+                  title="No Losses Recorded"
+                  message="No bird losses have been logged yet"
+                  variant="compact"
+                />
               ) : (
-                <div className="space-y-4">
-                  {deathRecords.map((record) => {
-                    const batch = batches.find(b => b.id === record.batchId);
-                    return (
-                      <div key={record.id} className="bg-gray-50 rounded-lg p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <span className="text-red-500 text-lg">💀</span>
-                              <div>
-                                <h3 className="font-semibold text-gray-900">
-                                  {record.count} birds lost - {batch?.batchName || 'Unknown Batch'}
-                                </h3>
-                                <p className="text-sm text-gray-600">
-                                  {new Date(record.date).toLocaleDateString()} • {record.cause}
-                                </p>
-                              </div>
-                            </div>
-                            <p className="text-sm text-gray-700 mb-2">{record.description}</p>
-                            {record.notes && (
-                              <p className="text-xs text-gray-500 italic">{record.notes}</p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <DataTable<DeathRecord>
+                  data={deathRecords}
+                  columns={deathRecordsColumns}
+                  loading={isLoading}
+                  sortable={true}
+                  onSort={(column, direction) => {
+                    const sortedRecords = [...deathRecords].sort((a, b) => {
+                      const aValue = a[column as keyof DeathRecord];
+                      const bValue = b[column as keyof DeathRecord];
+                      if (column === 'date') {
+                        const aDate = new Date(aValue as string);
+                        const bDate = new Date(bValue as string);
+                        return direction === 'asc' ? aDate.getTime() - bDate.getTime() : bDate.getTime() - aDate.getTime();
+                      }
+                      if (direction === 'asc') {
+                        return String(aValue).localeCompare(String(bValue));
+                      }
+                      return String(bValue).localeCompare(String(aValue));
+                    });
+                    setDeathRecords(sortedRecords);
+                  }}
+                  responsive={true}
+                />
               )}
             </div>
           </motion.div>
@@ -605,149 +925,131 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
           >
-            <div className="neu-form">
-              <h2 className="neu-title">Add New Batch</h2>
-              <form onSubmit={addBatch} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-gray-600 text-sm mb-2">
-                      Batch Name
-                    </label>
-                    <input
-                      type="text"
-                      value={newBatch.batchName}
-                      onChange={(e) => setNewBatch({ ...newBatch, batchName: e.target.value })}
-                      className="neu-input"
-                      placeholder="e.g., Spring 2024 Layers"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-gray-600 text-sm mb-2">
-                      Breed
-                    </label>
-                    <input
-                      type="text"
-                      value={newBatch.breed}
-                      onChange={(e) => setNewBatch({ ...newBatch, breed: e.target.value })}
-                      className="neu-input"
-                      placeholder="e.g., Rhode Island Red"
-                      required
-                    />
-                  </div>
-                </div>
+            <FormCard
+              title="Add New Batch"
+              subtitle="Enter batch details to organize your flock management"
+              onSubmit={addBatch}
+              loading={isLoading}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField label="Batch Name" required>
+                  <input
+                    type="text"
+                    value={newBatch.batchName}
+                    onChange={(e) => setNewBatch({ ...newBatch, batchName: e.target.value })}
+                    className="neu-input"
+                    placeholder="e.g., Spring 2024 Layers"
+                    required
+                  />
+                </FormField>
+                <FormField label="Breed" required>
+                  <input
+                    type="text"
+                    value={newBatch.breed}
+                    onChange={(e) => setNewBatch({ ...newBatch, breed: e.target.value })}
+                    className="neu-input"
+                    placeholder="e.g., Rhode Island Red"
+                    required
+                  />
+                </FormField>
+              </div>
 
-                <div>
-                  <label className="block text-gray-600 text-sm mb-3">
-                    <span className="flex items-center gap-2">
-                      🐔 Bird Counts
-                      <span className="text-xs text-gray-500">(Enter 0 for types you don't have)</span>
-                    </span>
-                  </label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-gray-600 text-xs mb-1">
-                        🐔 Hens
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={newBatch.hens}
-                        onChange={(e) => setNewBatch({ ...newBatch, hens: e.target.value })}
-                        className="neu-input"
-                        placeholder="0"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-600 text-xs mb-1">
-                        🐓 Roosters
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={newBatch.roosters}
-                        onChange={(e) => setNewBatch({ ...newBatch, roosters: e.target.value })}
-                        className="neu-input"
-                        placeholder="0"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-600 text-xs mb-1">
-                        🐥 Chicks
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={newBatch.chicks}
-                        onChange={(e) => setNewBatch({ ...newBatch, chicks: e.target.value })}
-                        className="neu-input"
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-                  {/* Show total count preview */}
-                  {(parseInt(newBatch.hens) || 0) + (parseInt(newBatch.roosters) || 0) + (parseInt(newBatch.chicks) || 0) > 0 && (
-                    <div className="mt-2 text-sm text-gray-600 bg-gray-50 rounded px-3 py-2">
-                      Total: {(parseInt(newBatch.hens) || 0) + (parseInt(newBatch.roosters) || 0) + (parseInt(newBatch.chicks) || 0)} birds
-                      {(parseInt(newBatch.hens) || 0) > 0 && ` (${parseInt(newBatch.hens)} hens`}
-                      {(parseInt(newBatch.roosters) || 0) > 0 && `, ${parseInt(newBatch.roosters)} roosters`}
-                      {(parseInt(newBatch.chicks) || 0) > 0 && `, ${parseInt(newBatch.chicks)} chicks`})
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <label className="block text-gray-600 text-sm mb-2">
-                      Age at Acquisition
-                    </label>
-                    <select
-                      value={newBatch.ageAtAcquisition}
-                      onChange={(e) => setNewBatch({ ...newBatch, ageAtAcquisition: e.target.value as 'chick' | 'juvenile' | 'adult' })}
-                      className="neu-input"
-                      required
-                    >
-                      <option value="chick">Chick (0-8 weeks)</option>
-                      <option value="juvenile">Juvenile (8-18 weeks)</option>
-                      <option value="adult">Adult (18+ weeks)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-gray-600 text-sm mb-2">
-                      Acquisition Date
-                    </label>
+              <FormField 
+                label="🐔 Bird Counts" 
+                help="Enter 0 for types you don't have"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <FormField label="🐔 Hens">
                     <input
-                      type="date"
-                      value={newBatch.acquisitionDate}
-                      onChange={(e) => setNewBatch({ ...newBatch, acquisitionDate: e.target.value })}
+                      type="number"
+                      min="0"
+                      value={newBatch.hens}
+                      onChange={(e) => setNewBatch({ ...newBatch, hens: e.target.value })}
                       className="neu-input"
-                      required
+                      placeholder="0"
                     />
-                  </div>
-                  <div>
-                    <label className="block text-gray-600 text-sm mb-2">
-                      <span className="flex items-center gap-2">
-                        🥚 Laying Start Date
-                        <span className="text-xs text-gray-500">(Optional)</span>
-                      </span>
-                    </label>
+                  </FormField>
+                  <FormField label="🪺 Brooding">
                     <input
-                      type="date"
-                      value={newBatch.layingStartDate}
-                      onChange={(e) => setNewBatch({ ...newBatch, layingStartDate: e.target.value })}
+                      type="number"
+                      min="0"
+                      value={newBatch.brooding}
+                      onChange={(e) => setNewBatch({ ...newBatch, brooding: e.target.value })}
                       className="neu-input"
-                      min={newBatch.acquisitionDate}
+                      placeholder="0"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Leave blank if not laying yet. Set when hens actually start laying.
-                    </p>
-                  </div>
+                  </FormField>
+                  <FormField label="🐓 Roosters">
+                    <input
+                      type="number"
+                      min="0"
+                      value={newBatch.roosters}
+                      onChange={(e) => setNewBatch({ ...newBatch, roosters: e.target.value })}
+                      className="neu-input"
+                      placeholder="0"
+                    />
+                  </FormField>
+                  <FormField label="🐥 Chicks">
+                    <input
+                      type="number"
+                      min="0"
+                      value={newBatch.chicks}
+                      onChange={(e) => setNewBatch({ ...newBatch, chicks: e.target.value })}
+                      className="neu-input"
+                      placeholder="0"
+                    />
+                  </FormField>
                 </div>
+                {/* Show total count preview */}
+                {(parseInt(newBatch.hens) || 0) + (parseInt(newBatch.roosters) || 0) + (parseInt(newBatch.chicks) || 0) + (parseInt(newBatch.brooding) || 0) > 0 && (
+                  <div className="mt-2 text-sm text-gray-600 bg-gray-50 rounded px-3 py-2">
+                    Total: {(parseInt(newBatch.hens) || 0) + (parseInt(newBatch.roosters) || 0) + (parseInt(newBatch.chicks) || 0) + (parseInt(newBatch.brooding) || 0)} birds
+                    {(parseInt(newBatch.hens) || 0) > 0 && ` (${parseInt(newBatch.hens)} hens`}
+                    {(parseInt(newBatch.brooding) || 0) > 0 && `, ${parseInt(newBatch.brooding)} brooding`}
+                    {(parseInt(newBatch.roosters) || 0) > 0 && `, ${parseInt(newBatch.roosters)} roosters`}
+                    {(parseInt(newBatch.chicks) || 0) > 0 && `, ${parseInt(newBatch.chicks)} chicks`})
+                  </div>
+                )}
+              </FormField>
 
-                <div>
-                  <label className="block text-gray-600 text-sm mb-2">
-                    Source
-                  </label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <FormField label="Age at Acquisition" required>
+                  <select
+                    value={newBatch.ageAtAcquisition}
+                    onChange={(e) => setNewBatch({ ...newBatch, ageAtAcquisition: e.target.value as 'chick' | 'juvenile' | 'adult' })}
+                    className="neu-input"
+                    required
+                  >
+                    <option value="chick">Chick (0-8 weeks)</option>
+                    <option value="juvenile">Juvenile (8-18 weeks)</option>
+                    <option value="adult">Adult (18+ weeks)</option>
+                  </select>
+                </FormField>
+                <FormField label="Acquisition Date" required>
+                  <input
+                    type="date"
+                    value={newBatch.acquisitionDate}
+                    onChange={(e) => setNewBatch({ ...newBatch, acquisitionDate: e.target.value })}
+                    className="neu-input"
+                    required
+                  />
+                </FormField>
+                <FormField 
+                  label="🥚 Laying Start Date" 
+                  help="Leave blank if not laying yet. Set when hens actually start laying."
+                >
+                  <input
+                    type="date"
+                    value={newBatch.layingStartDate}
+                    onChange={(e) => setNewBatch({ ...newBatch, layingStartDate: e.target.value })}
+                    className="neu-input"
+                    min={newBatch.acquisitionDate}
+                  />
+                </FormField>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField label="Source" required>
                   <input
                     type="text"
                     value={newBatch.source}
@@ -756,29 +1058,82 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
                     placeholder="e.g., Local Hatchery, Farm Store"
                     required
                   />
-                </div>
-
-                <div>
-                  <label className="block text-gray-600 text-sm mb-2">
-                    Notes
-                  </label>
-                  <textarea
-                    value={newBatch.notes}
-                    onChange={(e) => setNewBatch({ ...newBatch, notes: e.target.value })}
-                    className="neu-input min-h-[100px]"
-                    placeholder="Additional notes about this batch..."
-                    rows={4}
+                </FormField>
+                <FormField 
+                  label="💰 Cost" 
+                  help="Leave blank or enter 0 if free"
+                >
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={newBatch.cost}
+                    onChange={(e) => setNewBatch({ ...newBatch, cost: e.target.value })}
+                    className="neu-input"
+                    placeholder="0.00"
                   />
-                </div>
+                </FormField>
+              </div>
 
-                <button type="submit" className="neu-button full-width" disabled={isLoading}>
-                  {isLoading ? 'Adding Batch...' : 'Add Batch'}
-                </button>
-              </form>
-            </div>
+              <FormField label="Notes">
+                <textarea
+                  value={newBatch.notes}
+                  onChange={(e) => setNewBatch({ ...newBatch, notes: e.target.value })}
+                  className="neu-input min-h-[100px]"
+                  placeholder="Additional notes about this batch..."
+                  rows={4}
+                />
+              </FormField>
+
+              <FormButton 
+                type="submit" 
+                loading={isLoading} 
+                fullWidth
+              >
+                Add Batch
+              </FormButton>
+            </FormCard>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+
+      {/* Laying Date Modal */}
+      <FormModal
+        isOpen={showLayingDateModal}
+        onClose={closeLayingDateModal}
+        title="🥚 Set Laying Date"
+        onSubmit={saveLayingDate}
+        submitText="Set Date"
+        loading={isLoading}
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="text-sm text-gray-600">
+            <p className="mb-2">
+              Batch: <span className="font-medium">{editingBatch?.batchName}</span> ({editingBatch?.type})
+            </p>
+            <p>
+              {(editingBatch?.type === 'hens' || editingBatch?.type === 'mixed') 
+                ? 'Set the date when this batch started laying eggs.'
+                : 'Set a laying date if this batch will eventually lay eggs (optional for roosters/chicks).'
+              }
+            </p>
+          </div>
+
+          <FormField label="Laying Start Date">
+            <input
+              type="date"
+              value={layingDateForm}
+              onChange={(e) => setLayingDateForm(e.target.value)}
+              className="neu-input"
+              max={new Date().toISOString().split('T')[0]}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Leave empty to clear the laying date
+            </p>
+          </FormField>
+        </div>
+      </FormModal>
+    </PageContainer>
   );
 };

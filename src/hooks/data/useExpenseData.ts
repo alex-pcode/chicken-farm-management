@@ -13,7 +13,7 @@ export interface UseExpenseDataOptions {
 export interface UseExpenseDataReturn {
   expenses: Expense[];
   isLoading: boolean;
-  error: any;
+  error: unknown;
   refetch: () => Promise<void>;
   addExpense: (expense: Omit<Expense, 'id'>) => Promise<void>;
   updateExpense: (id: string, expense: Partial<Expense>) => Promise<void>;
@@ -37,7 +37,10 @@ export const useExpenseData = (options: UseExpenseDataOptions = {}): UseExpenseD
   const contextExpenses = data.expenses;
 
   // Memoize the fetcher function to prevent infinite loops
-  const fetcher = useCallback(() => apiService.production.getExpenses(), []);
+  const fetcher = useCallback(async (): Promise<Expense[]> => {
+    const response = await apiService.production.getExpenses();
+    return response.data as Expense[];
+  }, []);
   
   // Fallback data fetching hook (if DataContext fails)
   const {
@@ -53,10 +56,14 @@ export const useExpenseData = (options: UseExpenseDataOptions = {}): UseExpenseD
   });
 
   // Use context data preferentially, fallback to fetched data
-  const allExpenses = (contextExpenses && contextExpenses.length > 0) ? contextExpenses : (fetchedExpenses || []);
+  const allExpenses = useMemo(() => {
+    return (contextExpenses && contextExpenses.length > 0) ? contextExpenses : (fetchedExpenses || []);
+  }, [contextExpenses, fetchedExpenses]);
   
-  // Ensure allExpenses is always an array
-  const safeAllExpenses = Array.isArray(allExpenses) ? allExpenses : [];
+  // Ensure allExpenses is always an array - wrap in useMemo to prevent dependency changes
+  const safeAllExpenses = useMemo(() => {
+    return Array.isArray(allExpenses) ? allExpenses : [];
+  }, [allExpenses]);
   
   // Filter by category if specified
   const expenses = useMemo(() => {
@@ -71,16 +78,11 @@ export const useExpenseData = (options: UseExpenseDataOptions = {}): UseExpenseD
 
   // Add new expense  
   const addExpense = useCallback(async (expense: Omit<Expense, 'id'>) => {
-    try {
-      // Save to API without ID (let database generate UUID)
-      await apiService.production.saveExpenses([expense]);
-      
-      // After successful save, refresh data from server to get updated state
-      await refreshData();
-      
-    } catch (err) {
-      throw err;
-    }
+    // Save to API without ID (let database generate UUID)
+    await apiService.production.saveExpenses([expense]);
+    
+    // After successful save, refresh data from server to get updated state
+    await refreshData();
   }, [refreshData]);
 
   // Update existing expense
@@ -90,29 +92,20 @@ export const useExpenseData = (options: UseExpenseDataOptions = {}): UseExpenseD
 
     const expenseToUpdate = { ...safeAllExpenses[expenseIndex], ...updatedData };
     
-    try {
-      // Save to API
-      await apiService.production.saveExpenses([expenseToUpdate]);
-      
-      // After successful save, refresh data from server to get updated state
-      await refreshData();
-    } catch (err) {
-      throw err;
-    }
+    // Save to API
+    await apiService.production.saveExpenses([expenseToUpdate]);
+    
+    // After successful save, refresh data from server to get updated state
+    await refreshData();
   }, [safeAllExpenses, refreshData]);
 
   // Delete expense
   const deleteExpense = useCallback(async (id: string) => {
-    try {
-      // Use proper DELETE API endpoint
-      await apiService.production.deleteExpense(id);
-      
-      // After successful delete, refresh data from server to get updated state
-      await refreshData();
-    } catch (err) {
-      console.error('Failed to delete expense:', err);
-      throw err;
-    }
+    // Use proper DELETE API endpoint
+    await apiService.production.deleteExpense(id);
+    
+    // After successful delete, refresh data from server to get updated state
+    await refreshData();
   }, [refreshData]);
 
   // Statistics calculations

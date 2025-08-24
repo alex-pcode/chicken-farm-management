@@ -19,6 +19,27 @@ export class FlockService extends BaseApiService implements IFlockService {
   }
 
   /**
+   * Get flock profile data
+   */
+  public async getFlockProfile(): Promise<ApiResponse> {
+    // Use the data endpoint to get flock profile
+    const response = await this.get('/data?type=flock');
+    if (response.data && typeof response.data === 'object' && 'flockProfile' in response.data) {
+      const responseData = response.data as { flockProfile: FlockProfile };
+      return {
+        success: true,
+        data: responseData.flockProfile,
+        message: 'Flock profile extracted from full data response'
+      };
+    }
+    return {
+      success: true,
+      data: null,
+      message: 'No flock profile found in response'
+    };
+  }
+
+  /**
    * Save flock profile to database
    */
   public async saveFlockProfile(profile: FlockProfile): Promise<ApiResponse> {
@@ -40,7 +61,7 @@ export class FlockService extends BaseApiService implements IFlockService {
     event: FlockEvent, 
     eventId?: string
   ): Promise<ApiResponse> {
-    const method = eventId ? 'PUT' : 'POST';
+    // const method = eventId ? 'PUT' : 'POST'; // Unused - method selection handled by API endpoint
     const eventWithProfile = { ...event, flock_profile_id: flockProfileId, id: eventId };
     return this.post('/crud?operation=flockEvents', eventWithProfile);
   }
@@ -56,14 +77,14 @@ export class FlockService extends BaseApiService implements IFlockService {
    * Save flock batch information
    */
   public async saveFlockBatch(batch: FlockBatch): Promise<ApiResponse> {
-    return this.post('/saveFlockBatch', batch);
+    return this.post('/flockBatches', batch);
   }
 
   /**
    * Save death record
    */
   public async saveDeathRecord(deathRecord: DeathRecord): Promise<ApiResponse> {
-    return this.post('/saveDeathRecord', deathRecord);
+    return this.post('/deathRecords', deathRecord);
   }
 
   /**

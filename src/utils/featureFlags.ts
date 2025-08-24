@@ -244,6 +244,6 @@ featureFlags.initialize()
 
 // Development utilities (available in browser console)
 if (import.meta.env.DEV) {
-  (window as any).featureFlags = featureFlags
+  (window as unknown as Window & { featureFlags: typeof featureFlags }).featureFlags = featureFlags
   console.log('Feature flags available in console as window.featureFlags')
 }

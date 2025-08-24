@@ -16,15 +16,15 @@ interface UseAsyncOptions<T> {
   resetOnExecute?: boolean;
 }
 
-interface UseAsyncReturn<T, Args extends any[] = any[]> extends UseAsyncState<T> {
+interface UseAsyncReturn<T, Args extends unknown[] = unknown[]> extends UseAsyncState<T> {
   execute: (...args: Args) => Promise<T>;
   reset: () => void;
   cancel: () => void;
 }
 
-type AsyncFunction<T, Args extends any[] = any[]> = (...args: Args) => Promise<T>;
+type AsyncFunction<T, Args extends unknown[] = unknown[]> = (...args: Args) => Promise<T>;
 
-export const useAsync = <T, Args extends any[] = any[]>(
+export const useAsync = <T, Args extends unknown[] = unknown[]>(
   asyncFunction: AsyncFunction<T, Args>,
   options: UseAsyncOptions<T> = {}
 ): UseAsyncReturn<T, Args> => {
@@ -150,9 +150,9 @@ export const useAsync = <T, Args extends any[] = any[]>(
   // Execute immediately if requested
   useEffect(() => {
     if (immediate) {
-      execute();
+      execute(...([] as unknown as Args));
     }
-  }, [immediate]); // Only run on mount when immediate is true
+  }, [immediate, execute]); // Only run on mount when immediate is true
 
   // Cleanup on unmount
   useEffect(() => {
@@ -173,7 +173,7 @@ export const useAsync = <T, Args extends any[] = any[]>(
 };
 
 // Hook for handling async operations with retry functionality
-export const useAsyncRetry = <T, Args extends any[] = any[]>(
+export const useAsyncRetry = <T, Args extends unknown[] = unknown[]>(
   asyncFunction: AsyncFunction<T, Args>,
   maxRetries: number = 3,
   retryDelay: number = 1000

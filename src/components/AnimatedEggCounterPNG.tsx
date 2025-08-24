@@ -6,7 +6,7 @@ const AnimatedEggCounterPNG: React.FC = () => {
     <div>
       {/* Animation container */}
       <motion.div 
-        className="relative w-full h-64 flex justify-center items-center overflow-hidden"
+        className="relative w-full h-64 flex justify-center items-center overflow-hidden mt-8 md:mt-0"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}

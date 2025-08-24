@@ -62,7 +62,9 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({
   className = '',
   testId,
 }) => {
-  const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
+  const safeValue = value ?? 0;
+  const safeMax = max ?? 1;
+  const percentage = Math.min(Math.max((safeValue / safeMax) * 100, 0), 100);
   const colors = colorClasses[color];
   
   const baseClasses = 'glass-card p-6 space-y-4';
@@ -102,8 +104,8 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({
         
         {variant === 'detailed' && showValues && (
           <div className="flex justify-between text-sm text-gray-600">
-            <span>{value.toLocaleString()}</span>
-            <span>{max.toLocaleString()}</span>
+            <span>{safeValue.toLocaleString()}</span>
+            <span>{safeMax.toLocaleString()}</span>
           </div>
         )}
       </div>
@@ -130,7 +132,7 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({
             )}
             {showValues && variant !== 'detailed' && (
               <span className="text-sm text-gray-600">
-                {value.toLocaleString()} / {max.toLocaleString()}
+                {safeValue.toLocaleString()} / {safeMax.toLocaleString()}
               </span>
             )}
           </div>

@@ -5,7 +5,7 @@ import { useEggData } from '../data/useEggData';
 import { validateEggCount, validators } from '../../utils/validation';
 import type { EggEntry, ValidationError } from '../../types';
 
-export interface EggEntryFormData {
+export interface EggEntryFormData extends Record<string, unknown> {
   count: string;
   date: string;
   notes?: string;
@@ -53,68 +53,44 @@ export const useEggEntryForm = (options: UseEggEntryFormOptions = {}): UseEggEnt
     notes: initialEntry?.notes || ''
   }), [initialEntry]);
 
-  // Form validation
-  const validateForm = useCallback((values: EggEntryFormData): boolean => {
-    let isValid = true;
-    
-    // Validate egg count
+  // Form submission handler (without formState dependency)
+  const handleFormSubmit = useCallback(async (values: EggEntryFormData): Promise<void> => {
+    // Validate form data
     const countError = validateEggCount(values.count);
-    if (countError) {
-      formState.setError('count', countError);
-      isValid = false;
-    }
-    
-    // Validate date
     const dateError = validators.dateRange()(values.date);
-    if (dateError) {
-      formState.setError('date', dateError);
-      isValid = false;
-    }
     
-    return isValid;
-  }, []);
-
-  // Form submission handler
-  const handleFormSubmit = useCallback(async (values: EggEntryFormData) => {
-    // Clear existing errors
-    formState.clearAllErrors();
-    
-    // Validate form
-    if (!validateForm(values)) {
+    if (countError || dateError) {
       throw new Error('Form validation failed');
     }
     
     // Convert form data to EggEntry
     const eggEntry: Omit<EggEntry, 'id'> = {
-      count: parseInt(values.count, 10),
+      count: typeof values.count === 'string' ? parseInt(values.count, 10) : values.count as number,
       date: values.date,
       notes: values.notes || '',
-      userId: '', // Will be set by API
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
     };
     
     // Submit to API
     await addEntry(eggEntry);
     
-    return eggEntry;
-  }, [addEntry, validateForm]);
+    // Call success callback if provided
+    if (onSuccess) {
+      onSuccess({ ...eggEntry, id: Date.now().toString() } as EggEntry);
+    }
+  }, [addEntry, onSuccess]);
 
   // Form state hook
   const formState = useFormState({
     initialValues,
-    onSubmit: handleFormSubmit,
-    onError,
-    resetOnSubmit: true,
-    validateOnChange: true
+    onSubmit: handleFormSubmit
   });
 
   // Form submission hook
   const submitState = useFormSubmit({
     onSubmit: handleFormSubmit,
-    onSuccess: (result) => {
-      if (onSuccess) {
-        onSuccess(result);
-      }
+    onSuccess: () => {
+      // Success handled within handleFormSubmit
     },
     onError,
     showSuccessFor: 3000,
@@ -125,30 +101,37 @@ export const useEggEntryForm = (options: UseEggEntryFormOptions = {}): UseEggEnt
   const handleSubmit = useCallback(async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     await submitState.submit(formState.values);
-  }, [submitState.submit, formState.values]);
+  }, [submitState, formState]);
+
+  // Form validation
+  const validateForm = useCallback((values: EggEntryFormData): boolean => {
+    const countError = validateEggCount(values.count);
+    const dateError = validators.dateRange()(values.date);
+    
+    return !countError && !dateError;
+  }, []);
 
   // Field validation
   const validateField = useCallback((field: keyof EggEntryFormData): boolean => {
     const value = formState.values[field];
     
     switch (field) {
-      case 'count':
-        const countError = validateEggCount(value);
+      case 'count': {
+        const countError = validateEggCount(String(value));
         if (countError) {
-          formState.setError('count', countError);
+          // Note: formState from useFormState doesn't have setError method
           return false;
         }
-        formState.clearError('count');
         return true;
+      }
         
-      case 'date':
-        const dateError = validators.dateRange()(value);
+      case 'date': {
+        const dateError = validators.dateRange()(String(value));
         if (dateError) {
-          formState.setError('date', dateError);
           return false;
         }
-        formState.clearError('date');
         return true;
+      }
         
       default:
         return true;

@@ -1,5 +1,6 @@
 // Table and List Components
 export { DataTable } from './tables/DataTable';
+export { PaginatedDataTable } from './tables/PaginatedDataTable';
 export { DataList } from './tables/DataList';
 export { EmptyState } from './tables/EmptyState';
 
@@ -30,5 +31,13 @@ export { SectionContainer } from './layout/SectionContainer';
 export { GridContainer } from './layout/GridContainer';
 export { CardContainer } from './layout/CardContainer';
 
+// Form Components
+export { FormCard } from './forms/FormCard';
+export { FormButton } from './forms/FormButton';
+
+// Timeline Components
+export { Timeline } from './timeline/Timeline';
+
 // Type exports
 export type { TableColumn } from './tables/DataTable';
+export type { TimelineItem } from './timeline/Timeline';

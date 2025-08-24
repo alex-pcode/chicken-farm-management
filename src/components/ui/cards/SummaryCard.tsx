@@ -106,7 +106,7 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
               </span>
               <span 
                 className={`font-semibold ${typeof getValueColorClass(item.color) === 'string' ? getValueColorClass(item.color) : ''} ${variant === 'compact' ? 'text-sm' : 'text-base'}`}
-                style={typeof getValueColorClass(item.color) === 'object' ? getValueColorClass(item.color) : undefined}
+                style={typeof getValueColorClass(item.color) === 'object' ? getValueColorClass(item.color) as React.CSSProperties : undefined}
               >
                 {formatValue(item.value, item.format)}
               </span>

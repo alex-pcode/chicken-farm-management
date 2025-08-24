@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import type { FlockEvent } from '../src/types/index';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -73,15 +74,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 
 // All data (original getData.ts functionality)
-async function getAllData(user: any, res: VercelResponse) {
+interface AuthUser {
+  id: string;
+  email?: string;
+}
+
+async function getAllData(user: AuthUser, res: VercelResponse) {
   // Fetch user's egg entries, order by date descending
   const { data: eggEntries, error } = await supabase
     .from('egg_entries')
-    .select('id, date, count')
+    .select('id, date, count, size, color, notes, created_at, user_id')
     .eq('user_id', user.id)
     .order('date', { ascending: false });
 
   if (error) throw error;
+
   
   // Fetch user's flock profile
   const { data: flockProfiles, error: flockProfileError } = await supabase
@@ -95,7 +102,7 @@ async function getAllData(user: any, res: VercelResponse) {
   const flockProfile = flockProfiles && flockProfiles.length > 0 ? flockProfiles[0] : null;
   
   // Fetch flock events
-  let flockEvents: any[] = [];
+  let flockEvents: FlockEvent[] = [];
   if (flockProfile) {
     const { data: events, error: eventsError } = await supabase
       .from('flock_events')
@@ -108,7 +115,22 @@ async function getAllData(user: any, res: VercelResponse) {
     }
   }
 
-  let mappedFlockProfile: any = null;
+  let mappedFlockProfile: {
+    id: string;
+    farmName: string;
+    location: string;
+    flockSize: number;
+    breedTypes: string[];
+    flockStartDate: string;
+    notes: string;
+    hens: number;
+    roosters: number;
+    chicks: number;
+    brooding: number;
+    events: FlockEvent[];
+    createdAt?: string;
+    updatedAt?: string;
+  } | null = null;
   if (flockProfile) {
     mappedFlockProfile = {
       id: flockProfile.id,
@@ -127,7 +149,7 @@ async function getAllData(user: any, res: VercelResponse) {
         date: event.date,
         type: event.type,
         description: event.description,
-        affectedBirds: event.affected_birds,
+        affectedBirds: event.affectedBirds,
         notes: event.notes
       })),
       createdAt: flockProfile.created_at,
@@ -190,7 +212,12 @@ async function getAllData(user: any, res: VercelResponse) {
       eggEntries: eggEntries?.map(entry => ({
         id: entry.id,
         date: entry.date,
-        count: entry.count
+        count: entry.count,
+        size: entry.size,
+        color: entry.color,
+        notes: entry.notes,
+        created_at: entry.created_at,
+        user_id: entry.user_id
       })) || [],
       flockProfile: mappedFlockProfile,
       feedInventory: feedInventory?.map(feed => ({
@@ -218,8 +245,7 @@ async function getAllData(user: any, res: VercelResponse) {
 }
 
 // Dashboard summary data
-async function getDashboardSummary(user: any, res: VercelResponse) {
-  const today = new Date().toISOString().split('T')[0];
+async function getDashboardSummary(user: AuthUser, res: VercelResponse) {
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
   // Get recent egg entries
@@ -265,7 +291,7 @@ async function getDashboardSummary(user: any, res: VercelResponse) {
 }
 
 // Production data (egg entries)
-async function getProductionData(user: any, res: VercelResponse) {
+async function getProductionData(user: AuthUser, res: VercelResponse) {
   const { data: eggEntries, error } = await supabase
     .from('egg_entries')
     .select('*')
@@ -282,7 +308,7 @@ async function getProductionData(user: any, res: VercelResponse) {
 }
 
 // Feed data
-async function getFeedData(user: any, res: VercelResponse) {
+async function getFeedData(user: AuthUser, res: VercelResponse) {
   const { data: feedInventory, error } = await supabase
     .from('feed_inventory')
     .select('*')
@@ -299,7 +325,7 @@ async function getFeedData(user: any, res: VercelResponse) {
 }
 
 // Expenses data
-async function getExpensesData(user: any, res: VercelResponse) {
+async function getExpensesData(user: AuthUser, res: VercelResponse) {
   const { data: expenses, error } = await supabase
     .from('expenses')
     .select('*')
@@ -316,7 +342,7 @@ async function getExpensesData(user: any, res: VercelResponse) {
 }
 
 // Savings data
-async function getSavingsData(user: any, res: VercelResponse) {
+async function getSavingsData(user: AuthUser, res: VercelResponse) {
   // Get sales and expenses for savings calculation
   const { data: sales } = await supabase
     .from('sales')
@@ -346,7 +372,7 @@ async function getSavingsData(user: any, res: VercelResponse) {
 }
 
 // Flock data
-async function getFlockData(user: any, res: VercelResponse) {
+async function getFlockData(user: AuthUser, res: VercelResponse) {
   const { data: flockProfiles } = await supabase
     .from('flock_profiles')
     .select('*')
@@ -369,7 +395,7 @@ async function getFlockData(user: any, res: VercelResponse) {
 }
 
 // CRM data
-async function getCRMData(user: any, res: VercelResponse) {
+async function getCRMData(user: AuthUser, res: VercelResponse) {
   const { data: customers } = await supabase
     .from('customers')
     .select('*')

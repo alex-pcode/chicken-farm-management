@@ -53,8 +53,18 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
     
     try {
       const response = await apiService.data.fetchAllData();
-      const dbData = response.data;
+      const dbData = response.data || {
+        eggEntries: [],
+        expenses: [],
+        feedInventory: [],
+        flockProfile: null,
+        flockEvents: [],
+        customers: [],
+        sales: [],
+        summary: undefined
+      };
       
+
       const newData = {
         eggEntries: dbData?.eggEntries || [],
         expenses: dbData?.expenses || [],
@@ -67,6 +77,7 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
       };
       
       setData(newData);
+      
       setLastFetched(new Date());
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch data';
@@ -117,6 +128,7 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
 };
 
 // Legacy compatibility hook - provides same interface as useAppData but with optimized performance
+// eslint-disable-next-line react-refresh/only-export-components
 export const useOptimizedAppData = (): OptimizedDataContextType => {
   const context = useContext(OptimizedDataContext);
   if (context === undefined) {
@@ -126,57 +138,68 @@ export const useOptimizedAppData = (): OptimizedDataContextType => {
 };
 
 // Simplified hooks that use the optimized data context
+// eslint-disable-next-line react-refresh/only-export-components
 export const useEggEntries = () => {
   const { data } = useOptimizedAppData();
   return data.eggEntries;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useFeedInventory = () => {
   const { data } = useOptimizedAppData();
   return data.feedInventory;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useExpenses = () => {
   const { data } = useOptimizedAppData();
   return data.expenses;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSales = () => {
   const { data } = useOptimizedAppData();
   return data.sales;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSalesSummary = () => {
   const { data } = useOptimizedAppData();
   return data.summary;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useFlockProfile = () => {
   const { data } = useOptimizedAppData();
   return data.flockProfile;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useFlockEvents = () => {
   const { data } = useOptimizedAppData();
   return data.flockEvents;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useCustomers = () => {
   const { data } = useOptimizedAppData();
   return data.customers;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useCRMSales = () => {
   const { data } = useOptimizedAppData();
   return data.sales;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useCRMSummary = () => {
   const { data } = useOptimizedAppData();
   return data.summary;
 };
 
 // Specialized data hooks for backward compatibility
+// eslint-disable-next-line react-refresh/only-export-components
 export const useProductionData = () => {
   const context = useOptimizedAppData();
   return {
@@ -190,6 +213,7 @@ export const useProductionData = () => {
   };
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useFinancialData = () => {
   const context = useOptimizedAppData();
   return {
@@ -204,6 +228,7 @@ export const useFinancialData = () => {
   };
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useFlockData = () => {
   const context = useOptimizedAppData();
   return {
@@ -217,6 +242,7 @@ export const useFlockData = () => {
   };
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useCRMData = () => {
   const context = useOptimizedAppData();
   return {

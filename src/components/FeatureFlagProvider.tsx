@@ -1,23 +1,8 @@
 // Feature Flag Provider for React Context
-import React, { createContext, useContext, useEffect, useState } from 'react'
-import { featureFlags, FeatureFlags } from '../utils/featureFlags'
+import React, { useEffect, useState, useContext } from 'react'
+import { featureFlags, type FeatureFlags } from '../utils/featureFlags'
 import { withEpicMonitoring } from '../utils/monitoring'
-
-interface FeatureFlagContextType {
-  flags: FeatureFlags
-  isEnabled: (flag: keyof FeatureFlags) => boolean
-  loading: boolean
-}
-
-const FeatureFlagContext = createContext<FeatureFlagContextType | undefined>(undefined)
-
-export const useFeatureFlags = (): FeatureFlagContextType => {
-  const context = useContext(FeatureFlagContext)
-  if (!context) {
-    throw new Error('useFeatureFlags must be used within FeatureFlagProvider')
-  }
-  return context
-}
+import { FeatureFlagContext, type FeatureFlagContextType } from '../contexts/FeatureFlagContext'
 
 interface FeatureFlagProviderProps {
   children: React.ReactNode
@@ -42,7 +27,7 @@ export const FeatureFlagProvider: React.FC<FeatureFlagProviderProps> = ({ childr
     }
 
     initializeFlags()
-  }, [])
+  }, [monitor])
 
   const isEnabled = (flag: keyof FeatureFlags): boolean => {
     return featureFlags.isEnabled(flag)
@@ -69,9 +54,12 @@ interface FeatureProps {
 }
 
 export const Feature: React.FC<FeatureProps> = ({ flag, children, fallback = null }) => {
-  const { isEnabled } = useFeatureFlags()
+  const context = useContext(FeatureFlagContext)
+  if (!context) {
+    throw new Error('Feature must be used within FeatureFlagProvider')
+  }
   
-  return isEnabled(flag) ? <>{children}</> : <>{fallback}</>
+  return context.isEnabled(flag) ? <>{children}</> : <>{fallback}</>
 }
 
 // Epic-specific feature components
