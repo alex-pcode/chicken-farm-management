@@ -128,7 +128,7 @@ const CardShowcase: React.FC = () => {
 
         {/* Full-width content for charts and timeline */}
         {(activeTab === 'charts' || activeTab === 'timeline') && (
-          <div className="w-full space-y-8 px-4 pb-8">
+          <div className="w-full space-y-8 pb-8">
             {renderTabContent()}
           </div>
         )}

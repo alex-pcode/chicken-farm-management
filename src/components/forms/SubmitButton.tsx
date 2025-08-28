@@ -30,10 +30,10 @@ const getVariantClasses = (variant: string) => {
 
 const getSizeClasses = (size: string) => {
   switch (size) {
-    case 'sm': return 'px-3 py-2 text-sm';
-    case 'md': return 'px-4 py-2';
-    case 'lg': return 'px-6 py-3 text-lg';
-    default: return 'px-4 py-2';
+    case 'sm': return 'px-4 py-2 text-sm min-w-[120px]';
+    case 'md': return 'px-6 py-2 min-w-[200px]';
+    case 'lg': return 'px-8 py-3 text-lg min-w-[240px]';
+    default: return 'px-6 py-2 min-w-[200px]';
   }
 };
 
@@ -65,21 +65,21 @@ export const SubmitButton: React.FC<SubmitButtonProps> = ({
       whileHover={isDisabled ? {} : { scale: 1.02 }}
       whileTap={isDisabled ? {} : { scale: 0.98 }}
       className={`
-        relative
-        rounded-lg
-        font-medium
+        neu-button
         transition-all
         duration-200
+        font-medium
+        rounded-lg
+        flex
+        items-center
+        justify-center
+        gap-2
         focus:outline-none
         focus:ring-2
         focus:ring-blue-500
         focus:ring-offset-2
         disabled:opacity-50
         disabled:cursor-not-allowed
-        flex
-        items-center
-        justify-center
-        gap-2
         ${getVariantClasses(variant)}
         ${getSizeClasses(size)}
         ${className}

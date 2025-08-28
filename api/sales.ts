@@ -32,7 +32,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Verify authentication
   const user = await getAuthenticatedUser(req, supabase);
   if (!user) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ 
+      success: false,
+      error: { message: 'Unauthorized' }
+    });
   }
 
   const userId = user.id;
@@ -57,7 +60,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         customer_name: sale.customers?.name || 'Unknown Customer'
       }));
 
-      return res.status(200).json(salesWithCustomers);
+      return res.status(200).json({
+        success: true,
+        data: salesWithCustomers
+      });
     }
 
     if (req.method === 'POST') {
@@ -66,15 +72,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Validation
       if (!customer_id || !sale_date || total_amount === undefined) {
-        return res.status(400).json({ error: 'Customer ID, sale date, and total amount are required' });
+        return res.status(400).json({ 
+          success: false,
+          error: { message: 'Customer ID, sale date, and total amount are required' }
+        });
       }
 
       if (total_amount < 0) {
-        return res.status(400).json({ error: 'Total amount cannot be negative' });
+        return res.status(400).json({ 
+          success: false,
+          error: { message: 'Total amount cannot be negative' }
+        });
       }
 
       if ((dozen_count || 0) < 0 || (individual_count || 0) < 0) {
-        return res.status(400).json({ error: 'Egg counts cannot be negative' });
+        return res.status(400).json({ 
+          success: false,
+          error: { message: 'Egg counts cannot be negative' }
+        });
       }
 
       // Verify customer belongs to user
@@ -86,7 +101,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .single();
 
       if (customerError || !customer) {
-        return res.status(400).json({ error: 'Invalid customer ID' });
+        return res.status(400).json({ 
+          success: false,
+          error: { message: 'Invalid customer ID' }
+        });
       }
 
       const { data, error } = await supabase
@@ -114,7 +132,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         customer_name: data.customers?.name || 'Unknown Customer'
       };
 
-      return res.status(201).json(saleWithCustomer);
+      return res.status(201).json({
+        success: true,
+        data: saleWithCustomer
+      });
     }
 
     if (req.method === 'PUT') {
@@ -122,16 +143,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { id, customer_id, sale_date, dozen_count, individual_count, total_amount, notes } = req.body;
 
       if (!id) {
-        return res.status(400).json({ error: 'Sale ID is required' });
+        return res.status(400).json({ 
+          success: false,
+          error: { message: 'Sale ID is required' }
+        });
       }
 
       // Validation
       if (total_amount !== undefined && total_amount < 0) {
-        return res.status(400).json({ error: 'Total amount cannot be negative' });
+        return res.status(400).json({ 
+          success: false,
+          error: { message: 'Total amount cannot be negative' }
+        });
       }
 
       if ((dozen_count !== undefined && dozen_count < 0) || (individual_count !== undefined && individual_count < 0)) {
-        return res.status(400).json({ error: 'Egg counts cannot be negative' });
+        return res.status(400).json({ 
+          success: false,
+          error: { message: 'Egg counts cannot be negative' }
+        });
       }
 
       // If customer_id is being updated, verify it belongs to user
@@ -144,7 +174,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           .single();
 
         if (customerError || !customer) {
-          return res.status(400).json({ error: 'Invalid customer ID' });
+          return res.status(400).json({ 
+          success: false,
+          error: { message: 'Invalid customer ID' }
+        });
         }
       }
 
@@ -170,7 +203,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (error) throw error;
 
       if (!data) {
-        return res.status(404).json({ error: 'Sale not found' });
+        return res.status(404).json({ 
+          success: false,
+          error: { message: 'Sale not found' }
+        });
       }
 
       // Transform the response to include customer_name
@@ -179,12 +215,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         customer_name: data.customers?.name || 'Unknown Customer'
       };
 
-      return res.status(200).json(saleWithCustomer);
+      return res.status(200).json({
+        success: true,
+        data: saleWithCustomer
+      });
     }
 
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ 
+      success: false,
+      error: { message: 'Method not allowed' }
+    });
   } catch (error) {
     console.error('Sales API error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ 
+      success: false,
+      error: { message: 'Internal server error' }
+    });
   }
 }

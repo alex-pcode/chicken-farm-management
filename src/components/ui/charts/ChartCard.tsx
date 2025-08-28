@@ -12,6 +12,8 @@ interface ChartCardProps extends BaseUIComponentProps {
   subtitle?: string;
   height?: number;
   loading?: boolean;
+  variant?: 'default' | 'compact' | 'detailed';
+  showBorder?: boolean;
 }
 
 export const ChartCard: React.FC<ChartCardProps> = ({
@@ -19,6 +21,8 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   subtitle,
   height = 240,
   loading = false,
+  variant = 'default',
+  showBorder = true,
   children,
   className = '',
   testId,
@@ -28,7 +32,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`chart-card flex flex-col gap-4 ${className}`}
+        className={`chart-card bg-white rounded-xl ${showBorder ? 'border border-gray-200 shadow-sm hover:shadow-md' : 'shadow-none'} p-6 transition-shadow flex flex-col gap-4 ${className}`}
         data-testid={testId}
       >
         <div>
@@ -52,14 +56,14 @@ export const ChartCard: React.FC<ChartCardProps> = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`chart-card flex flex-col gap-4 ${className}`}
+      className={`chart-card bg-white rounded-xl ${showBorder ? 'border border-gray-200 shadow-sm hover:shadow-md' : 'shadow-none'} p-6 transition-shadow flex flex-col gap-4 ${className}`}
       data-testid={testId}
     >
       <div>
         <h3 className="text-base lg:text-lg font-semibold text-gray-900">{title}</h3>
         {subtitle && <p className="text-xs lg:text-sm text-gray-600 mt-1">{subtitle}</p>}
       </div>
-      <div className="aspect-auto h-60 w-full" style={{ height }}>
+      <div className="chart-container w-full" style={{ height }}>
         {children}
       </div>
     </motion.div>

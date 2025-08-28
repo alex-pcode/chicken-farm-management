@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { TrashIcon } from '@heroicons/react/24/outline';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
+import { CHART_COLORS, CHART_MARGINS } from '../constants/chartColors';
 import { LoadingSpinner } from './LoadingSpinner';
 import type { Expense } from '../types';
 import { AnimatedCoinPNG } from './AnimatedCoinPNG';
@@ -156,16 +157,7 @@ export const Expenses = () => {
     return CATEGORIES.map(category => ({
       name: category,
       total: expensesByCategory[category] || 0,
-      color: {
-        Birds: '#8B5CF6',
-        Feed: '#06B6D4', 
-        Equipment: '#10B981',
-        Veterinary: '#F59E0B',
-        Maintenance: '#EF4444',
-        Supplies: '#EC4899',
-        'Start-up': '#8B5A2B',
-        Other: '#6B7280'
-      }[category] || '#6B7280'
+      color: CHART_COLORS.categories[category as keyof typeof CHART_COLORS.categories] || CHART_COLORS.primary
     }));
   }, [expensesByCategory]);
 
@@ -182,8 +174,8 @@ export const Expenses = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="space-y-8 max-w-7xl mx-auto pt-20"
-      style={{ margin: '0px auto', opacity: 1 }}
+      className="space-y-8 max-w-7xl mx-auto mt-[80px] md:mt-0"
+      style={{ opacity: 1 }}
     >
       {/* Animated Piggy Bank Section - Testing (will be for new users) */}
       <motion.div
@@ -341,18 +333,19 @@ export const Expenses = () => {
         <ChartCard
           title="Expense Breakdown"
           subtitle="Monthly expenses by category"
+          height={320}
           loading={isLoading}
         >
           {!isLoading && (
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart margin={CHART_MARGINS.default}>
                 <Pie
                   data={categoryData.filter(item => item.total > 0)}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
+                  outerRadius={90}
                   fill="#8884d8"
                   dataKey="total"
                 >

@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useOptimizedAppData } from '../contexts/OptimizedDataProvider';
+import { useOptimizedAppData, useSalesSummary } from '../contexts/OptimizedDataProvider';
 import { 
   StatCard, 
   MetricDisplay, 
@@ -17,6 +17,7 @@ type TimePeriod = 'all' | 'month' | 'year' | 'custom';
 
 export const Savings = () => {
   const { data, isLoading } = useOptimizedAppData();
+  const salesSummary = useSalesSummary();
   const [flockSummary, setFlockSummary] = useState<FlockSummary | null>(null);
   const [flockLoading, setFlockLoading] = useState(true);
   const [eggPrice, setEggPrice] = useState('0.30'); // Default price per egg
@@ -113,70 +114,6 @@ export const Savings = () => {
     };
   }, [data, eggPrice, startingCost, getFilteredData, isLoading, timePeriod]);
 
-  // Memoized productivity calculations using FlockSummary data
-  const productivityStats = useMemo(() => {
-    if (isLoading || flockLoading || !flockSummary) {
-      return { 
-        eggsPerHen: 0, 
-        dailyLayRate: 0, 
-        revenuePerHen: 0,
-        layingHens: 0,
-        notLayingHens: 0,
-        broodingHens: 0
-      };
-    }
-
-    // Use laying hens specifically for calculations
-    const layingHens = flockSummary.expectedLayers || 0;
-    const notLayingHens = (flockSummary.totalHens || 0) - layingHens - (flockSummary.totalBrooding || 0);
-    const broodingHens = flockSummary.totalBrooding || 0;
-
-    if (layingHens === 0) {
-      return { 
-        eggsPerHen: 0, 
-        dailyLayRate: 0, 
-        revenuePerHen: 0,
-        layingHens,
-        notLayingHens,
-        broodingHens
-      };
-    }
-
-    // Use filtered eggs for the selected time period
-    const filteredEggs = data.eggEntries
-      .filter((entry: EggEntry) => getFilteredData(entry.date))
-      .reduce((sum: number, entry: { count: number }) => sum + entry.count, 0);
-
-    // Calculate eggs per laying hen for the selected period
-    const eggsPerHen = filteredEggs / layingHens;
-
-    // Calculate daily lay rate for the selected period
-    let dailyLayRate = 0;
-    const filteredEntries = data.eggEntries.filter((entry: EggEntry) => getFilteredData(entry.date));
-    
-    if (filteredEntries.length > 0) {
-      // Get the date range of filtered entries
-      const dates = filteredEntries.map((entry: EggEntry) => new Date(entry.date));
-      const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
-      const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
-      const daysDiff = Math.max(1, Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
-      
-      // Use laying hens for daily lay rate calculation
-      dailyLayRate = (filteredEggs / (daysDiff * layingHens)) * 100;
-    }
-
-    // Calculate revenue per laying hen for the selected period
-    const revenuePerHen = eggsPerHen * parseFloat(eggPrice);
-
-    return { 
-      eggsPerHen, 
-      dailyLayRate, 
-      revenuePerHen,
-      layingHens,
-      notLayingHens,
-      broodingHens
-    };
-  }, [data, eggPrice, isLoading, flockLoading, flockSummary, getFilteredData]);
 
   const handleEggPriceChange = (value: number) => {
     setEggPrice(value.toString());
@@ -259,7 +196,7 @@ export const Savings = () => {
 
       <div className="mb-8">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900" style={{ marginBottom: '10px' }}>Financial Summary</h2>
+          <h2 className="text-2xl font-bold text-gray-900" style={{ marginBottom: 0 }}>Financial Summary</h2>
           <div className="w-48">
             <SelectInput
               label=""
@@ -324,123 +261,123 @@ export const Savings = () => {
               total={savingsData.totalEggs}
               label="collected eggs"
               icon="🥚"
-              variant="corner-gradient"
+              variant="dark"
             />
             
             <StatCard
-              title="Egg Value"
+              title="You've Saved"
               total={formatCurrency(savingsData.totalEggs * savingsData.eggPrice)}
-              label="total potential revenue"
+              label="vs buying organic eggs"
               icon="💰"
-              variant="corner-gradient"
+              variant="dark"
             />
 
             <StatCard
-              title="Operating Expenses"
+              title="You've Invested"
               total={formatCurrency(savingsData.totalExpenses)}
-              label={timePeriod === 'all' ? 'including startup costs' : 'period expenses only'}
-              icon="📊"
-              variant="corner-gradient"
+              label="in chicken happiness"
+              icon="❤️"
+              variant="dark"
             />
 
             <StatCard
-              title="Net Profit/Loss"
+              title={savingsData.netSavings >= 0 ? "Chickens Rewarded You" : "Chickens Owe You"}
               total={formatCurrency(savingsData.netSavings)}
-              label={timePeriod === 'all' ? 'including startup costs' : 'period profit only'}
-              icon={savingsData.netSavings >= 0 ? '📈' : '📉'}
-              variant="corner-gradient"
+              label={savingsData.netSavings >= 0 ? "in delicious eggs" : "in uncollected eggs"}
+              icon={savingsData.netSavings >= 0 ? '😋' : '🤝'}
+              variant="dark"
             />
           </GridContainer>
         </motion.div>
       </div>
 
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900" style={{ marginBottom: '10px' }}>Productivity Analysis</h2>
+        <h2 className="text-2xl font-bold text-gray-900" style={{ marginBottom: '10px' }}>Lifestyle Impact</h2>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="space-y-12"
+          transition={{ delay: 0.25 }}
         >
-          <div className="mb-12">
-            {flockSummary ? (
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <StatCard 
-                  title="Laying Hens" 
-                  total={productivityStats.layingHens} 
-                  label={`${Math.ceil((flockSummary.batchSummary?.filter(b => b.isLayingAge).length || 0))} batches laying`}
-                  icon="🐔"
-                  variant="corner-gradient"
-                  testId="laying-hens-stat"
-                />
-                <StatCard 
-                  title="Not Laying" 
-                  total={productivityStats.notLayingHens} 
-                  label={`${Math.ceil((flockSummary.batchSummary?.filter(b => !b.isLayingAge && b.type === 'hens').length || 0))} batches not laying`}
-                  icon="⏳"
-                  variant="corner-gradient"
-                  testId="not-laying-hens-stat"
-                />
-                <StatCard 
-                  title="Brooding Hens" 
-                  total={productivityStats.broodingHens} 
-                  label={`${Math.ceil((flockSummary.batchSummary?.filter(b => b.type === 'brooding').length || 0))} batches brooding`}
-                  icon="🪺"
-                  variant="corner-gradient"
-                  testId="brooding-hens-stat"
-                />
-                <StatCard 
-                  title="Roosters" 
-                  total={flockSummary.totalRoosters} 
-                  label={`${Math.ceil((flockSummary.batchSummary?.filter(b => b.type === 'roosters').length || 0))} batches`}
-                  icon="🐓"
-                  variant="corner-gradient"
-                  testId="roosters-stat"
-                />
-                <StatCard 
-                  title="Chicks" 
-                  total={flockSummary.totalChicks} 
-                  label={`${Math.ceil((flockSummary.batchSummary?.filter(b => b.type === 'chicks').length || 0))} batches`}
-                  icon="🐥"
-                  variant="corner-gradient"
-                  testId="chicks-stat"
-                />
-              </div>
-            ) : (
-              <div className="text-gray-500 text-center py-6">
-                No flock data available. Please set up your batches in the Flock Management section first.
-              </div>
-            )}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+            <StatCard
+              title="You've Gone"
+              total={(() => {
+                const filteredEntries = data.eggEntries.filter((entry: EggEntry) => getFilteredData(entry.date));
+                if (filteredEntries.length === 0) return 0;
+                
+                const dates = filteredEntries.map((entry: EggEntry) => new Date(entry.date));
+                const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
+                const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+                return Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+              })()}
+              label="days without needing store eggs"
+              icon="🏪"
+              variant="corner-gradient"
+            />
+
+            <StatCard
+              title="You've Given"
+              total={salesSummary?.free_eggs_given || 0}
+              label="eggs for free (all time)"
+              icon="🎁"
+              variant="corner-gradient"
+            />
+
+            <StatCard
+              title="You've Eaten"
+              total={(() => {
+                const totalEggs = savingsData.totalEggs;
+                const eggsSold = salesSummary?.total_eggs_sold || 0;
+                const eggsGiven = salesSummary?.free_eggs_given || 0;
+                const eggsConsumed = totalEggs - eggsSold - eggsGiven;
+                return Math.floor(eggsConsumed / 5);
+              })()}
+              label="omelettes (5 eggs each)"
+              icon="🍳"
+              variant="corner-gradient"
+            />
+
+            <StatCard
+              title="You've Enjoyed"
+              total={(() => {
+                const filteredEntries = data.eggEntries.filter((entry: EggEntry) => getFilteredData(entry.date));
+                if (filteredEntries.length === 0) return 0;
+                
+                const dates = filteredEntries.map((entry: EggEntry) => new Date(entry.date));
+                const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
+                const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+                const totalDays = Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                return Math.floor(totalDays * 0.5);
+              })()}
+              label="hours of chicken comedy"
+              icon="📺"
+              variant="corner-gradient"
+            />
+
+            <StatCard
+              title="You've Saved"
+              total={(() => {
+                // For now, use current total birds + deaths as an approximation
+                // This isn't perfect since we don't have the actual totalInitial from the API
+                if (!flockSummary) return 0;
+                return flockSummary.totalBirds + flockSummary.totalDeaths;
+              })()}
+              label="chickens from caged life"
+              icon="🕊️"
+              variant="corner-gradient"
+            />
+
+            <StatCard
+              title="You've Raised"
+              total={(() => {
+                if (!flockSummary?.batchSummary) return 0;
+                return flockSummary.batchSummary.filter(batch => batch.ageAtAcquisition === 'chick').length;
+              })()}
+              label="flocks from baby chickens"
+              icon="🐣"
+              variant="corner-gradient"
+            />
           </div>
-
-          <GridContainer columns={3} gap="lg">
-            <MetricDisplay
-              value={productivityStats.eggsPerHen.toFixed(1)}
-              label={`${timePeriod === 'all' ? 'lifetime' : timePeriod} eggs per hen`}
-              format="decimal"
-              precision={1}
-              variant="default"
-              color="default"
-            />
-
-            <MetricDisplay
-              value={productivityStats.dailyLayRate.toFixed(1)}
-              label="average daily lay rate"
-              format="percentage"
-              precision={1}
-              variant="default"
-              color="default"
-            />
-
-            <MetricDisplay
-              value={productivityStats.revenuePerHen}
-              label={`${timePeriod === 'all' ? 'lifetime' : timePeriod} revenue per hen`}
-              format="currency"
-              precision={2}
-              variant="default"
-              color="default"
-            />
-          </GridContainer>
         </motion.div>
       </div>
 

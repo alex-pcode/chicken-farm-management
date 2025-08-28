@@ -311,6 +311,29 @@ async function handlePost(req: VercelRequest, res: VercelResponse, userId: strin
       }
     }
 
+    // Create initial "Welcome to the Coop!" timeline event
+    console.log('Creating initial timeline event for batch:', batch.id);
+    
+    const { error: eventError } = await supabase
+      .from('batch_events')
+      .insert({
+        user_id: userId,
+        batch_id: batch.id,
+        date: acquisitionDate,
+        type: 'flock_added',
+        description: 'Welcome to the Coop!',
+        affected_count: parsedInitialCount,
+        notes: `Initial batch creation: ${parsedInitialCount} ${type} acquired from ${source}`
+      });
+
+    if (eventError) {
+      console.error('Failed to create initial timeline event:', eventError);
+      // Don't fail the batch creation if event creation fails
+      // Just log the error and continue
+    } else {
+      console.log('Initial "Welcome to the Coop!" timeline event created successfully');
+    }
+
     // Transform response
     const transformedBatch = {
       id: batch.id,

@@ -8,7 +8,18 @@ import {
   GridContainer, 
   EmptyState 
 } from './ui';
+import { ChartCard } from './ui/charts/ChartCard';
 import { NeumorphicSelect } from './forms/NeumorphicSelect';
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer 
+} from 'recharts';
 
 interface FlockSizeAtDate {
   date: string;
@@ -17,6 +28,16 @@ interface FlockSizeAtDate {
   roosters: number;
   chicks: number;
   brooding: number;
+}
+
+interface FlockChange {
+  date: string;
+  type: 'acquisition' | 'death';
+  changeAmount: number;
+  previousCount: number;
+  newCount: number;
+  description: string;
+  batchName?: string;
 }
 
 interface FeedPeriod {
@@ -29,7 +50,16 @@ interface FeedPeriod {
   costPerBirdPerDay: number;
   costPerBirdPerMonth: number;
   hasFlockChanges?: boolean;
+  flockChanges?: FlockChange[];
   subPeriods?: FeedPeriod[];
+}
+
+interface MonthlyFeedCostData {
+  month: string;
+  costPerBirdPerMonth: number;
+  totalCost: number;
+  avgFlockSize: number;
+  feedPeriods: number;
 }
 
 export const FeedCostCalculator = () => {
@@ -42,110 +72,116 @@ export const FeedCostCalculator = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<FeedPeriod | null>(null);
   const [timeRange, setTimeRange] = useState<'3months' | '6months' | '12months' | 'all'>('6months');
 
-    // Build flock size history from events and profile
+    // Build flock size history from flock batches and death records
   useEffect(() => {
-    if (!flockProfile) return;
-
-
+    const flockBatches = data.flockBatches;
+    const deathRecords = data.deathRecords;
+    
+    if (!flockBatches.length) return;
 
     const history: FlockSizeAtDate[] = [];
     
-    // Process events chronologically to build the flock history
-    const sortedEvents = [...(flockProfile.events || [])].sort((a, b) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    // Create timeline events from flock batches and death records
+    const timelineEvents: Array<{
+      date: string;
+      type: 'acquisition' | 'death';
+      batchId?: string;
+      hens: number;
+      roosters: number;
+      chicks: number;
+      brooding: number;
+      totalBirds: number;
+    }> = [];
     
-    // Use the earliest event date as the start date, or flock start date if earlier
-    let startDate = flockProfile.flockStartDate || new Date().toISOString().split('T')[0];
-    if (sortedEvents.length > 0) {
-      const earliestEventDate = sortedEvents[0].date;
-      if (new Date(earliestEventDate) < new Date(startDate)) {
-        startDate = earliestEventDate;
-      }
-    }
-
-    
-    // Find the first acquisition event to use as our baseline
-    const firstAcquisition = sortedEvents.find(event => event.type === 'acquisition' && event.affectedBirds);
-    
-    let currentSize;
-    if (firstAcquisition && firstAcquisition.affectedBirds) {
-      // Use the first acquisition as the baseline
-      currentSize = {
-        totalBirds: firstAcquisition.affectedBirds,
-        hens: firstAcquisition.affectedBirds,
-        roosters: 0,
-        chicks: 0,
-        brooding: 0
-      };
-    } else {
-      // No acquisition event, use reasonable default
-      currentSize = {
-        totalBirds: 10,
-        hens: 10,
-        roosters: 0,
-        chicks: 0,
-        brooding: 0
-      };
-    }
-    
-    // Add the starting point
-    history.push({
-      date: startDate,
-      ...currentSize
+    // Add acquisition events from flock batches
+    flockBatches.forEach(batch => {
+      if (!batch.isActive) return; // Skip inactive batches
+      
+      timelineEvents.push({
+        date: batch.acquisitionDate,
+        type: 'acquisition',
+        batchId: batch.id,
+        hens: batch.hensCount || 0,
+        roosters: batch.roostersCount || 0,
+        chicks: batch.chicksCount || 0,
+        brooding: batch.broodingCount || 0,
+        totalBirds: batch.initialCount // Use initial count, not current count
+      });
     });
     
-    // Process remaining events (skip the first acquisition since we used it as baseline)
-    for (const event of sortedEvents) {
-      if (event.type === 'acquisition' && event === firstAcquisition) {
-        continue;
+    // Add death events from death records
+    deathRecords.forEach(deathRecord => {
+      const batch = flockBatches.find(b => b.id === deathRecord.batchId);
+      if (!batch || !batch.isActive) return;
+      
+      timelineEvents.push({
+        date: deathRecord.date,
+        type: 'death',
+        batchId: deathRecord.batchId,
+        hens: 0,
+        roosters: 0,
+        chicks: 0,
+        brooding: 0,
+        totalBirds: -deathRecord.count // Negative for death
+      });
+    });
+    
+    // Sort events chronologically
+    timelineEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    // Build cumulative flock size history
+    let currentSize = {
+      hens: 0,
+      roosters: 0,
+      chicks: 0,
+      brooding: 0,
+      totalBirds: 0
+    };
+    
+    // Process each timeline event
+    for (const event of timelineEvents) {
+      if (event.type === 'acquisition') {
+        currentSize = {
+          hens: currentSize.hens + event.hens,
+          roosters: currentSize.roosters + event.roosters,
+          chicks: currentSize.chicks + event.chicks,
+          brooding: currentSize.brooding + event.brooding,
+          totalBirds: currentSize.totalBirds + event.totalBirds
+        };
+      } else if (event.type === 'death') {
+        // For deaths, we reduce the total but maintain proportions
+        const deathCount = Math.abs(event.totalBirds);
+        currentSize = {
+          hens: Math.max(0, currentSize.hens - Math.floor((currentSize.hens / currentSize.totalBirds) * deathCount) || 0),
+          roosters: Math.max(0, currentSize.roosters - Math.floor((currentSize.roosters / currentSize.totalBirds) * deathCount) || 0),
+          chicks: Math.max(0, currentSize.chicks - Math.floor((currentSize.chicks / currentSize.totalBirds) * deathCount) || 0),
+          brooding: Math.max(0, currentSize.brooding - Math.floor((currentSize.brooding / currentSize.totalBirds) * deathCount) || 0),
+          totalBirds: Math.max(0, currentSize.totalBirds - deathCount)
+        };
       }
       
-      // Handle different event types that affect flock size
-      if (event.affectedBirds) {
-        const affectedBirds = event.affectedBirds;
-        
-        if (event.type === 'acquisition' || event.type === 'hatching') {
-          currentSize = {
-            ...currentSize,
-            chicks: currentSize.chicks + affectedBirds,
-            totalBirds: currentSize.totalBirds + affectedBirds
-          };
-        } else if (event.type === 'other') {
-          // Check if this is a loss/death event (negative impact)
-          // For now, let's assume "other" events with affected birds are losses
-          if (event.description?.toLowerCase().includes('loss') || 
-              event.description?.toLowerCase().includes('death') ||
-              event.description?.toLowerCase().includes('died') ||
-              event.notes?.toLowerCase().includes('loss') ||
-              event.notes?.toLowerCase().includes('death') ||
-              event.notes?.toLowerCase().includes('died')) {
-            currentSize = {
-              ...currentSize,
-              totalBirds: Math.max(0, currentSize.totalBirds - affectedBirds),
-              // Reduce from chicks first, then hens
-              chicks: Math.max(0, currentSize.chicks - Math.min(affectedBirds, currentSize.chicks)),
-              hens: currentSize.chicks >= affectedBirds ? currentSize.hens : Math.max(0, currentSize.hens - (affectedBirds - currentSize.chicks))
-            };
-          } else {
-            currentSize = {
-              ...currentSize,
-              chicks: currentSize.chicks + affectedBirds,
-              totalBirds: currentSize.totalBirds + affectedBirds
-            };
-          }
-        } else {
-          continue;
-        }
-        
-        history.push({
-          date: event.date,
-          ...currentSize
-        });
-      }
+      // Add snapshot to history
+      history.push({
+        date: event.date,
+        ...currentSize
+      });
     }
+    
+    // If no events, add current flock profile as baseline
+    if (history.length === 0 && flockProfile) {
+      const profileDate = flockProfile.flockStartDate || new Date().toISOString().split('T')[0];
+      history.push({
+        date: profileDate,
+        hens: flockProfile.hens || 0,
+        roosters: flockProfile.roosters || 0,
+        chicks: flockProfile.chicks || 0,
+        brooding: flockProfile.brooding || 0,
+        totalBirds: (flockProfile.hens || 0) + (flockProfile.roosters || 0) + (flockProfile.chicks || 0) + (flockProfile.brooding || 0)
+      });
+    }
+    
     setFlockHistory(history);
-  }, [flockProfile]);
+  }, [data.flockBatches, data.deathRecords, flockProfile]);
 
   // Calculate feed periods with flock size
   useEffect(() => {
@@ -172,26 +208,127 @@ export const FeedCostCalculator = () => {
       const hasFlockChanges = flockChanges.length > 0;
       
       if (hasFlockChanges) {
-        // Handle periods with flock changes - simplified for now
-        const subPeriods: FeedPeriod[] = [];
+        // Handle periods with flock changes using consumption-based allocation
         const totalCost = feed.quantity * feed.pricePerUnit;
+        const totalFeedQuantity = feed.quantity;
         
-        // Create parent period that contains the sub-periods
+        // Build chronological list of all dates in this period (start + changes + end)
+        const periodDates = [startDate, ...flockChanges.map(c => c.date), endDate]
+          .filter((date, index, arr) => arr.indexOf(date) === index) // Remove duplicates
+          .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+        
+        // Calculate baseline consumption rate: total feed ÷ total bird-days
+        const totalBirdDays = periodDates.slice(0, -1).reduce((total, date, i) => {
+          const nextDate = periodDates[i + 1];
+          const subDuration = Math.ceil(
+            (new Date(nextDate).getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24)
+          );
+          const flockSize = getFlockSizeAtDate(date);
+          return total + (flockSize.totalBirds * subDuration);
+        }, 0);
+        
+        const feedPerBirdPerDay = totalBirdDays > 0 ? totalFeedQuantity / totalBirdDays : 0;
+        const costPerBirdPerDay = totalBirdDays > 0 ? totalCost / totalBirdDays : 0;
+        const costPerBirdPerMonth = costPerBirdPerDay * 30;
+        
+        // Create sub-periods with consumption-based allocation
+        const subPeriods: FeedPeriod[] = [];
+        
+        for (let i = 0; i < periodDates.length - 1; i++) {
+          const subStartDate = periodDates[i];
+          const subEndDate = periodDates[i + 1];
+          const subDuration = Math.ceil(
+            (new Date(subEndDate).getTime() - new Date(subStartDate).getTime()) / (1000 * 60 * 60 * 24)
+          );
+          
+          if (subDuration <= 0) continue;
+          
+          const subFlockSize = getFlockSizeAtDate(subStartDate);
+          const birdDays = subFlockSize.totalBirds * subDuration;
+          
+          // Feed consumed and cost for this sub-period
+          const feedConsumed = birdDays * feedPerBirdPerDay;
+          const subCost = birdDays * costPerBirdPerDay;
+          
+          subPeriods.push({
+            feedEntry: { ...feed, quantity: feedConsumed },
+            startDate: subStartDate,
+            endDate: subEndDate,
+            duration: subDuration,
+            totalCost: subCost,
+            flockSize: subFlockSize,
+            costPerBirdPerDay: costPerBirdPerDay, // Same for all sub-periods
+            costPerBirdPerMonth: costPerBirdPerMonth, // Same for all sub-periods
+            hasFlockChanges: false
+          });
+        }
+        
+        // Weighted averages (should equal the consistent rate)
+        const weightedCostPerBirdPerDay = costPerBirdPerDay;
+        const weightedCostPerBirdPerMonth = costPerBirdPerMonth;
+        
+        // Build detailed flock change information
+        const detailedFlockChanges: FlockChange[] = flockChanges.map((change, index) => {
+          const previousChange = index > 0 ? flockChanges[index - 1] : 
+            getFlockSizeAtDate(startDate);
+          
+          // Determine change type and details from our timeline data
+          const timelineEvent = data.flockBatches.find(batch => batch.acquisitionDate === change.date) ||
+            data.deathRecords.find(record => record.date === change.date);
+            
+          let changeType: 'acquisition' | 'death' = 'acquisition';
+          let description = 'Flock change';
+          let batchName: string | undefined;
+          let changeAmount = 0;
+          
+          if (timelineEvent) {
+            if ('batchName' in timelineEvent) {
+              // It's a batch acquisition
+              changeType = 'acquisition';
+              changeAmount = timelineEvent.initialCount;
+              description = `Added ${changeAmount} birds from batch "${timelineEvent.batchName}"`;
+              batchName = timelineEvent.batchName;
+            } else {
+              // It's a death record
+              changeType = 'death';
+              changeAmount = -timelineEvent.count;
+              const batch = data.flockBatches.find(b => b.id === timelineEvent.batchId);
+              description = `Lost ${Math.abs(changeAmount)} birds - ${timelineEvent.cause}`;
+              if (batch) {
+                description += ` (from batch "${batch.batchName}")`;
+                batchName = batch.batchName;
+              }
+            }
+          }
+          
+          return {
+            date: change.date,
+            type: changeType,
+            changeAmount,
+            previousCount: previousChange.totalBirds,
+            newCount: change.totalBirds,
+            description,
+            batchName
+          };
+        });
+        
+        // Create parent period with weighted averages
         periods.push({
           feedEntry: feed,
           startDate,
           endDate,
           duration,
           totalCost,
-          flockSize: flockHistory[0] || { date: startDate, totalBirds: 0, hens: 0, roosters: 0, chicks: 0, brooding: 0 }, // Initial flock size
-          costPerBirdPerDay: 0, // Will be calculated from sub-periods
-          costPerBirdPerMonth: 0, // Will be calculated from sub-periods
+          flockSize: getFlockSizeAtDate(startDate), // Flock size at start of period
+          costPerBirdPerDay: weightedCostPerBirdPerDay,
+          costPerBirdPerMonth: weightedCostPerBirdPerMonth,
           hasFlockChanges: true,
+          flockChanges: detailedFlockChanges,
           subPeriods: subPeriods
         });
       } else {
         // Simple case: flock size constant throughout period
-        const flockSize = flockHistory[0] || { date: startDate, totalBirds: 0, hens: 0, roosters: 0, chicks: 0, brooding: 0 };
+        const flockSize = getFlockSizeAtDate(startDate);
         const totalCost = feed.quantity * feed.pricePerUnit;
         const costPerBirdPerDay = flockSize.totalBirds > 0 ? totalCost / duration / flockSize.totalBirds : 0;
         const costPerBirdPerMonth = costPerBirdPerDay * 30;
@@ -279,7 +416,14 @@ export const FeedCostCalculator = () => {
               <h4 className="font-semibold text-gray-900">{period.feedEntry.brand}</h4>
               <p className="text-sm text-gray-600">{period.feedEntry.type}</p>
               {period.hasFlockChanges && (
-                <p className="text-xs text-orange-600 font-medium mt-1">⚠️ Flock changed during period</p>
+                <div className="mt-1 space-y-1">
+                  <p className="text-xs text-orange-600 font-medium">
+                    ⚠️ {period.flockChanges?.length || 0} flock change{period.flockChanges?.length !== 1 ? 's' : ''} during period
+                  </p>
+                  <p className="text-xs text-blue-600 font-medium">
+                    📊 Consumption-based allocation applied
+                  </p>
+                </div>
               )}
             </div>
             <div>
@@ -301,36 +445,52 @@ export const FeedCostCalculator = () => {
             </div>
           </div>
 
-          {/* Sub-periods (tree structure) */}
-          {hasSubPeriods && (
-            <div className="mt-4 pl-6 border-l-2 border-gray-200">
-              <h5 className="text-sm font-semibold text-gray-700 mb-2">Sub-periods (flock changes):</h5>
+          {/* Flock Changes Section */}
+          {period.hasFlockChanges && period.flockChanges && period.flockChanges.length > 0 && (
+            <div className="mt-4 pl-6 border-l-2 border-orange-200">
+              <h5 className="text-sm font-semibold text-gray-700 mb-2">🔄 Flock Changes During This Period:</h5>
               <div className="space-y-2">
-                {period.subPeriods!.map((subPeriod, subIndex) => (
+                {period.flockChanges.map((change, changeIndex) => (
                   <motion.div
-                    key={`${period.feedEntry.id}-sub-${subIndex}`}
+                    key={`${period.feedEntry.id}-change-${changeIndex}`}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: (index * 0.05) + (subIndex * 0.02) }}
-                    className="bg-gray-50 rounded-lg p-3 border border-gray-200"
+                    transition={{ delay: (index * 0.05) + (changeIndex * 0.02) }}
+                    className={`rounded-lg p-3 border ${
+                      change.type === 'acquisition' 
+                        ? 'bg-green-50 border-green-200' 
+                        : 'bg-red-50 border-red-200'
+                    }`}
                   >
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div>
-                        <p className="text-xs text-gray-600">Sub-period</p>
-                        <p className="text-sm font-medium">{subPeriod.startDate} to {subPeriod.endDate}</p>
-                        <p className="text-xs text-gray-500">{subPeriod.duration} days</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-600">Flock Size</p>
-                        <p className="text-sm font-medium">{subPeriod.flockSize.totalBirds} birds</p>
-                        <p className="text-xs text-gray-500">
-                          {subPeriod.flockSize.hens}H {subPeriod.flockSize.roosters}R {subPeriod.flockSize.chicks}C {subPeriod.flockSize.brooding}B
+                        <p className="text-xs text-gray-600">Date</p>
+                        <p className="text-sm font-medium">{change.date}</p>
+                        <p className={`text-xs font-medium mt-1 ${
+                          change.type === 'acquisition' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {change.type === 'acquisition' ? '+ Added' : '- Lost'}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-600">Cost Per Bird</p>
-                        <p className="text-sm font-medium text-green-600">${subPeriod.costPerBirdPerMonth.toFixed(2)}/month</p>
-                        <p className="text-xs text-gray-500">${subPeriod.costPerBirdPerDay.toFixed(3)}/day</p>
+                        <p className="text-xs text-gray-600">Change</p>
+                        <p className={`text-sm font-medium ${
+                          change.type === 'acquisition' ? 'text-green-700' : 'text-red-700'
+                        }`}>
+                          {change.previousCount} → {change.newCount} birds
+                        </p>
+                        <p className={`text-xs ${
+                          change.type === 'acquisition' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {change.type === 'acquisition' ? '+' : ''}{change.changeAmount} birds
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">Details</p>
+                        <p className="text-sm text-gray-700">{change.description}</p>
+                        {change.batchName && (
+                          <p className="text-xs text-blue-600 mt-1">Batch: {change.batchName}</p>
+                        )}
                       </div>
                     </div>
                   </motion.div>
@@ -338,6 +498,7 @@ export const FeedCostCalculator = () => {
               </div>
             </div>
           )}
+
 
           {/* Detailed view when selected */}
           {isSelected && (
@@ -513,8 +674,75 @@ export const FeedCostCalculator = () => {
     };
   };
 
+  const calculateMonthlyTrends = (): MonthlyFeedCostData[] => {
+    const filteredPeriods = getFilteredPeriods();
+    if (filteredPeriods.length === 0) return [];
+
+    const monthlyData = new Map<string, {
+      costs: number[];
+      totalCosts: number[];
+      flockSizes: number[];
+      periodCount: number;
+    }>();
+
+    filteredPeriods.forEach(period => {
+      const startDate = new Date(period.startDate);
+      const endDate = new Date(period.endDate);
+      
+      // Generate months this period spans
+      const currentMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+      const endMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+
+      while (currentMonth <= endMonth) {
+        const monthKey = currentMonth.toISOString().slice(0, 7); // YYYY-MM format
+        
+        if (!monthlyData.has(monthKey)) {
+          monthlyData.set(monthKey, {
+            costs: [],
+            totalCosts: [],
+            flockSizes: [],
+            periodCount: 0
+          });
+        }
+
+        const monthData = monthlyData.get(monthKey)!;
+        monthData.costs.push(period.costPerBirdPerMonth);
+        monthData.totalCosts.push(period.totalCost);
+        monthData.flockSizes.push(period.flockSize.totalBirds);
+        monthData.periodCount++;
+
+        currentMonth.setMonth(currentMonth.getMonth() + 1);
+      }
+    });
+
+    // Convert to array and calculate averages
+    const result: MonthlyFeedCostData[] = [];
+    
+    Array.from(monthlyData.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .forEach(([monthKey, data]) => {
+        const avgCostPerBird = data.costs.reduce((sum, cost) => sum + cost, 0) / data.costs.length;
+        const avgTotalCost = data.totalCosts.reduce((sum, cost) => sum + cost, 0) / data.totalCosts.length;
+        const avgFlockSize = data.flockSizes.reduce((sum, size) => sum + size, 0) / data.flockSizes.length;
+        
+        const date = new Date(monthKey + '-01');
+        const monthLabel = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+
+        result.push({
+          month: monthLabel,
+          costPerBirdPerMonth: avgCostPerBird,
+          totalCost: avgTotalCost,
+          avgFlockSize: Math.round(avgFlockSize),
+          feedPeriods: data.periodCount
+        });
+      });
+
+    return result;
+  };
+
   const averages = calculateAverages();
   const filteredPeriods = getFilteredPeriods();
+  const monthlyTrends = calculateMonthlyTrends();
 
   return (
     <div className="space-y-6">
@@ -576,6 +804,89 @@ export const FeedCostCalculator = () => {
         </>
       )}
 
+      {/* Feed Cost Trends Chart */}
+      {monthlyTrends.length > 0 && (
+        <SectionContainer
+          title="📈 Feed Cost Trends"
+          description="Monthly feed cost per bird, total monthly costs, and flock size over time"
+          variant="glass"
+        >
+          <ChartCard
+            title="Feed Cost Analysis Over Time"
+            subtitle="Monthly feed cost per bird, total monthly cost, and flock size trends"
+            height={360}
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={monthlyTrends} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="month" 
+                  fontSize={12}
+                  tick={{ fontSize: 12 }}
+                />
+                <YAxis 
+                  yAxisId="cost"
+                  domain={['dataMin - 1', 'dataMax + 1']}
+                  width={20}
+                  fontSize={12}
+                  tick={false}
+                />
+                <YAxis 
+                  yAxisId="total"
+                  orientation="right"
+                  domain={['dataMin - 10', 'dataMax + 10']}
+                  width={20}
+                  fontSize={12}
+                  tick={false}
+                />
+                <Tooltip 
+                  formatter={(value, name) => {
+                    if (name === 'Cost Per Bird') return [`$${Number(value).toFixed(2)}`, name];
+                    if (name === 'Total Cost') return [`$${Number(value).toFixed(2)}`, name];
+                    if (name === 'Avg Flock Size') return [`${value} birds`, name];
+                    return [value, name];
+                  }}
+                  labelStyle={{ fontSize: 12 }}
+                  contentStyle={{ fontSize: 12 }}
+                />
+                <Legend />
+                <Line 
+                  yAxisId="cost"
+                  type="monotone" 
+                  dataKey="costPerBirdPerMonth" 
+                  stroke="#10B981" 
+                  strokeWidth={3}
+                  name="Cost Per Bird"
+                  dot={{ r: 5, fill: '#10B981' }}
+                  activeDot={{ r: 7, fill: '#059669' }}
+                />
+                <Line 
+                  yAxisId="total"
+                  type="monotone" 
+                  dataKey="totalCost" 
+                  stroke="#F59E0B" 
+                  strokeWidth={3}
+                  name="Total Cost"
+                  dot={{ r: 5, fill: '#F59E0B' }}
+                  activeDot={{ r: 7, fill: '#D97706' }}
+                />
+                <Line 
+                  yAxisId="cost"
+                  type="monotone" 
+                  dataKey="avgFlockSize" 
+                  stroke="#3B82F6" 
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  name="Avg Flock Size"
+                  dot={{ r: 3, fill: '#3B82F6' }}
+                  activeDot={{ r: 5, fill: '#2563EB' }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </SectionContainer>
+      )}
+
       {/* Feed Period Details */}
       <SectionContainer
         title="📈 Feed Period Breakdown"
@@ -618,9 +929,9 @@ export const FeedCostCalculator = () => {
                     <span className="text-xl">🧮</span>
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-2">Accurate Calculations</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">Consumption-Based Allocation</h4>
                     <p className="text-sm text-gray-700 leading-relaxed">
-                      Cost per bird calculated using exact feed consumption duration and flock size during each period.
+                      Establishes consistent cost per bird per day across the entire period, then allocates feed quantity and costs based on actual consumption patterns.
                     </p>
                   </div>
                 </div>
@@ -642,9 +953,9 @@ export const FeedCostCalculator = () => {
                     <span className="text-xl">📅</span>
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-2">Timeline Integration</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">Sub-Period Breakdown</h4>
                     <p className="text-sm text-gray-700 leading-relaxed">
-                      Automatically adjusts costs when flock size changes during feed periods.
+                      Feed periods with flock changes are divided into sub-periods, each with proportional cost allocation based on actual consumption.
                     </p>
                   </div>
                 </div>

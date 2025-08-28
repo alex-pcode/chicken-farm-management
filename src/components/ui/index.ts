@@ -31,6 +31,9 @@ export { SectionContainer } from './layout/SectionContainer';
 export { GridContainer } from './layout/GridContainer';
 export { CardContainer } from './layout/CardContainer';
 
+// Chart Components
+export { ChartCard } from './charts/ChartCard';
+
 // Form Components
 export { FormCard } from './forms/FormCard';
 export { FormButton } from './forms/FormButton';

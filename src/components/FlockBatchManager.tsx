@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { FlockBatch, DeathRecord, FlockSummary } from '../types';
+import type { FlockBatch, DeathRecord } from '../types';
 import { BatchDetailView } from './BatchDetailView';
+import { FlockOverview } from './FlockOverview';
+import { useFlockBatchData, useFlockProfile } from '../contexts/OptimizedDataProvider';
 
 import { FormCard } from './ui/forms/FormCard';
 import { FormField } from './ui/forms/FormField';
@@ -12,7 +14,6 @@ import { StatCard } from './ui/cards/StatCard';
 import { DataTable, TableColumn } from './ui/tables/DataTable';
 import { EmptyState } from './ui/tables/EmptyState';
 import { PageContainer } from './ui/layout/PageContainer';
-// import { useAuth } from '../contexts/AuthContext'; // Unused import
 import { apiService } from '../services/api';
 
 interface FlockBatchManagerProps {
@@ -20,14 +21,15 @@ interface FlockBatchManagerProps {
 }
 
 export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
+  // Use optimized data context instead of local state
+  const { data: { flockBatches: batches, deathRecords }, isLoading, error: contextError, refreshData } = useFlockBatchData();
+  const flockProfile = useFlockProfile();
+  
   const [activeTab, setActiveTab] = useState<'batches' | 'deaths' | 'add-batch'>('batches');
   const [selectedBatch, setSelectedBatch] = useState<FlockBatch | null>(null);
-  const [batches, setBatches] = useState<FlockBatch[]>([]);
-  const [deathRecords, setDeathRecords] = useState<DeathRecord[]>([]);
-  const [flockSummary, setFlockSummary] = useState<FlockSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [submitLoading, setSubmitLoading] = useState(false);
 
   // New batch form state
   const [newBatch, setNewBatch] = useState({
@@ -60,56 +62,14 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
   const [editingBatch, setEditingBatch] = useState<FlockBatch | null>(null);
   const [layingDateForm, setLayingDateForm] = useState('');
 
-  // Load all data using specific API endpoints
-  const loadData = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      // Load flock data in parallel for better performance
-      const [batchesRes, deathsRes, summaryRes] = await Promise.all([
-        fetch('/api/flockBatches', {
-          headers: await apiService.auth.getAuthHeaders(),
-        }),
-        fetch('/api/deathRecords', {
-          headers: await apiService.auth.getAuthHeaders(),
-        }),
-        apiService.flock.getFlockSummary()
-      ]);
-
-      // Handle batch data
-      if (!batchesRes.ok) {
-        throw new Error('Failed to load batch data');
-      }
-      const batchesData = await batchesRes.json();
-      setBatches(batchesData.data?.batches || []);
-
-      // Handle death records
-      if (!deathsRes.ok) {
-        throw new Error('Failed to load death records');
-      }
-      const deathsData = await deathsRes.json();
-      setDeathRecords(deathsData.data?.records || []);
-
-      // Handle flock summary
-      if (summaryRes.success) {
-        const summaryData = summaryRes.data as { summary?: FlockSummary };
-        setFlockSummary(summaryData.summary || null);
-      } else {
-        setFlockSummary(null);
-      }
-    } catch (err) {
-      console.error('Error loading flock data:', err);
-      setError('Failed to load flock data. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Calculate some basic metrics for the batch statistics section
+  const totalBirds = batches.reduce((sum, batch) => sum + batch.currentCount, 0);
+  const layingBatches = batches.filter(b => b.actualLayingStartDate).length;
 
   // Add new batch
   const addBatch = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setSubmitLoading(true);
     setError(null);
 
     // Calculate counts
@@ -122,7 +82,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
     // Validation
     if (totalCount === 0) {
       setError('Please enter at least one bird (hens, roosters, chicks, or brooding hens)');
-      setIsLoading(false);
+      setSubmitLoading(false);
       return;
     }
 
@@ -170,7 +130,6 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
       }
 
       const responseData = response.data as { batch: FlockBatch };
-      setBatches(prev => [responseData.batch, ...prev]);
       
       // Reset form
       setNewBatch({
@@ -191,13 +150,13 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
       setSuccess(`Batch added successfully! (${totalCount} birds: ${hensCount} hens, ${roostersCount} roosters, ${chicksCount} chicks${broodingCount > 0 ? `, ${broodingCount} brooding` : ''})`);
       setActiveTab('batches');
       
-      // Reload summary to get updated counts
-      loadData();
+      // Refresh data through optimized context
+      await refreshData();
     } catch (err) {
       console.error('Error adding batch:', err);
       setError('Failed to add batch. Please try again.');
     } finally {
-      setIsLoading(false);
+      setSubmitLoading(false);
     }
   };
 
@@ -240,18 +199,14 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
         throw new Error(errorData.error || 'Failed to update laying date');
       }
 
-      // Update local state
-      setBatches(prev => prev.map(batch => 
-        batch.id === editingBatch.id 
-          ? { ...batch, actualLayingStartDate: layingDateForm || undefined }
-          : batch
-      ));
-
       setSuccess(layingDateForm 
         ? `Laying start date updated to ${new Date(layingDateForm).toLocaleDateString()}`
         : 'Laying start date cleared'
       );
       closeLayingDateModal();
+      
+      // Refresh data through optimized context
+      await refreshData();
     } catch (err) {
       console.error('Error updating laying date:', err);
       setError(err instanceof Error ? err.message : 'Failed to update laying date. Please try again.');
@@ -261,7 +216,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
   // Log death
   const logDeath = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setSubmitLoading(true);
     setError(null);
 
     try {
@@ -282,7 +237,6 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
       }
 
       const responseData = response.data as { record: DeathRecord };
-      setDeathRecords(prev => [responseData.record, ...prev]);
       
       // Reset form
       setNewDeath({
@@ -296,22 +250,20 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
 
       setSuccess('Death record logged successfully');
       
-      // Reload data to get updated counts
-      loadData();
+      // Refresh data through optimized context
+      await refreshData();
     } catch (err) {
       console.error('Error logging death:', err);
       setError(err instanceof Error ? err.message : 'Failed to log death. Please try again.');
     } finally {
-      setIsLoading(false);
+      setSubmitLoading(false);
     }
   };
 
-  // Handle batch update from detail view
-  const handleBatchUpdate = (updatedBatch: FlockBatch) => {
-    setBatches(prev => prev.map(batch => 
-      batch.id === updatedBatch.id ? updatedBatch : batch
-    ));
-    setSelectedBatch(updatedBatch); // Update the selected batch as well
+  // Handle batch update from detail view - refresh data instead
+  const handleBatchUpdate = async (updatedBatch: FlockBatch) => {
+    setSelectedBatch(updatedBatch); // Update the selected batch
+    await refreshData(); // Refresh all data to stay in sync
   };
 
   // Clear messages
@@ -329,10 +281,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
     }
   }, [error]);
 
-  // Load data on mount
-  useEffect(() => {
-    loadData();
-  }, []);
+  // Data is automatically loaded through OptimizedDataProvider - no manual loading needed!
 
 
   // Define columns for batch DataTable
@@ -521,7 +470,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
       </header>
 
       {/* Batch Statistics */}
-      {!isLoading && flockSummary && (
+      {!isLoading && flockProfile && (
         <section 
           className="grid grid-cols-2 lg:grid-cols-4 gap-3"
           aria-label="Flock batch statistics"
@@ -541,7 +490,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
           </div>
           <div className="glass-card p-6">
             <MetricDisplay
-              value={flockSummary.totalBirds || 0}
+              value={totalBirds}
               label="Total Birds"
               format="number"
               precision={0}
@@ -553,7 +502,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
           </div>
           <div className="glass-card p-6">
             <MetricDisplay
-              value={batches.filter(b => b.actualLayingStartDate).length}
+              value={layingBatches}
               label="Laying Batches"
               format="number"
               precision={0}
@@ -578,74 +527,8 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
         </section>
       )}
 
-      {/* Flock Overview */}
-      {!isLoading && batches.length > 0 && (
-        <section 
-          aria-label="Flock overview by bird type"
-          role="region"
-        >
-          <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-            <span className="text-xl">🐔</span>
-            Flock Overview
-          </h2>
-          <div className={`grid grid-cols-2 md:grid-cols-${batches.some(b => (b.broodingCount || 0) > 0) ? '5' : '4'} gap-4`}>
-            <StatCard
-              title="Laying Hens"
-              total={batches
-                .filter(batch => batch.actualLayingStartDate) // Only batches that are laying
-                .reduce((sum, batch) => {
-                  const hens = batch.hensCount || 0;
-                  const brooding = batch.broodingCount || 0;
-                  return sum + Math.max(0, hens - brooding); // Subtract brooding hens from laying hens
-                }, 0)}
-              label={`${batches.filter(b => b.actualLayingStartDate && (b.hensCount || 0) > 0).length} batches laying`}
-              icon="🐔"
-              variant="corner-gradient"
-              testId="laying-hens-stat"
-            />
-            <StatCard
-              title="Not Laying"
-              total={batches
-                .filter(batch => !batch.actualLayingStartDate && ((batch.hensCount || 0) > 0 || batch.type === 'hens')) // Batches not laying that have hens or are hen batches
-                .reduce((sum, batch) => {
-                  const hens = batch.hensCount || 0;
-                  const brooding = batch.broodingCount || 0;
-                  return sum + Math.max(0, hens - brooding); // Subtract brooding hens from not laying hens
-                }, 0)}
-              label={`${batches.filter(b => !b.actualLayingStartDate && ((b.hensCount || 0) > 0 || b.type === 'hens')).length} batches not laying`}
-              icon="⏳"
-              variant="corner-gradient"
-              testId="not-laying-hens-stat"
-            />
-            {batches.some(b => (b.broodingCount || 0) > 0) && (
-              <StatCard
-                title="Brooding Hens"
-                total={batches.reduce((sum, batch) => sum + (batch.broodingCount || 0), 0)}
-                label={`${batches.filter(b => (b.broodingCount || 0) > 0).length} batches brooding`}
-                icon="🪺"
-                variant="corner-gradient"
-                testId="brooding-hens-stat"
-              />
-            )}
-            <StatCard
-              title="Roosters"
-              total={batches.reduce((sum, batch) => sum + (batch.roostersCount || 0), 0)}
-              label={`${batches.filter(b => (b.roostersCount || 0) > 0).length} batches`}
-              icon="🐓"
-              variant="corner-gradient"
-              testId="roosters-stat"
-            />
-            <StatCard
-              title="Chicks"
-              total={batches.reduce((sum, batch) => sum + (batch.chicksCount || 0), 0)}
-              label={`${batches.filter(b => (b.chicksCount || 0) > 0).length} batches`}
-              icon="🐥"
-              variant="corner-gradient"
-              testId="chicks-stat"
-            />
-          </div>
-        </section>
-      )}
+      {/* Flock Overview with batch-specific stats */}
+      <FlockOverview />
 
       {/* Messages */}
       <AnimatePresence>
@@ -659,14 +542,14 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
             {success}
           </motion.div>
         )}
-        {error && (
+        {(error || contextError) && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             className="error-toast"
           >
-            {error}
+            {error || contextError}
           </motion.div>
         )}
       </AnimatePresence>
@@ -761,15 +644,8 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
                   loading={isLoading}
                   sortable={true}
                   onSort={(column, direction) => {
-                    const sortedBatches = [...batches].sort((a, b) => {
-                      const aValue = a[column as keyof FlockBatch];
-                      const bValue = b[column as keyof FlockBatch];
-                      if (direction === 'asc') {
-                        return String(aValue).localeCompare(String(bValue));
-                      }
-                      return String(bValue).localeCompare(String(aValue));
-                    });
-                    setBatches(sortedBatches);
+                    // Sorting will be handled by the table component itself
+                    // since we're not managing local state anymore
                   }}
                   responsive={true}
                 />
@@ -872,7 +748,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
               
               <FormButton 
                 type="submit" 
-                loading={isLoading}
+                loading={submitLoading}
                 fullWidth
               >
                 Log Loss
@@ -896,20 +772,8 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
                   loading={isLoading}
                   sortable={true}
                   onSort={(column, direction) => {
-                    const sortedRecords = [...deathRecords].sort((a, b) => {
-                      const aValue = a[column as keyof DeathRecord];
-                      const bValue = b[column as keyof DeathRecord];
-                      if (column === 'date') {
-                        const aDate = new Date(aValue as string);
-                        const bDate = new Date(bValue as string);
-                        return direction === 'asc' ? aDate.getTime() - bDate.getTime() : bDate.getTime() - aDate.getTime();
-                      }
-                      if (direction === 'asc') {
-                        return String(aValue).localeCompare(String(bValue));
-                      }
-                      return String(bValue).localeCompare(String(aValue));
-                    });
-                    setDeathRecords(sortedRecords);
+                    // Sorting will be handled by the table component itself
+                    // since we're not managing local state anymore
                   }}
                   responsive={true}
                 />
@@ -1087,7 +951,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
 
               <FormButton 
                 type="submit" 
-                loading={isLoading} 
+                loading={submitLoading} 
                 fullWidth
               >
                 Add Batch
@@ -1104,7 +968,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
         title="🥚 Set Laying Date"
         onSubmit={saveLayingDate}
         submitText="Set Date"
-        loading={isLoading}
+        loading={submitLoading}
         size="md"
       >
         <div className="space-y-4">

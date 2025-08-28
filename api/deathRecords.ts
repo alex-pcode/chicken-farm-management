@@ -172,6 +172,29 @@ async function handlePost(req: VercelRequest, res: VercelResponse, userId: strin
       throw error;
     }
 
+    // Create automatic "Gone but not forgotten" timeline event
+    console.log('Creating flock loss timeline event for death record:', record.id);
+    
+    const { error: eventError } = await supabase
+      .from('batch_events')
+      .insert({
+        user_id: userId,
+        batch_id: batchId,
+        date: date,
+        type: 'flock_loss',
+        description: 'Gone but not forgotten',
+        affected_count: count,
+        notes: `${count} bird(s) lost due to ${cause}: ${description}${notes ? ` - ${notes}` : ''}`
+      });
+
+    if (eventError) {
+      console.error('Failed to create flock loss timeline event:', eventError);
+      // Don't fail the death record creation if event creation fails
+      // Just log the error and continue
+    } else {
+      console.log('Flock loss timeline event created successfully');
+    }
+
     // Transform response
     const transformedRecord = {
       id: record.id,

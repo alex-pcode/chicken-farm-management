@@ -55,15 +55,58 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 // GET - Get comprehensive flock summary
 async function handleGet(req: VercelRequest, res: VercelResponse, userId: string) {
   try {
-    // Get batches and calculate totals from individual count columns
-    const { data: flockBatches, error: flockBatchError } = await supabase
-      .from('flock_batches')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('is_active', true);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    if (flockBatchError) {
-      throw flockBatchError;
+    // Execute all database queries in parallel to reduce latency
+    const [
+      flockBatchResult,
+      eggDataResult,
+      recentDeathsResult
+    ] = await Promise.all([
+      // Get active flock batches
+      supabase
+        .from('flock_batches')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true),
+      
+      // Get recent egg production data
+      supabase
+        .from('egg_entries')
+        .select('count, date')
+        .eq('user_id', userId)
+        .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
+        .order('date', { ascending: false }),
+      
+      // Get recent death records
+      supabase
+        .from('death_records')
+        .select('count, date, cause, batch_id')
+        .eq('user_id', userId)
+        .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
+        .order('date', { ascending: false })
+    ]);
+
+    if (flockBatchResult.error) {
+      throw flockBatchResult.error;
+    }
+
+    const flockBatches = flockBatchResult.data;
+    const eggData = eggDataResult.data;
+    const recentDeaths = recentDeathsResult.data;
+
+    // Get all-time mortality records for these batches (if we have batches)
+    let mortalityRecords = [];
+    if (flockBatches && flockBatches.length > 0) {
+      const mortalityResult = await supabase
+        .from('death_records')
+        .select('count')
+        .in('batch_id', flockBatches.map(b => b.id));
+      
+      if (!mortalityResult.error) {
+        mortalityRecords = mortalityResult.data || [];
+      }
     }
 
     // Calculate totals from individual count columns
@@ -84,16 +127,6 @@ async function handleGet(req: VercelRequest, res: VercelResponse, userId: string
       return sum;
     }, 0) || 0;
 
-    // Get death records for mortality calculation
-    const { data: mortalityRecords, error: mortalityError } = await supabase
-      .from('death_records')
-      .select('count')
-      .in('batch_id', flockBatches?.map(b => b.id) || []);
-
-    if (mortalityError) {
-      console.error('Error fetching death records:', mortalityError);
-    }
-
     const totalDeaths = mortalityRecords?.reduce((sum, record) => sum + (record.count || 0), 0) || 0;
     const totalInitial = flockBatches?.reduce((sum, batch) => sum + (batch.initial_count || 0), 0) || 0;
     const mortalityRate = totalInitial > 0 ? Number(((totalDeaths / totalInitial) * 100).toFixed(2)) : 0;
@@ -110,19 +143,8 @@ async function handleGet(req: VercelRequest, res: VercelResponse, userId: string
       mortality_rate: mortalityRate
     };
 
-    // Get recent egg production data for calculating actual layers
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const { data: eggData, error: eggError } = await supabase
-      .from('egg_entries')
-      .select('count, date')
-      .eq('user_id', userId)
-      .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
-      .order('date', { ascending: false });
-
-    if (eggError) {
-      console.error('Error fetching egg data:', eggError);
+    if (eggDataResult.error) {
+      console.error('Error fetching egg data:', eggDataResult.error);
     }
 
     // Calculate average daily eggs and estimated laying hens
@@ -178,16 +200,8 @@ async function handleGet(req: VercelRequest, res: VercelResponse, userId: string
       }
     });
 
-    // Get recent death records for mortality trends
-    const { data: recentDeaths, error: deathError } = await supabase
-      .from('death_records')
-      .select('count, date, cause')
-      .eq('user_id', userId)
-      .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
-      .order('date', { ascending: false });
-
-    if (deathError) {
-      console.error('Error fetching death records:', deathError);
+    if (recentDeathsResult.error) {
+      console.error('Error fetching death records:', recentDeathsResult.error);
     }
 
     const recentMortality = recentDeaths?.reduce((sum, record) => sum + record.count, 0) || 0;
@@ -248,6 +262,7 @@ async function handleGet(req: VercelRequest, res: VercelResponse, userId: string
         type: batch.type,
         currentCount: batch.current_count,
         acquisitionDate: batch.acquisition_date,
+        ageAtAcquisition: batch.age_at_acquisition,
         isLayingAge: batch.type === 'hens' && (
           batch.actual_laying_start_date || 
           (batch.expected_laying_start_date && new Date(batch.expected_laying_start_date) <= today)

@@ -1,101 +1,121 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { StatCard } from './ui/cards/StatCard';
-import type { FlockSummary } from '../types';
+import { SubmitButton } from './forms/SubmitButton';
+import { useFlockBatchData, useFlockProfile } from '../contexts/OptimizedDataProvider';
 
 interface FlockOverviewProps {
-  flockSummary: FlockSummary | null;
-  isLoading?: boolean;
+  className?: string;
 }
 
 export const FlockOverview: React.FC<FlockOverviewProps> = ({
-  flockSummary,
-  isLoading = false,
+  className
 }) => {
-  if (!flockSummary && !isLoading) {
-    return null;
-  }
+  const navigate = useNavigate();
+  // Use optimized data context
+  const { data: { flockBatches: batches }, isLoading } = useFlockBatchData();
+  const flockProfile = useFlockProfile();
+  
+  // Show skeleton if loading OR no data yet
+  const shouldShowSkeleton = isLoading || batches.length === 0 || !flockProfile;
 
+  // Always render the container to prevent CLS
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.25 }}
-      className="neu-form"
-    >
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="neu-title">🐔 Flock Overview</h2>
-        <Link 
-          to="/flock-batches" 
-          className="neu-button-secondary text-sm"
-        >
-          Manage Batches
-        </Link>
-      </div>
+    <div className={`neu-form ${className || ''}`} style={{ paddingLeft: 15, paddingRight: 15 }}>
+      {shouldShowSkeleton ? (
+        // True-to-form skeleton matching actual FlockOverview structure
+        <>
+          {/* Header skeleton */}
+          <div className="flex items-center justify-between mb-6 animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-40"></div>
+            <div className="h-8 bg-gray-200 rounded w-28"></div>
+          </div>
 
-      {/* Flock Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard 
-          title="Total Birds" 
-          total={isLoading ? 0 : flockSummary?.totalBirds || 0} 
-          label="active birds"
-          icon="🐔"
-          variant="gradient"
-          loading={isLoading}
-        />
-        <StatCard 
-          title="Hens" 
-          total={isLoading ? 0 : flockSummary?.totalHens || 0} 
-          label="female birds"
-          icon="🐔"
-          loading={isLoading}
-        />
-        <StatCard 
-          title="Roosters" 
-          total={isLoading ? 0 : flockSummary?.totalRoosters || 0} 
-          label="male birds"
-          icon="🐓"
-          loading={isLoading}
-        />
-        <StatCard 
-          title="Chicks" 
-          total={isLoading ? 0 : flockSummary?.totalChicks || 0} 
-          label="young birds"
-          icon="🐥"
-          loading={isLoading}
-        />
-        <StatCard 
-          title="Active Batches" 
-          total={isLoading ? 0 : flockSummary?.activeBatches || 0} 
-          label="managed groups"
-          icon="📦"
-          loading={isLoading}
-        />
-        <StatCard 
-          title="Laying Hens" 
-          total={isLoading ? 0 : flockSummary?.expectedLayers || 0} 
-          label="productive birds"
-          icon="🥚"
-          loading={isLoading}
-        />
-        <StatCard 
-          title="Total Losses" 
-          total={isLoading ? 0 : flockSummary?.totalDeaths || 0} 
-          label={isLoading ? "loading..." : `${flockSummary?.mortalityRate || 0}% mortality`}
-          icon="💀"
-          trend={flockSummary?.mortalityRate && flockSummary.mortalityRate > 5 ? 'up' : 'neutral'}
-          changeType={flockSummary?.mortalityRate && flockSummary.mortalityRate > 5 ? 'decrease' : undefined}
-          loading={isLoading}
-        />
-        <StatCard 
-          title="Mortality Rate" 
-          total={isLoading ? 0 : `${flockSummary?.mortalityRate || 0}%`} 
-          label="loss percentage"
-          icon="📊"
-          loading={isLoading}
-        />
-      </div>
-    </motion.div>
+          {/* Stats grid skeleton - matches actual layout */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {[...Array(5)].map((_, index) => (
+              <div key={index} className="glass-card p-6 space-y-4 animate-pulse">
+                {/* Icon and title skeleton */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="h-4 bg-gray-200 rounded w-20"></div>
+                  <div className="h-6 w-6 bg-gray-200 rounded"></div>
+                </div>
+                {/* Total count skeleton */}
+                <div className="h-8 bg-gray-200 rounded w-12 mb-2"></div>
+                {/* Label skeleton */}
+                <div className="h-3 bg-gray-200 rounded-full w-28"></div>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        // Actual content
+        <>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="neu-title" style={{ marginBottom: 0 }}>Flock Overview</h2>
+            <SubmitButton
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={() => navigate('/flock-batches')}
+              text="Manage Batches"
+            />
+          </div>
+
+          {/* Batch-Specific Flock Overview Stats */}
+          <div className={`grid grid-cols-2 md:grid-cols-${batches.some(b => (b.broodingCount || 0) > 0) ? '5' : '4'} gap-4`}>
+            <StatCard
+              title="Laying"
+              total={batches
+                .filter(batch => batch.actualLayingStartDate)
+                .reduce((sum, batch) => {
+                  const hens = batch.hensCount || 0;
+                  const brooding = batch.broodingCount || 0;
+                  return sum + Math.max(0, hens - brooding);
+                }, 0)}
+              label={`${batches.filter(b => b.actualLayingStartDate && (b.hensCount || 0) > 0).length} batches laying`}
+              icon="🐔"
+              variant="corner-gradient"
+            />
+            <StatCard
+              title="Not Laying"
+              total={batches
+                .filter(batch => !batch.actualLayingStartDate && ((batch.hensCount || 0) > 0 || batch.type === 'hens'))
+                .reduce((sum, batch) => {
+                  const hens = batch.hensCount || 0;
+                  const brooding = batch.broodingCount || 0;
+                  return sum + Math.max(0, hens - brooding);
+                }, 0)}
+              label={`${batches.filter(b => !b.actualLayingStartDate && ((b.hensCount || 0) > 0 || b.type === 'hens')).length} batches`}
+              icon="⏳"
+              variant="corner-gradient"
+            />
+            {batches.some(b => (b.broodingCount || 0) > 0) && (
+              <StatCard
+                title="Brooding"
+                total={batches.reduce((sum, batch) => sum + (batch.broodingCount || 0), 0)}
+                label={`${batches.filter(b => (b.broodingCount || 0) > 0).length} hen brooding`}
+                icon="🐣"
+                variant="corner-gradient"
+              />
+            )}
+            <StatCard
+              title="Roosters"
+              total={batches.reduce((sum, batch) => sum + (batch.roostersCount || 0), 0)}
+              label={`${batches.filter(b => (b.roostersCount || 0) > 0).length} batches`}
+              icon="🐓"
+              variant="corner-gradient"
+            />
+            <StatCard
+              title="Chicks"
+              total={batches.reduce((sum, batch) => sum + (batch.chicksCount || 0), 0)}
+              label={`${batches.filter(b => (b.chicksCount || 0) > 0).length} batches`}
+              icon="🐥"
+              variant="corner-gradient"
+            />
+          </div>
+        </>
+      )}
+    </div>
   );
 };

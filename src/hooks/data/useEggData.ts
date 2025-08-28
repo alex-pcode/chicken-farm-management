@@ -103,15 +103,33 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
     
     const totalEggs = validEntries.reduce((sum, entry) => sum + (entry?.count || 0), 0);
     
-    // Calculate average daily production
-    const uniqueDates = [...new Set(validEntries.map(entry => entry?.date).filter(Boolean))];
-    const averageDaily = uniqueDates.length > 0 ? totalEggs / uniqueDates.length : 0;
+    // Calculate monthly-based daily average: this month's total / highest date in this month
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
     
-    // Calculate this week's total
+    const thisMonthEntries = validEntries.filter(entry => {
+      if (!entry?.date) return false;
+      const entryDate = new Date(entry.date);
+      return entryDate.getMonth() === currentMonth && entryDate.getFullYear() === currentYear;
+    });
+    
+    const thisMonthTotal = thisMonthEntries.reduce((sum, entry) => sum + (entry?.count || 0), 0);
+    
+    // Monthly-based daily average: thisMonth total / last entry date
+    let averageDaily = 0;
+    if (thisMonthEntries.length > 0) {
+      const lastDateThisMonth = Math.max(...thisMonthEntries.map(entry => new Date(entry.date).getDate()));
+      averageDaily = thisMonthTotal / lastDateThisMonth;
+    }
+    
+    // Calculate this week's total (last 7 days inclusive)
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    oneWeekAgo.setHours(0, 0, 0, 0); // Set to start of day to be inclusive
+    
     const thisWeekTotal = validEntries
-      .filter(entry => entry?.date && new Date(entry.date) >= oneWeekAgo)
+      .filter(entry => entry?.date && new Date(entry.date + 'T00:00:00') >= oneWeekAgo)
       .reduce((sum, entry) => sum + (entry?.count || 0), 0);
     
     // Calculate previous week's total
@@ -121,14 +139,9 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
       .filter(entry => entry?.date && new Date(entry.date) >= twoWeeksAgo && new Date(entry.date) < oneWeekAgo)
       .reduce((sum, entry) => sum + (entry?.count || 0), 0);
     
-    // Calculate this month's total
+    // Calculate previous month's total
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    const thisMonthTotal = validEntries
-      .filter(entry => entry?.date && new Date(entry.date) >= oneMonthAgo)
-      .reduce((sum, entry) => sum + (entry?.count || 0), 0);
-    
-    // Calculate previous month's total
     const twoMonthsAgo = new Date();
     twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
     const previousMonthTotal = validEntries

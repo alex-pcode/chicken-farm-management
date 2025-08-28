@@ -189,6 +189,23 @@ async function getAllData(user: AuthUser, res: VercelResponse) {
     .order('sale_date', { ascending: false });
   if (salesError) throw salesError;
 
+  // Fetch flock batches
+  const { data: flockBatches, error: batchesError } = await supabase
+    .from('flock_batches')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .order('acquisition_date', { ascending: false });
+  if (batchesError) throw batchesError;
+
+  // Fetch death records  
+  const { data: deathRecords, error: deathsError } = await supabase
+    .from('death_records')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('date', { ascending: false });
+  if (deathsError) throw deathsError;
+
   const summary = {
     customer_count: customers?.length || 0,
     total_sales: sales?.length || 0,
@@ -236,6 +253,38 @@ async function getAllData(user: AuthUser, res: VercelResponse) {
       expenses: expenses || [],
       customers: customers || [],
       sales: sales || [],
+      flockBatches: flockBatches?.map(batch => ({
+        id: batch.id,
+        batchName: batch.batch_name,
+        breed: batch.breed,
+        acquisitionDate: batch.acquisition_date,
+        initialCount: batch.initial_count,
+        currentCount: batch.current_count,
+        type: batch.type,
+        ageAtAcquisition: batch.age_at_acquisition,
+        expectedLayingStartDate: batch.expected_laying_start_date,
+        actualLayingStartDate: batch.actual_laying_start_date,
+        source: batch.source,
+        cost: batch.cost,
+        notes: batch.notes,
+        isActive: batch.is_active,
+        created_at: batch.created_at,
+        updated_at: batch.updated_at,
+        hensCount: batch.hens_count,
+        roostersCount: batch.roosters_count,
+        chicksCount: batch.chicks_count,
+        broodingCount: batch.brooding_count
+      })) || [],
+      deathRecords: deathRecords?.map(record => ({
+        id: record.id,
+        batchId: record.batch_id,
+        date: record.date,
+        count: record.count,
+        cause: record.cause,
+        description: record.description,
+        notes: record.notes,
+        created_at: record.created_at
+      })) || [],
       summary
     },
     timestamp: new Date().toISOString()

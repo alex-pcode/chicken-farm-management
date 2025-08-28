@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { apiService } from '../services/api';
-import type { EggEntry, Expense, FeedEntry, FlockProfile, FlockEvent } from '../types';
+import { browserCache, CACHE_KEYS } from '../utils/browserCache';
+import type { EggEntry, Expense, FeedEntry, FlockProfile, FlockEvent, FlockBatch, DeathRecord } from '../types';
 import type { Customer, SaleWithCustomer, SalesSummary } from '../types/crm';
 
 interface AppData {
@@ -12,6 +13,8 @@ interface AppData {
   customers: Customer[];
   sales: SaleWithCustomer[];
   summary: SalesSummary | undefined;
+  flockBatches: FlockBatch[];
+  deathRecords: DeathRecord[];
 }
 
 interface OptimizedDataContextType {
@@ -19,6 +22,7 @@ interface OptimizedDataContextType {
   isLoading: boolean;
   error: string | null;
   refreshData: () => Promise<void>;
+  silentRefresh: () => Promise<void>;
   lastFetched: Date | null;
 }
 
@@ -28,19 +32,25 @@ interface OptimizedDataProviderProps {
   children: ReactNode;
 }
 
-// Cache duration in milliseconds (5 minutes)
-const CACHE_DURATION = 5 * 60 * 1000;
+// Cache duration in milliseconds (10 minutes)
+const CACHE_DURATION = 10 * 60 * 1000;
 
 export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ children }) => {
-  const [data, setData] = useState<AppData>({
-    eggEntries: [],
-    expenses: [],
-    feedInventory: [],
-    flockProfile: null,
-    flockEvents: [],
-    customers: [],
-    sales: [],
-    summary: undefined
+  // Initialize with cached data if available
+  const [data, setData] = useState<AppData>(() => {
+    const cachedData = browserCache.get<AppData>(CACHE_KEYS.APP_DATA);
+    return cachedData || {
+      eggEntries: [],
+      expenses: [],
+      feedInventory: [],
+      flockProfile: null,
+      flockEvents: [],
+      customers: [],
+      sales: [],
+      summary: undefined,
+      flockBatches: [],
+      deathRecords: []
+    };
   });
   
   const [isLoading, setIsLoading] = useState(true);
@@ -73,10 +83,15 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
         flockEvents: dbData?.flockEvents || [],
         customers: dbData?.customers || [],
         sales: dbData?.sales || [],
-        summary: dbData?.summary || undefined
+        summary: dbData?.summary || undefined,
+        flockBatches: dbData?.flockBatches || [],
+        deathRecords: dbData?.deathRecords || []
       };
       
       setData(newData);
+      
+      // Cache the data in browser storage for faster subsequent loads
+      browserCache.set(CACHE_KEYS.APP_DATA, newData, 10); // 10 minutes cache
       
       setLastFetched(new Date());
     } catch (err) {
@@ -88,28 +103,65 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
     }
   }, []);
 
+  // Silent refresh that doesn't show loading state - for after mutations
+  const silentRefresh = useCallback(async () => {
+    try {
+      const response = await apiService.data.fetchAllData();
+      const dbData = response.data || {
+        eggEntries: [],
+        expenses: [],
+        feedInventory: [],
+        flockProfile: null,
+        flockEvents: [],
+        customers: [],
+        sales: [],
+        summary: undefined
+      };
+      
+      const newData = {
+        eggEntries: dbData?.eggEntries || [],
+        expenses: dbData?.expenses || [],
+        feedInventory: dbData?.feedInventory || [],
+        flockProfile: dbData?.flockProfile || null,
+        flockEvents: dbData?.flockEvents || [],
+        customers: dbData?.customers || [],
+        sales: dbData?.sales || [],
+        summary: dbData?.summary || undefined,
+        flockBatches: dbData?.flockBatches || [],
+        deathRecords: dbData?.deathRecords || []
+      };
+      
+      setData(newData);
+      browserCache.set(CACHE_KEYS.APP_DATA, newData, 10);
+      setLastFetched(new Date());
+    } catch (err) {
+      console.error('Silent refresh failed:', err);
+      // Don't set error state for silent refresh failures
+    }
+  }, []);
+
   // Check if cache is stale
   const isCacheStale = useCallback(() => {
     if (!lastFetched) return true;
     return Date.now() - lastFetched.getTime() > CACHE_DURATION;
   }, [lastFetched]);
 
-  // Auto-refresh data on mount
+  // Auto-refresh data on mount - always fetch fresh data
   useEffect(() => {
     refreshData();
-  }, [refreshData]);
+  }, []); // Empty dependency array - only run once on mount
 
-  // Periodic cache validation (check every minute)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (isCacheStale() && !isLoading) {
-        console.log('Optimized cache is stale, refreshing data...');
-        refreshData();
-      }
-    }, 60000);
+  // TEMPORARY: Disabled automatic refresh to debug performance issue
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     if (isCacheStale() && !isLoading && document.hasFocus()) {
+  //       console.log('Optimized cache is stale, refreshing data...');
+  //       refreshData();
+  //     }
+  //   }, 5 * 60 * 1000);
 
-    return () => clearInterval(interval);
-  }, [isCacheStale, isLoading, refreshData]);
+  //   return () => clearInterval(interval);
+  // }, [isCacheStale, isLoading, refreshData]);
 
 
   const contextValue: OptimizedDataContextType = {
@@ -117,6 +169,7 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
     isLoading,
     error,
     refreshData,
+    silentRefresh,
     lastFetched
   };
 
@@ -250,6 +303,34 @@ export const useCRMData = () => {
       customers: context.data.customers,
       sales: context.data.sales,
       summary: context.data.summary
+    },
+    isLoading: context.isLoading,
+    error: context.error,
+    refreshData: context.refreshData,
+    silentRefresh: context.silentRefresh
+  };
+};
+
+// New hooks for flock batch data
+// eslint-disable-next-line react-refresh/only-export-components
+export const useFlockBatches = () => {
+  const { data } = useOptimizedAppData();
+  return data.flockBatches;
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const useDeathRecords = () => {
+  const { data } = useOptimizedAppData();
+  return data.deathRecords;
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const useFlockBatchData = () => {
+  const context = useOptimizedAppData();
+  return {
+    data: {
+      flockBatches: context.data.flockBatches,
+      deathRecords: context.data.deathRecords
     },
     isLoading: context.isLoading,
     error: context.error,

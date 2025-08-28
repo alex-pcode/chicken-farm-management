@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useDataFetch } from './useDataFetch';
-import { useOptimizedAppData } from '../../contexts/OptimizedDataProvider';
+import { useOptimizedAppData, useFlockBatchData } from '../../contexts/OptimizedDataProvider';
 import { apiService } from '../../services/api';
 import type { FlockProfile, FlockEvent, FlockSummary } from '../../types';
 
@@ -36,6 +36,7 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
 
   // Use OptimizedDataProvider for cached data
   const { data, isLoading: contextLoading, refreshData } = useOptimizedAppData();
+  const { data: { flockBatches: batches } } = useFlockBatchData();
   const contextProfile = data.flockProfile;
   // const contextEvents = data.flockEvents; // TODO: Use for event filtering - commented to avoid unused variable
 
@@ -160,34 +161,57 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
 
   // Flock statistics and calculations
   const statistics = useMemo(() => {
-    if (!profile) {
+    // Calculate from batch data (modern approach)
+    const batchStats = {
+      totalBirds: batches.reduce((sum, batch) => {
+        return sum + (batch.hensCount || 0) + (batch.roostersCount || 0) + (batch.chicksCount || 0);
+      }, 0),
+      layingHens: batches
+        .filter(batch => batch.actualLayingStartDate)
+        .reduce((sum, batch) => {
+          const hens = batch.hensCount || 0;
+          const brooding = batch.broodingCount || 0;
+          return sum + Math.max(0, hens - brooding);
+        }, 0),
+      productionRate: 0, // Will be calculated below
+      breedDistribution: {} as Record<string, number>
+    };
+
+    // Fallback to legacy profile data if no batch data
+    if (!batches.length && profile) {
+      const totalBirds = profile.hens + profile.roosters + profile.chicks + profile.brooding;
+      const layingHens = profile.hens - profile.brooding; // Assuming brooding hens don't lay
+      
+      // Calculate production rate (this could be enhanced with actual egg data)
+      const productionRate = layingHens > 0 ? Math.min((layingHens / profile.hens) * 100, 100) : 0;
+      
+      // Calculate breed distribution
+      const breedDistribution = profile.breedTypes.reduce((acc, breed) => {
+        acc[breed] = (acc[breed] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
       return {
-        totalBirds: 0,
-        layingHens: 0,
-        productionRate: 0,
-        breedDistribution: {}
+        totalBirds,
+        layingHens,
+        productionRate: Math.round(productionRate * 100) / 100,
+        breedDistribution
       };
     }
-
-    const totalBirds = profile.hens + profile.roosters + profile.chicks + profile.brooding;
-    const layingHens = profile.hens - profile.brooding; // Assuming brooding hens don't lay
     
-    // Calculate production rate (this could be enhanced with actual egg data)
-    const productionRate = layingHens > 0 ? Math.min((layingHens / profile.hens) * 100, 100) : 0;
+    // Calculate production rate from batch data
+    const totalHens = batches.reduce((sum, batch) => sum + (batch.hensCount || 0), 0);
+    batchStats.productionRate = totalHens > 0 ? Math.round(((batchStats.layingHens / totalHens) * 100) * 100) / 100 : 0;
     
-    // Calculate breed distribution
-    const breedDistribution = profile.breedTypes.reduce((acc, breed) => {
-      acc[breed] = (acc[breed] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    // Calculate breed distribution from batches
+    batches.forEach(batch => {
+      if (batch.breed) {
+        batchStats.breedDistribution[batch.breed] = (batchStats.breedDistribution[batch.breed] || 0) + (batch.hensCount || 0) + (batch.roostersCount || 0);
+      }
+    });
     
-    return {
-      totalBirds,
-      layingHens,
-      productionRate: Math.round(productionRate * 100) / 100,
-      breedDistribution
-    };
-  }, [profile]);
+    return batchStats;
+  }, [batches, profile]);
 
   return useMemo(() => ({
     profile,

@@ -6,6 +6,100 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Function to delete corresponding flock event when batch event is deleted
+async function deleteCorrespondingFlockEvent(batchEvent: any, userId: string) {
+  try {
+    // Find and delete the corresponding flock event
+    // We'll match by date, description pattern, and user
+    const searchPattern = `%${batchEvent.description}%`;
+    
+    const { error: deleteError } = await supabase
+      .from('flock_events')
+      .delete()
+      .eq('user_id', userId)
+      .eq('date', batchEvent.date)
+      .like('description', searchPattern);
+
+    if (deleteError) {
+      console.error('Error deleting corresponding flock event:', deleteError);
+    } else {
+      console.log(`Successfully deleted corresponding flock event for batch event: ${batchEvent.description}`);
+    }
+  } catch (error) {
+    console.error('Error in deleteCorrespondingFlockEvent:', error);
+  }
+}
+
+// Function to create flock-level event when batch event is created
+async function createFlockEventFromBatchEvent(batchEvent: any, batchName: string, userId: string) {
+  try {
+    // Map batch event types to flock event types and descriptions
+    const eventMapping = {
+      health_check: {
+        type: 'other' as const,
+        description: `Health check performed on ${batchName} batch`
+      },
+      vaccination: {
+        type: 'other' as const,
+        description: `Vaccination administered to ${batchName} batch`
+      },
+      relocation: {
+        type: 'other' as const,
+        description: `${batchName} batch relocated`
+      },
+      breeding: {
+        type: 'broody' as const,
+        description: `Breeding activity in ${batchName} batch`
+      },
+      laying_start: {
+        type: 'laying_start' as const,
+        description: `${batchName} batch started laying eggs`
+      },
+      production_note: {
+        type: 'other' as const,
+        description: `Production update for ${batchName} batch`
+      },
+      brooding_start: {
+        type: 'broody' as const,
+        description: `Brooding started in ${batchName} batch`
+      },
+      brooding_stop: {
+        type: 'other' as const,
+        description: `Brooding ended in ${batchName} batch`
+      },
+      other: {
+        type: 'other' as const,
+        description: `${batchName}: ${batchEvent.description}`
+      }
+    };
+
+    const mapping = eventMapping[batchEvent.type as keyof typeof eventMapping] || eventMapping.other;
+    
+    // Create flock event (same pattern as crud.ts - flock_profile_id is null, user_id is the key)
+    const flockEventData = {
+      user_id: userId,
+      flock_profile_id: null,
+      date: batchEvent.date,
+      type: mapping.type,
+      description: mapping.description,
+      affected_birds: batchEvent.affected_count || null,
+      notes: batchEvent.notes ? `From ${batchName} batch: ${batchEvent.notes}` : `From ${batchName} batch`
+    };
+
+    const { error: flockEventError } = await supabase
+      .from('flock_events')
+      .insert([flockEventData]);
+
+    if (flockEventError) {
+      console.error('Error creating flock event:', flockEventError);
+    } else {
+      console.log(`Successfully created flock event for batch event: ${batchEvent.description}`);
+    }
+  } catch (error) {
+    console.error('Error in createFlockEventFromBatchEvent:', error);
+  }
+}
+
 // Function to update batch brooding count based on timeline events
 async function updateBatchBroodingCount(batchId: string, userId: string) {
   try {
@@ -138,6 +232,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(500).json({ error: 'Failed to create batch event' });
       }
 
+      // Get batch name for flock event creation
+      const { data: batchData } = await supabase
+        .from('flock_batches')
+        .select('batch_name')
+        .eq('id', batchId)
+        .single();
+
+      // Create corresponding flock event
+      await createFlockEventFromBatchEvent(event, batchData?.batch_name || 'Unknown Batch', userId);
+
       // Update batch counts for brooding events
       if (type === 'brooding_start' || type === 'brooding_stop') {
         await updateBatchBroodingCount(batchId, userId);
@@ -195,6 +299,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(500).json({ error: 'Failed to update batch event' });
       }
 
+      // Get batch name for flock event creation
+      const { data: batchData } = await supabase
+        .from('flock_batches')
+        .select('batch_name')
+        .eq('id', event.batch_id)
+        .single();
+
+      // Create new flock event for the updated batch event
+      await createFlockEventFromBatchEvent(event, batchData?.batch_name || 'Unknown Batch', userId);
+
       // Update batch counts if brooding event was modified
       if (type === 'brooding_start' || type === 'brooding_stop') {
         await updateBatchBroodingCount(event.batch_id, userId);
@@ -236,6 +350,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.error('Error deleting batch event:', error);
         return res.status(500).json({ error: 'Failed to delete batch event' });
       }
+
+      // Delete corresponding flock event
+      await deleteCorrespondingFlockEvent(eventToDelete, userId);
 
       // Update batch counts if brooding event was deleted
       if (eventToDelete.type === 'brooding_start' || eventToDelete.type === 'brooding_stop') {

@@ -15,7 +15,7 @@ interface StatCardProps extends BaseUIComponentProps {
   changeType?: 'increase' | 'decrease';
   trend?: 'up' | 'down' | 'neutral';
   loading?: boolean;
-  variant?: 'default' | 'compact' | 'gradient' | 'corner-gradient';
+  variant?: 'default' | 'compact' | 'gradient' | 'corner-gradient' | 'dark';
   icon?: string;
   onClick?: () => void;
 }
@@ -25,6 +25,7 @@ const variantClasses = {
   compact: 'glass-card p-2 lg:p-3',
   gradient: 'glass-card bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 p-2 lg:p-3',
   'corner-gradient': 'glass-card p-2 lg:p-3 relative overflow-hidden',
+  'dark': 'stat-card',
 };
 
 const cardVariants = {
@@ -102,7 +103,11 @@ export const StatCard: React.FC<StatCardProps> = ({
       <div className="relative flex items-center gap-3">
         {/* Icon Section */}
         {icon && (
-          <div className="max-[480px]:hidden size-8 shrink-0 rounded-full bg-indigo-600/25 border border-indigo-600/50 flex items-center justify-center text-indigo-500">
+          <div className={`size-8 shrink-0 rounded-full flex items-center justify-center ${
+            variant === 'dark' 
+              ? 'bg-white/25 border border-white/50 text-white' 
+              : 'max-[480px]:hidden bg-indigo-600/25 border border-indigo-600/50 text-indigo-500'
+          }`}>
             <span className="text-lg">{icon}</span>
           </div>
         )}
@@ -110,19 +115,29 @@ export const StatCard: React.FC<StatCardProps> = ({
         {/* Content Section */}
         <div className="flex-1">
           {/* Title */}
-          <div className="font-semibold text-gray-900 text-base lg:text-lg mb-1">
+          <div className={`font-bold text-base lg:text-lg mb-1 ${
+            variant === 'dark' ? 'text-white' : 'text-gray-900'
+          }`}>
             {title}
           </div>
           
           {/* Value */}
-          <div className="font-bold mb-2 text-gray-900 text-2xl">
+          <div className={`font-bold mb-2 text-2xl ${
+            variant === 'dark' ? 'text-white' : 'text-gray-900'
+          }`}>
             {total}
           </div>
           
           {/* Label and Change */}
-          <div className="text-xs text-gray-500">
+          <div className={`text-xs ${
+            variant === 'dark' ? 'text-white/90' : 'text-gray-500'
+          }`}>
             {change !== undefined && (
-              <span className={`font-medium ${getChangeColor()}`}>
+              <span className={`font-medium ${
+                variant === 'dark' 
+                  ? (changeType === 'increase' ? 'text-green-400' : changeType === 'decrease' ? 'text-red-400' : 'text-white/90')
+                  : getChangeColor()
+              }`}>
                 {changeType === 'increase' ? '↗' : changeType === 'decrease' ? '↘' : '→'} {changeType === 'increase' ? '+' : ''}{change}%
               </span>
             )}

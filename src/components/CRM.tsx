@@ -14,7 +14,7 @@ type CRMTab = 'customers' | 'sales' | 'quick-sale' | 'reports';
 
 export const CRM = () => {
   const [activeTab, setActiveTab] = useState<CRMTab>('customers');
-  const { data, isLoading, error, refreshData } = useCRMData();
+  const { data, isLoading, error, refreshData, silentRefresh } = useCRMData();
 
   const tabs = [
     { id: 'customers' as CRMTab, label: 'Customers', emoji: '👥' },
@@ -23,9 +23,9 @@ export const CRM = () => {
     { id: 'reports' as CRMTab, label: 'Reports', emoji: '📊' }
   ];
 
-  // Use refreshData from context for mutations
+  // Use silentRefresh from context for mutations to avoid showing loading state
   const handleDataChange = () => {
-    refreshData();
+    silentRefresh();
   };
 
   if (isLoading) {
@@ -63,7 +63,7 @@ export const CRM = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="w-full mb-8 mt-10 lg:mt-0"
+        className="w-full mb-8 mt-[80px] md:mt-[10px]"
       >
         <AnimatedCRMPNG />
       </motion.div>
@@ -77,42 +77,42 @@ export const CRM = () => {
               total={data.summary.customer_count.toString()}
               label="active customers"
               icon="👥"
-              variant="default"
+              variant="corner-gradient"
             />
             <StatCard
               title="Sales"
               total={data.summary.total_sales.toString()}
               label="transactions"
               icon="🧾"
-              variant="default"
+              variant="corner-gradient"
             />
             <StatCard
               title="Revenue"
               total={`$${data.summary.total_revenue.toFixed(2)}`}
               label="total earnings"
               icon="💰"
-              variant="gradient"
+              variant="corner-gradient"
             />
             <StatCard
               title="Eggs Sold"
               total={data.summary.total_eggs_sold.toString()}
               label="units sold"
               icon="🥚"
-              variant="default"
+              variant="corner-gradient"
             />
             <StatCard
               title="Free Eggs"
               total={(data.summary.free_eggs_given || 0).toString()}
               label="given away"
               icon="🎁"
-              variant="default"
+              variant="corner-gradient"
             />
             <StatCard
               title="Top Customer"
               total={data.summary.top_customer || 'None'}
               label="highest purchaser"
               icon="⭐"
-              variant="compact"
+              variant="corner-gradient"
             />
           </div>
         </div>

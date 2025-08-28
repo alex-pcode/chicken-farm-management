@@ -11,6 +11,7 @@ interface PageContainerProps extends BaseUIComponentProps {
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
   padding?: 'none' | 'sm' | 'md' | 'lg';
   animated?: boolean;
+  style?: React.CSSProperties;
 }
 
 const maxWidthClasses = {
@@ -36,6 +37,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   children,
   className = '',
   testId,
+  style,
 }) => {
   const baseClasses = 'mx-auto px-4 sm:px-6 lg:px-8';
   const widthClass = maxWidthClasses[maxWidth];
@@ -48,6 +50,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className={combinedClassName}
+        style={style}
         data-testid={testId}
       >
         {children}
@@ -58,6 +61,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   return (
     <div 
       className={combinedClassName}
+      style={style}
       data-testid={testId}
     >
       {children}

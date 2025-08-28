@@ -75,27 +75,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 
 // Handle save operations (create/update)
-async function handleSave(user: User, operation: string, table: string, body: unknown, res: VercelResponse) {
+async function handleSave(user: User, operation: string, _table: string, body: unknown, res: VercelResponse) {
   switch (operation) {
     case 'eggs':
     case 'eggEntries':
-      return await saveEggEntries(user, body, res);
+      return await saveEggEntries(user, body as EggEntry | EggEntry[], res);
     case 'expenses':
-      return await saveExpenses(user, body, res);
+      return await saveExpenses(user, body as Expense | Expense[], res);
     case 'feed':
     case 'feedInventory':
-      return await saveFeedInventory(user, body, res);
+      return await saveFeedInventory(user, body as FeedEntry | FeedEntry[], res);
     case 'flockEvents':
-      return await saveFlockEvents(user, body, res);
+      return await saveFlockEvents(user, body as FlockEvent | FlockEvent[], res);
     case 'flockProfile':
-      return await saveFlockProfile(user, body, res);
+      return await saveFlockProfile(user, body as FlockProfile, res);
     default:
       return res.status(400).json({ message: 'Invalid operation' });
   }
 }
 
 // Handle delete operations
-async function handleDelete(user: User, operation: string, table: string, body: { id: string }, res: VercelResponse) {
+async function handleDelete(user: User, operation: string, _table: string, body: { id: string }, res: VercelResponse) {
   const { id } = body;
   if (!id) {
     return res.status(400).json({ message: 'ID is required for delete operations' });
@@ -117,6 +117,12 @@ async function handleDelete(user: User, operation: string, table: string, body: 
   }
 }
 
+// Helper function to check if an ID is a valid UUID
+function isValidUUID(id: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+}
+
 // Save egg entries
 async function saveEggEntries(user: User, eggData: EggEntry | EggEntry[], res: VercelResponse) {
   const eggWithUser = Array.isArray(eggData) 
@@ -127,7 +133,7 @@ async function saveEggEntries(user: User, eggData: EggEntry | EggEntry[], res: V
         ...(egg.size && { size: egg.size }),
         ...(egg.color && { color: egg.color }),
         ...(egg.notes && { notes: egg.notes }),
-        ...(egg.id && { id: egg.id })
+        ...(egg.id && isValidUUID(egg.id) && { id: egg.id })
       }))
     : {
         user_id: user.id,
@@ -136,7 +142,7 @@ async function saveEggEntries(user: User, eggData: EggEntry | EggEntry[], res: V
         ...(eggData.size && { size: eggData.size }),
         ...(eggData.color && { color: eggData.color }),
         ...(eggData.notes && { notes: eggData.notes }),
-        ...(eggData.id && { id: eggData.id })
+        ...(eggData.id && isValidUUID(eggData.id) && { id: eggData.id })
       };
 
   const { data, error } = await supabase
@@ -166,7 +172,7 @@ async function saveExpenses(user: User, expenseData: Expense | Expense[], res: V
           date: expense.date,
           description: expense.description
         };
-        if (expense.id) mapped.id = expense.id;
+        if (expense.id && isValidUUID(expense.id)) mapped.id = expense.id;
         if (expense.created_at) mapped.created_at = expense.created_at;
         return mapped;
       })
@@ -176,7 +182,7 @@ async function saveExpenses(user: User, expenseData: Expense | Expense[], res: V
         amount: expenseData.amount,
         date: expenseData.date,
         description: expenseData.description,
-        ...(expenseData.id && { id: expenseData.id }),
+        ...(expenseData.id && isValidUUID(expenseData.id) && { id: expenseData.id }),
         ...(expenseData.created_at && { created_at: expenseData.created_at })
       };
 
@@ -199,29 +205,41 @@ async function saveExpenses(user: User, expenseData: Expense | Expense[], res: V
 // Save feed inventory
 async function saveFeedInventory(user: User, feedData: FeedEntry | FeedEntry[], res: VercelResponse) {
   const feedWithUser = Array.isArray(feedData) 
-    ? feedData.map(feed => ({
-        user_id: user.id,
-        name: feed.brand || feed.name,
-        type: feed.type || 'Layer Feed',
-        quantity: feed.quantity,
-        unit: feed.unit || 'lbs',
-        cost_per_unit: feed.pricePerUnit || feed.cost_per_unit,
-        purchase_date: feed.openedDate || feed.purchase_date,
-        expiry_date: feed.depletedDate || feed.expiry_date,
-        batch_number: feed.batchNumber || feed.batch_number || '',
-        ...(feed.id && { id: feed.id })
-      }))
+    ? feedData.map(feed => {
+        const mapped: Record<string, any> = {
+          user_id: user.id,
+          name: feed.brand,
+          quantity: Number(feed.quantity), // Ensure numeric
+          unit: feed.unit || 'lbs',
+          cost_per_unit: Number(feed.pricePerUnit), // Ensure numeric
+          purchase_date: feed.openedDate
+        };
+        
+        // Only include expiry_date if depletedDate is provided and not null/undefined
+        if (feed.depletedDate) {
+          mapped.expiry_date = feed.depletedDate;
+        }
+        
+        // Only include id if it's a valid UUID (for updates)
+        if (feed.id && isValidUUID(feed.id)) {
+          mapped.id = feed.id;
+        }
+        
+        // NOTE: Do NOT include created_at, updated_at, createdAt, updatedAt - these are auto-managed
+        
+        return mapped;
+      })
     : {
         user_id: user.id,
-        name: feedData.brand || feedData.name,
-        type: feedData.type || 'Layer Feed',
-        quantity: feedData.quantity,
+        name: feedData.brand,
+        quantity: Number(feedData.quantity), // Ensure numeric
         unit: feedData.unit || 'lbs',
-        cost_per_unit: feedData.pricePerUnit || feedData.cost_per_unit,
-        purchase_date: feedData.openedDate || feedData.purchase_date,
-        expiry_date: feedData.depletedDate || feedData.expiry_date,
-        batch_number: feedData.batchNumber || feedData.batch_number || '',
-        ...(feedData.id && { id: feedData.id })
+        cost_per_unit: Number(feedData.pricePerUnit), // Ensure numeric
+        purchase_date: feedData.openedDate,
+        ...(feedData.depletedDate && { expiry_date: feedData.depletedDate }),
+        ...(feedData.id && isValidUUID(feedData.id) && { id: feedData.id })
+        // NOTE: Do NOT include created_at, updated_at, createdAt, updatedAt - these are auto-managed
+        // NOTE: batch_number and type columns don't exist in feed_inventory table
       };
 
   const { data, error } = await supabase
@@ -245,23 +263,23 @@ async function saveFlockEvents(user: User, eventData: FlockEvent | FlockEvent[],
   const eventWithUser = Array.isArray(eventData) 
     ? eventData.map(event => ({
         user_id: user.id,
-        flock_profile_id: event.flock_profile_id || event.flockProfileId,
+        flock_profile_id: null,
         date: event.date,
         type: event.type,
         description: event.description,
-        affected_birds: event.affected_birds || event.affectedBirds,
+        affected_birds: event.affectedBirds,
         notes: event.notes,
-        ...(event.id && { id: event.id })
+        ...(event.id && isValidUUID(event.id) && { id: event.id })
       }))
     : {
         user_id: user.id,
-        flock_profile_id: eventData.flock_profile_id || eventData.flockProfileId,
+        flock_profile_id: null,
         date: eventData.date,
         type: eventData.type,
         description: eventData.description,
-        affected_birds: eventData.affected_birds || eventData.affectedBirds,
+        affected_birds: eventData.affectedBirds,
         notes: eventData.notes,
-        ...(eventData.id && { id: eventData.id })
+        ...(eventData.id && isValidUUID(eventData.id) && { id: eventData.id })
       };
 
   const { data, error } = await supabase
@@ -284,19 +302,19 @@ async function saveFlockEvents(user: User, eventData: FlockEvent | FlockEvent[],
 async function saveFlockProfile(user: User, profileData: FlockProfile, res: VercelResponse) {
   const profileWithUser = {
     user_id: user.id,
-    farm_name: profileData.farmName || profileData.farm_name,
-    location: profileData.location,
-    flock_size: profileData.flockSize || profileData.flock_size,
+    farm_name: 'Default Farm',
+    location: 'Default Location',
+    flock_size: profileData.hens + profileData.roosters + profileData.chicks + profileData.brooding,
     breed: Array.isArray(profileData.breedTypes) 
       ? profileData.breedTypes.join(', ') 
-      : profileData.breed,
-    start_date: profileData.flockStartDate || profileData.start_date,
+      : 'Mixed',
+    start_date: profileData.flockStartDate || new Date().toISOString(),
     notes: profileData.notes || '',
     hens: profileData.hens || 0,
     roosters: profileData.roosters || 0,
     chicks: profileData.chicks || 0,
     brooding: profileData.brooding || 0,
-    ...(profileData.id && { id: profileData.id })
+    ...(profileData.id && isValidUUID(profileData.id) && { id: profileData.id })
   };
 
   const { data, error } = await supabase

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { FlockBatch, BatchEvent } from '../types';
 import { apiService } from '../services/api';
+import { useOptimizedAppData } from '../contexts/OptimizedDataProvider';
 import { Timeline, TimelineItem } from './ui/timeline/Timeline';
 import { FormCard } from './ui/forms/FormCard';
 import { FormField } from './ui/forms/FormField';
@@ -25,6 +26,7 @@ interface TimelineEventFormData {
 }
 
 export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: BatchDetailViewProps) => {
+  const { refreshData } = useOptimizedAppData();
   const [events, setEvents] = useState<BatchEvent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -242,6 +244,9 @@ export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: Bat
       if (newEvent.type === 'brooding_start' || newEvent.type === 'brooding_stop') {
         await refreshBatchData();
       }
+
+      // Refresh global data to update Profile timeline (since batch events propagate to flock events)
+      await refreshData();
       
     } catch (err) {
       console.error('Error adding event:', err);
@@ -263,6 +268,8 @@ export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: Bat
         brooding_start: { icon: '🪺', color: 'yellow' as const },
         brooding_stop: { icon: '🐔', color: 'green' as const },
         production_note: { icon: '📝', color: 'indigo' as const },
+        flock_added: { icon: '🎉', color: 'green' as const },
+        flock_loss: { icon: '💔', color: 'red' as const },
         other: { icon: '📋', color: 'gray' as const }
       };
       return styles[type as keyof typeof styles] || styles.other;
@@ -523,6 +530,8 @@ export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: Bat
               <option value="brooding_start">🪺 Brooding Start</option>
               <option value="brooding_stop">🐔 Brooding Stop</option>
               <option value="production_note">📝 Production Note</option>
+              <option value="flock_added">🎉 Flock Added</option>
+              <option value="flock_loss">💔 Flock Loss</option>
               <option value="other">📋 Other</option>
             </select>
           </FormField>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { BatchEvent } from '../types';
 import { apiService } from '../services/api';
+import { useOptimizedAppData } from '../contexts/OptimizedDataProvider';
 import { Timeline, TimelineItem } from './ui/timeline/Timeline';
 
 interface BatchTimelineProps {
@@ -19,6 +20,7 @@ interface TimelineEventFormData {
 }
 
 export const BatchTimeline = ({ batchId, batchName, className }: BatchTimelineProps) => {
+  const { refreshData } = useOptimizedAppData();
   const [events, setEvents] = useState<BatchEvent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -101,6 +103,9 @@ export const BatchTimeline = ({ batchId, batchName, className }: BatchTimelinePr
 
       setSuccess('Event added to timeline');
       setShowAddForm(false);
+      
+      // Refresh global data to update Profile timeline (since batch events propagate to flock events)
+      await refreshData();
       
     } catch (err) {
       console.error('Error adding event:', err);

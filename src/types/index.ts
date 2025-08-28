@@ -105,7 +105,7 @@ export interface BatchEvent {
   id: string;
   batchId: string;
   date: string;
-  type: 'health_check' | 'vaccination' | 'relocation' | 'breeding' | 'laying_start' | 'brooding_start' | 'brooding_stop' | 'production_note' | 'other';
+  type: 'health_check' | 'vaccination' | 'relocation' | 'breeding' | 'laying_start' | 'brooding_start' | 'brooding_stop' | 'production_note' | 'flock_added' | 'flock_loss' | 'other';
   description: string;
   affectedCount?: number;
   notes?: string;
@@ -153,6 +153,7 @@ export interface FlockSummary {
     type: string;
     currentCount: number;
     acquisitionDate: string;
+    ageAtAcquisition: 'chick' | 'juvenile' | 'adult';
     isLayingAge: boolean;
   }>;
 }

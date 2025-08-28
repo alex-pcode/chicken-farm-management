@@ -1,5 +1,5 @@
 "use client";
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ApiServiceError, AuthenticationError, NetworkError, ServerError, getUserFriendlyErrorMessage } from '../types/api';
 import type { EggEntry } from '../types';
@@ -7,12 +7,13 @@ import { DataTable, TableColumn } from './ui/tables/DataTable';
 import { Pagination } from './ui/navigation/Pagination';
 import { ProgressCard } from './ui/cards/ProgressCard';
 import { StatCard } from './ui/cards/StatCard';
+import { ComparisonCard } from './ui/cards/ComparisonCard';
 import AnimatedEggCounterPNG from './AnimatedEggCounterPNG';
 import { useFormState } from '../hooks/useFormState';
 import { useFormValidation } from '../hooks/useFormValidation';
 import { validateEggCount } from '../utils/validation';
 import { useEggData } from '../hooks/data/useEggData';
-// import { useFlockData } from '../hooks/data/useFlockData';
+import { useFlockBatchData } from '../contexts/OptimizedDataProvider';
 import { useEggPagination } from '../hooks/pagination/useEggPagination';
 import { useTimeoutToggle } from '../hooks/utils';
 import { ConfirmDialog } from './ui/modals/ConfirmDialog';
@@ -22,8 +23,8 @@ export const EggCounter = () => {
   // Use custom data management hook
   const { entries: eggEntries, isLoading, addEntry, deleteEntry, totalEggs, averageDaily, thisWeekTotal, thisMonthTotal, previousWeekTotal, previousMonthTotal } = useEggData();
   
-  // Get flock data for hen count (currently unused but prepared for future features)
-  // const { profile } = useFlockData();
+  // Get flock batch data for accurate hen count
+  const { data: { flockBatches: batches } } = useFlockBatchData();
   
   // Calculate trend indicators
   const calculateTrend = (current: number, previous: number) => {
@@ -37,6 +38,29 @@ export const EggCounter = () => {
 
   const weekTrend = calculateTrend(thisWeekTotal, previousWeekTotal);
   const monthTrend = calculateTrend(thisMonthTotal, previousMonthTotal);
+
+  // Calculate laying hens from batch data (same logic as FlockOverview)
+  const layingHens = useMemo(() => {
+    return batches
+      .filter(batch => batch.actualLayingStartDate)
+      .reduce((sum, batch) => {
+        const hens = batch.hensCount || 0;
+        const brooding = batch.broodingCount || 0;
+        return sum + Math.max(0, hens - brooding);
+      }, 0);
+  }, [batches]);
+
+  // Calculate lay rate (average daily eggs / laying hens * 100)
+  const layRate = useMemo(() => {
+    if (layingHens === 0 || averageDaily === 0) return 0;
+    return Math.round((averageDaily / layingHens) * 100);
+  }, [averageDaily, layingHens]);
+
+  // Calculate protein generated (total eggs × 0.125 lbs)
+  const proteinGenerated = useMemo(() => {
+    const proteinLbs = totalEggs * 0.125;
+    return Math.round(proteinLbs);
+  }, [totalEggs]);
 
   // Monthly goal settings (could be made configurable later)
   const MONTHLY_EGG_GOAL = 1000;
@@ -550,21 +574,27 @@ export const EggCounter = () => {
         />
       </motion.div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 !mb-0">
+      {/* Comparison Cards Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 !mb-0">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <StatCard
-            title="This Week"
-            total={thisWeekTotal.toLocaleString()}
-            label="eggs collected"
-            icon="📅"
+          <ComparisonCard
+            title="7 Day Comparison"
+            before={{
+              value: previousWeekTotal,
+              label: "Previous 7 Days"
+            }}
+            after={{
+              value: thisWeekTotal,
+              label: "Last 7 Days"
+            }}
             change={previousWeekTotal > 0 ? weekTrend.percentage : undefined}
             changeType={previousWeekTotal > 0 ? (weekTrend.isPositive ? 'increase' : 'decrease') : undefined}
-            trend={previousWeekTotal > 0 ? (weekTrend.isPositive ? 'up' : 'down') : undefined}
-            variant="corner-gradient"
+            format="number"
+            icon="📅"
           />
         </motion.div>
 
@@ -573,17 +603,25 @@ export const EggCounter = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35 }}
         >
-          <StatCard
-            title="This Month"
-            total={thisMonthTotal.toLocaleString()}
-            label="eggs collected"
-            icon="📊"
+          <ComparisonCard
+            title="Monthly Comparison"
+            before={{
+              value: previousMonthTotal,
+              label: "Previous Month"
+            }}
+            after={{
+              value: thisMonthTotal,
+              label: "This Month"
+            }}
             change={previousMonthTotal > 0 ? monthTrend.percentage : undefined}
             changeType={previousMonthTotal > 0 ? (monthTrend.isPositive ? 'increase' : 'decrease') : undefined}
-            trend={previousMonthTotal > 0 ? (monthTrend.isPositive ? 'up' : 'down') : undefined}
-            variant="corner-gradient"
+            format="number"
+            icon="📊"
           />
         </motion.div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 !mb-0">
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -612,10 +650,38 @@ export const EggCounter = () => {
             variant="corner-gradient"
           />
         </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <StatCard
+            title="Lay Rate"
+            total={`${layRate}%`}
+            label={`of ${layingHens} laying hens`}
+            icon="🐔"
+            variant="corner-gradient"
+          />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
+        >
+          <StatCard
+            title="Protein Wizard"
+            total={`${proteinGenerated} lbs`}
+            label="of pure protein generated"
+            icon="🧙‍♂️"
+            variant="corner-gradient"
+          />
+        </motion.div>
       </div>
 
 
-      <h2 className="text-2xl font-bold mb-6 text-gray-900">Recent Entries</h2>
+      <h2 className="text-2xl font-bold text-gray-900" style={{ marginBottom: 0 }}>Recent Entries</h2>
       
       
       <motion.div

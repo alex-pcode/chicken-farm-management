@@ -15,7 +15,8 @@ import {
   CartesianGrid, 
   Tooltip, 
   Legend, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  ComposedChart 
 } from 'recharts';
 
 const ChartsTab: React.FC = () => {
@@ -40,11 +41,11 @@ const ChartsTab: React.FC = () => {
   ];
 
   const expenseData = [
-    { name: 'Feed', value: 423, color: '#8B5CF6' },
-    { name: 'Equipment', value: 145, color: '#06B6D4' },
-    { name: 'Veterinary', value: 89, color: '#10B981' },
-    { name: 'Utilities', value: 67, color: '#F59E0B' },
-    { name: 'Maintenance', value: 34, color: '#EF4444' }
+    { name: 'Feed', value: 423, color: '#544CE6' },
+    { name: 'Equipment', value: 145, color: '#2A2580' },
+    { name: 'Veterinary', value: 89, color: '#191656' },
+    { name: 'Utilities', value: 67, color: '#6B5CE6' },
+    { name: 'Maintenance', value: 34, color: '#4A3DC7' }
   ];
 
   const quarterlyTrends = [
@@ -55,16 +56,18 @@ const ChartsTab: React.FC = () => {
     { quarter: 'Q1 2024', production: 4402, efficiency: 95.2, revenue: 2201 }
   ];
 
-  const farmAnalyticsData = [
-    { month: 'Jan', eggs: 1245, feed: 245, revenue: 622, expenses: 289, profit: 333 },
-    { month: 'Feb', eggs: 1189, feed: 238, revenue: 595, expenses: 276, profit: 319 },
-    { month: 'Mar', eggs: 1356, feed: 271, revenue: 678, expenses: 312, profit: 366 },
-    { month: 'Apr', eggs: 1423, feed: 285, revenue: 712, expenses: 329, profit: 383 },
-    { month: 'May', eggs: 1467, feed: 293, revenue: 734, expenses: 341, profit: 393 },
-    { month: 'Jun', eggs: 1512, feed: 302, revenue: 756, expenses: 356, profit: 400 }
+  const performanceData = [
+    { month: 'Jan', efficiency: 87.5, satisfaction: 92.3, productivity: 89.1 },
+    { month: 'Feb', efficiency: 89.2, satisfaction: 94.1, productivity: 91.4 },
+    { month: 'Mar', efficiency: 91.8, satisfaction: 89.7, productivity: 93.2 },
+    { month: 'Apr', efficiency: 93.4, satisfaction: 96.2, productivity: 95.1 },
+    { month: 'May', efficiency: 95.1, satisfaction: 91.8, productivity: 92.7 },
+    { month: 'Jun', efficiency: 92.6, satisfaction: 93.5, productivity: 94.3 }
   ];
 
+
   return (
+    <>
     <div className="space-y-12">
       {/* Bar Charts */}
       <section className="space-y-6">
@@ -77,16 +80,17 @@ const ChartsTab: React.FC = () => {
           <ChartCard
             title="Monthly Egg Production"
             subtitle="Eggs produced vs target by month"
+            height={320}
           >
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyProductionData}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyProductionData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
-                <YAxis />
+                <YAxis width={25} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="eggs" fill="#8B5CF6" name="Actual Production" />
-                <Bar dataKey="target" fill="#E5E7EB" name="Target" />
+                <Bar dataKey="eggs" fill="#544CE6" name="Actual Production" />
+                <Bar dataKey="target" fill="#2A2580" name="Target" />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -94,16 +98,17 @@ const ChartsTab: React.FC = () => {
           <ChartCard
             title="Weekly Overview"
             subtitle="Daily egg production this week"
+            height={320}
           >
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={weeklyData}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={weeklyData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="day" />
-                <YAxis />
+                <YAxis width={25} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="eggs" fill="#06B6D4" name="Eggs Collected" />
-                <Bar dataKey="hens" fill="#10B981" name="Active Hens" />
+                <Bar dataKey="eggs" fill="#544CE6" name="Eggs Collected" />
+                <Bar dataKey="hens" fill="#2A2580" name="Active Hens" />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -121,20 +126,21 @@ const ChartsTab: React.FC = () => {
           <ChartCard
             title="Quarterly Trends"
             subtitle="Production and efficiency trends over time"
+            height={320}
           >
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={quarterlyTrends}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={quarterlyTrends} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="quarter" />
-                <YAxis yAxisId="left" />
-                <YAxis yAxisId="right" orientation="right" />
+                <YAxis yAxisId="left" width={25} />
+                <YAxis yAxisId="right" orientation="right" width={25} />
                 <Tooltip />
                 <Legend />
                 <Line 
                   yAxisId="left"
                   type="monotone" 
                   dataKey="production" 
-                  stroke="#8B5CF6" 
+                  stroke="#544CE6" 
                   strokeWidth={2}
                   name="Production"
                 />
@@ -142,7 +148,7 @@ const ChartsTab: React.FC = () => {
                   yAxisId="right"
                   type="monotone" 
                   dataKey="efficiency" 
-                  stroke="#06B6D4" 
+                  stroke="#2A2580" 
                   strokeWidth={2}
                   name="Efficiency %"
                 />
@@ -153,18 +159,19 @@ const ChartsTab: React.FC = () => {
           <ChartCard
             title="Revenue Growth"
             subtitle="Monthly revenue with trend area"
+            height={320}
           >
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={monthlyProductionData}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={monthlyProductionData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
-                <YAxis />
+                <YAxis width={25} />
                 <Tooltip formatter={(value) => [`$${value}`, 'Revenue']} />
                 <Area 
                   type="monotone" 
                   dataKey="revenue" 
-                  stroke="#10B981" 
-                  fill="#10B981"
+                  stroke="#544CE6" 
+                  fill="#544CE6"
                   fillOpacity={0.3}
                 />
               </AreaChart>
@@ -184,8 +191,9 @@ const ChartsTab: React.FC = () => {
           <ChartCard
             title="Expense Breakdown"
             subtitle="Monthly expenses by category"
+            height={320}
           >
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={expenseData}
@@ -209,8 +217,9 @@ const ChartsTab: React.FC = () => {
           <ChartCard
             title="Production Distribution"
             subtitle="Donut chart showing production by quality grade"
+            height={320}
           >
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={[
@@ -228,7 +237,12 @@ const ChartsTab: React.FC = () => {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {expenseData.map((entry, index) => (
+                  {[
+                    { name: 'Grade A', value: 78, color: '#544CE6' },
+                    { name: 'Grade B', value: 15, color: '#2A2580' },
+                    { name: 'Grade C', value: 5, color: '#191656' },
+                    { name: 'Cracked', value: 2, color: '#6B5CE6' }
+                  ].map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -250,6 +264,7 @@ const ChartsTab: React.FC = () => {
           <ChartCard
             title="Loading Chart"
             subtitle="Chart in loading state"
+            height={200}
             loading
           >
             <div className="h-48" />
@@ -258,13 +273,14 @@ const ChartsTab: React.FC = () => {
           <ChartCard
             title="Compact Chart"
             subtitle="Smaller chart for dashboard widgets"
+            height={170}
           >
-            <ResponsiveContainer width="100%" height={150}>
+            <ResponsiveContainer width="100%" height="100%">
               <LineChart data={weeklyData.slice(0, 5)}>
                 <Line 
                   type="monotone" 
                   dataKey="eggs" 
-                  stroke="#8B5CF6" 
+                  stroke="#544CE6" 
                   strokeWidth={2}
                   dot={false}
                 />
@@ -276,14 +292,15 @@ const ChartsTab: React.FC = () => {
           <ChartCard
             title="Mini Chart"
             subtitle="Tiny chart for cards"
+            height={120}
           >
-            <ResponsiveContainer width="100%" height={100}>
+            <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={weeklyData.slice(0, 4)}>
                 <Area 
                   type="monotone" 
                   dataKey="eggs" 
-                  stroke="#06B6D4" 
-                  fill="#06B6D4"
+                  stroke="#544CE6" 
+                  fill="#544CE6"
                   fillOpacity={0.4}
                 />
               </AreaChart>
@@ -292,57 +309,6 @@ const ChartsTab: React.FC = () => {
         </div>
       </section>
 
-      {/* Full-Width Chart Examples */}
-      <section className="space-y-6">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Full-Width Chart Examples</h2>
-          <p className="text-gray-600">Comprehensive charts spanning full width</p>
-        </div>
-        
-        <ChartCard
-          title="Complete Farm Analytics Dashboard"
-          subtitle="Comprehensive view of all farm metrics over time"
-        >
-          <ResponsiveContainer width="100%" height={400}>
-            <AreaChart data={farmAnalyticsData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis yAxisId="left" />
-              <YAxis yAxisId="right" orientation="right" />
-              <Tooltip />
-              <Legend />
-              <Area 
-                yAxisId="left"
-                type="monotone" 
-                dataKey="revenue" 
-                stackId="1"
-                stroke="#10B981" 
-                fill="#10B981"
-                fillOpacity={0.6}
-                name="Revenue ($)"
-              />
-              <Area 
-                yAxisId="left"
-                type="monotone" 
-                dataKey="expenses" 
-                stackId="2"
-                stroke="#EF4444" 
-                fill="#EF4444"
-                fillOpacity={0.6}
-                name="Expenses ($)"
-              />
-              <Line 
-                yAxisId="right"
-                type="monotone" 
-                dataKey="eggs" 
-                stroke="#8B5CF6" 
-                strokeWidth={3}
-                name="Egg Production"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      </section>
 
       {/* Dashboard Layout Example */}
       <section className="space-y-6">
@@ -351,26 +317,27 @@ const ChartsTab: React.FC = () => {
           <p className="text-gray-600">Mixed chart layout for comprehensive dashboards</p>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="xl:col-span-2">
             <ChartCard
               title="Production Trends"
               subtitle="Monthly egg production and revenue correlation"
+              height={370}
             >
-              <ResponsiveContainer width="100%" height={350}>
-                <AreaChart data={monthlyProductionData}>
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={monthlyProductionData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
+                  <YAxis yAxisId="left" width={25} />
+                  <YAxis yAxisId="right" orientation="right" width={25} />
                   <Tooltip />
                   <Legend />
                   <Area 
                     yAxisId="left"
                     type="monotone" 
                     dataKey="eggs" 
-                    stroke="#8B5CF6" 
-                    fill="#8B5CF6"
+                    stroke="#544CE6" 
+                    fill="#544CE6"
                     fillOpacity={0.3}
                     name="Egg Production"
                   />
@@ -378,11 +345,11 @@ const ChartsTab: React.FC = () => {
                     yAxisId="right"
                     type="monotone" 
                     dataKey="revenue" 
-                    stroke="#10B981" 
+                    stroke="#2A2580" 
                     strokeWidth={2}
                     name="Revenue ($)"
                   />
-                </AreaChart>
+                </ComposedChart>
               </ResponsiveContainer>
             </ChartCard>
           </div>
@@ -391,8 +358,9 @@ const ChartsTab: React.FC = () => {
             <ChartCard
               title="Current Expenses"
               subtitle="This month's spending breakdown"
-              >
-              <ResponsiveContainer width="100%" height={200}>
+              height={220}
+            >
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={expenseData}
@@ -415,10 +383,11 @@ const ChartsTab: React.FC = () => {
             <ChartCard
               title="Weekly Trend"
               subtitle="This week's daily production"
-              >
-              <ResponsiveContainer width="100%" height={150}>
-                <BarChart data={weeklyData}>
-                  <Bar dataKey="eggs" fill="#06B6D4" />
+              height={170}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weeklyData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+                  <Bar dataKey="eggs" fill="#544CE6" />
                   <Tooltip />
                 </BarChart>
               </ResponsiveContainer>
@@ -427,6 +396,55 @@ const ChartsTab: React.FC = () => {
         </div>
       </section>
     </div>
+
+    {/* Standalone Performance Chart */}
+    <div className="mt-12">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Farm Performance Analytics</h2>
+        <p className="text-gray-600">Standalone chart showing comprehensive performance metrics</p>
+      </div>
+      
+      <ChartCard
+        title="Multi-Metric Performance Dashboard"
+        subtitle="Tracking efficiency, satisfaction, and productivity over time"
+        height={420}
+      >
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={performanceData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" />
+            <YAxis domain={[80, 100]} width={25} />
+            <Tooltip />
+            <Legend />
+            <Line 
+              type="monotone" 
+              dataKey="efficiency" 
+              stroke="#544CE6" 
+              strokeWidth={3}
+              name="Farm Efficiency (%)"
+              dot={{ r: 5 }}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="satisfaction" 
+              stroke="#2A2580" 
+              strokeWidth={3}
+              name="Customer Satisfaction (%)"
+              dot={{ r: 5 }}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="productivity" 
+              stroke="#8833D7" 
+              strokeWidth={3}
+              name="Overall Productivity (%)"
+              dot={{ r: 5 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </ChartCard>
+    </div>
+    </>
   );
 };
 

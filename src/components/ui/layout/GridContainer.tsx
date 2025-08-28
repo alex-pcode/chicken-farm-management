@@ -18,10 +18,10 @@ interface GridContainerProps extends BaseUIComponentProps {
 
 const getColumnClasses = (columns: number | { sm?: number; md?: number; lg?: number; xl?: number }): string => {
   if (typeof columns === 'number') {
-    return `grid-cols-1 md:grid-cols-${Math.min(columns, 2)} lg:grid-cols-${columns}`;
+    return `grid-cols-2 md:grid-cols-${Math.min(columns, 3)} lg:grid-cols-${columns}`;
   }
 
-  const classes = ['grid-cols-1'];
+  const classes = ['grid-cols-2'];
   if (columns.sm) classes.push(`sm:grid-cols-${columns.sm}`);
   if (columns.md) classes.push(`md:grid-cols-${columns.md}`);
   if (columns.lg) classes.push(`lg:grid-cols-${columns.lg}`);
@@ -31,10 +31,10 @@ const getColumnClasses = (columns: number | { sm?: number; md?: number; lg?: num
 };
 
 const gapClasses = {
-  sm: 'gap-2',
-  md: 'gap-4',
-  lg: 'gap-6',
-  xl: 'gap-8',
+  sm: 'gap-1',
+  md: 'gap-2',
+  lg: 'gap-3',
+  xl: 'gap-4',
 };
 
 export const GridContainer: React.FC<GridContainerProps> = ({

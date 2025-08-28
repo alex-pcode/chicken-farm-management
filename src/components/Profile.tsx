@@ -342,7 +342,6 @@ export const Profile = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="mt-10 lg:mt-0 mb-8"
       >
         <AnimatedFarmPNG />
       </motion.div>
@@ -404,7 +403,7 @@ export const Profile = () => {
         </motion.div>
       )}
 
-      {flockSummary && (
+      {(flockSummary || batchLoading.value || !hasLoadedOnce) && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -412,10 +411,7 @@ export const Profile = () => {
           className="space-y-6"
         >
           {/* New Flock Overview Component */}
-          <FlockOverview 
-            flockSummary={flockSummary}
-            isLoading={batchLoading.value}
-          />
+          <FlockOverview />
         </motion.div>
       )}
 

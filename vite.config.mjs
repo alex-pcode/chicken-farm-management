@@ -21,6 +21,21 @@ export default defineConfig({
       authToken: process.env.SENTRY_AUTH_TOKEN,
     }),
   ].filter(Boolean),
+  build: {
+    rollupOptions: {
+      output: {
+        // Optimize chunk splitting for better caching
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          supabase: ['@supabase/supabase-js'],
+          charts: ['recharts'],
+          ui: ['framer-motion', '@headlessui/react'],
+        },
+      },
+    },
+    // Enable source maps for production debugging
+    sourcemap: process.env.NODE_ENV === 'production',
+  },
   test: {
     globals: true,
     environment: 'jsdom',
