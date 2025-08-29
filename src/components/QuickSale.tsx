@@ -104,9 +104,6 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
     }
   };
 
-  const quickAddEggs = (amount: number) => {
-    handleEggCountChange(formData.eggs_count + amount);
-  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -171,7 +168,7 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
           subtitle="Enter sale details and pricing below"
           onSubmit={handleSubmit}
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
             <NumberInput
               label="Price per Egg ($)"
               value={pricePerEgg}
@@ -206,77 +203,33 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
             />
           </div>
 
-          {/* Egg Count with Quick Add */}
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex-1">
-                <NumberInput
-                  label="Number of Eggs"
-                  value={formData.eggs_count}
-                  onChange={handleEggCountChange}
-                  min={0}
-                  placeholder="Enter egg count"
-                  required
-                />
-              </div>
-              <div className="flex gap-1 mt-6">
-                {[1, 6, 12, 24].map(amount => (
-                  <FormButton
-                    key={amount}
-                    type="button"
-                    onClick={() => quickAddEggs(amount)}
-                    variant="secondary"
-                    size="sm"
-                    className="px-3 py-2 text-sm"
-                  >
-                    +{amount}
-                  </FormButton>
-                ))}
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <NumberInput
+              label="Number of Eggs"
+              value={formData.eggs_count}
+              onChange={handleEggCountChange}
+              min={0}
+              placeholder="Enter egg count"
+              required
+            />
+
+            <NumberInput
+              label="Total Amount ($)"
+              value={formData.total_amount}
+              onChange={(value) => setFormData(prev => ({ ...prev, total_amount: value }))}
+              step={0.01}
+              min={0}
+              required
+            />
           </div>
 
-          {/* Total Amount with Calculator */}
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="flex-1">
-                <NumberInput
-                  label="Total Amount ($)"
-                  value={formData.total_amount}
-                  onChange={(value) => setFormData(prev => ({ ...prev, total_amount: value }))}
-                  step={0.01}
-                  min={0}
-                  required
-                />
-              </div>
-              <div title="Auto-calculate based on pricing">
-                <FormButton
-                  type="button"
-                  onClick={() => updateTotalAmount(formData.eggs_count)}
-                  variant="secondary"
-                  size="sm"
-                  className="mt-6 px-3 py-2"
-                >
-                  🧮
-                </FormButton>
-              </div>
+          {formData.eggs_count >= 12 && (
+            <div className="text-sm text-gray-500">
+              <p>
+                {Math.floor(formData.eggs_count / 12)} dozen + {formData.eggs_count % 12} individual
+              </p>
             </div>
-            {formData.eggs_count > 0 && (
-              <div className="mt-2 text-sm text-gray-600">
-                <p>
-                  Suggested: <span className="font-medium">${(formData.eggs_count * pricePerEgg).toFixed(2)}</span>
-                  {formData.total_amount === 0 && (
-                    <span className="text-green-600 font-medium"> (Free eggs)</span>
-                  )}
-                </p>
-                {formData.eggs_count >= 12 && (
-                  <p className="text-gray-500">
-                    {Math.floor(formData.eggs_count / 12)} dozen + {formData.eggs_count % 12} individual
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+          )}
 
           <TextareaInput
             label="Notes (optional)"
@@ -287,13 +240,13 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
           />
 
           {/* Submit Button */}
-          <div className="pt-4">
+          <div className="pt-4 flex justify-center">
             <FormButton
               type="submit"
               variant="primary"
               disabled={isSubmitting || !formData.customer_id || formData.eggs_count === 0}
               loading={isSubmitting}
-              className="w-full py-4 text-lg font-semibold"
+              className="px-8 py-4 text-lg font-semibold"
             >
               {formData.total_amount === 0 
                 ? 'Record Free Eggs 🥚' 

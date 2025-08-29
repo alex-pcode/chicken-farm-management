@@ -255,11 +255,11 @@ export const Savings = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <GridContainer columns={4} gap="lg">
+          <GridContainer columns={{ sm: 1, md: 2, lg: 4 }} gap="lg">
             <StatCard
-              title="Total Eggs"
+              title="You've Collected"
               total={savingsData.totalEggs}
-              label="collected eggs"
+              label="eggs without breaking them"
               icon="🥚"
               variant="dark"
             />

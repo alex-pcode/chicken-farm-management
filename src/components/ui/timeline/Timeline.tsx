@@ -85,7 +85,7 @@ export const Timeline: React.FC<TimelineProps> = ({
       case 'primary':
         return `${baseClasses} bg-indigo-600 text-white hover:bg-indigo-700`;
       case 'danger':
-        return `${baseClasses} bg-red-50 text-red-600 hover:bg-red-100`;
+        return `${baseClasses} bg-indigo-600 text-white hover:bg-indigo-700`;
       default:
         return `${baseClasses} bg-gray-50 text-gray-600 hover:bg-gray-100`;
     }
@@ -131,7 +131,7 @@ export const Timeline: React.FC<TimelineProps> = ({
         <div className="relative">
           {/* Center line for alternating layout */}
           {showConnector && (
-            <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
+            <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
           )}
           
           <div className="space-y-8">
@@ -218,13 +218,24 @@ export const Timeline: React.FC<TimelineProps> = ({
                   </div>
 
                   {/* Mobile layout */}
-                  <div className="md:hidden">
+                  <div className="md:hidden relative">
+                    {/* Mobile vertical line behind icons */}
+                    {showConnector && index === 0 && sortedItems.length > 1 && (
+                      <div className="absolute left-5 top-10 w-0.5 bg-gradient-to-b from-transparent via-gray-300 to-transparent" 
+                           style={{ height: `${(sortedItems.length - 1) * 120}px` }}></div>
+                    )}
                     <div className="flex gap-4">
-                      <div className={`shrink-0 w-10 h-10 ${colorClass.split(' ')[0]} rounded-full flex items-center justify-center text-white`}>
-                        {item.icon ? (
-                          <span className="text-lg">{item.icon}</span>
-                        ) : (
-                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                      <div className="relative shrink-0">
+                        <div className={`w-10 h-10 ${colorClass.split(' ')[0]} rounded-full flex items-center justify-center text-white relative z-10`}>
+                          {item.icon ? (
+                            <span className="text-lg">{item.icon}</span>
+                          ) : (
+                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                          )}
+                        </div>
+                        {/* Mobile connector line from icon to icon */}
+                        {showConnector && index < sortedItems.length - 1 && (
+                          <div className="absolute left-1/2 top-10 w-0.5 h-16 bg-gray-300 transform -translate-x-1/2"></div>
                         )}
                       </div>
                       <motion.div

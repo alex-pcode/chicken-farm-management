@@ -207,7 +207,7 @@ export interface FeedEntry {
   openedDate: string;
   depletedDate?: string;
   batchNumber?: string;
-  pricePerUnit: number;
+  total_cost: number;
   description?: string;
   created_at?: string;
   updated_at?: string;

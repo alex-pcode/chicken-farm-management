@@ -209,7 +209,7 @@ export const FeedCostCalculator = () => {
       
       if (hasFlockChanges) {
         // Handle periods with flock changes using consumption-based allocation
-        const totalCost = feed.quantity * feed.pricePerUnit;
+        const totalCost = feed.total_cost;
         const totalFeedQuantity = feed.quantity;
         
         // Build chronological list of all dates in this period (start + changes + end)
@@ -329,7 +329,7 @@ export const FeedCostCalculator = () => {
       } else {
         // Simple case: flock size constant throughout period
         const flockSize = getFlockSizeAtDate(startDate);
-        const totalCost = feed.quantity * feed.pricePerUnit;
+        const totalCost = feed.total_cost;
         const costPerBirdPerDay = flockSize.totalBirds > 0 ? totalCost / duration / flockSize.totalBirds : 0;
         const costPerBirdPerMonth = costPerBirdPerDay * 30;
 
@@ -512,7 +512,7 @@ export const FeedCostCalculator = () => {
                   <h5 className="font-semibold text-gray-900 mb-2">Feed Details</h5>
                   <div className="space-y-1 text-sm">
                     <p><span className="text-gray-600">Quantity:</span> {period.feedEntry.quantity} {period.feedEntry.unit}</p>
-                    <p><span className="text-gray-600">Price per {period.feedEntry.unit}:</span> ${period.feedEntry.pricePerUnit}</p>
+                    <p><span className="text-gray-600">Total Price:</span> ${period.feedEntry.total_cost}</p>
                     <p><span className="text-gray-600">Total Cost:</span> ${period.totalCost.toFixed(2)}</p>
                   </div>
                 </div>
@@ -542,7 +542,7 @@ export const FeedCostCalculator = () => {
   // @ts-ignore - Utility function for future use  
   const _calculateSubPeriods = useCallback((feed: FeedEntry, flockChanges: FlockSizeAtDate[], startDate: string, endDate: string): FeedPeriod[] => {
     const subPeriods: FeedPeriod[] = [];
-    const totalCost = feed.quantity * feed.pricePerUnit;
+    const totalCost = feed.total_cost;
     
     // Sort changes by date
     const sortedChanges = [...flockChanges].sort((a, b) => 

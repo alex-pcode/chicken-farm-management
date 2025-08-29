@@ -119,9 +119,9 @@ export const FeedTracker = () => {
       render: (_, feed) => `${feed.quantity} ${feed.unit}`,
     },
     {
-      key: 'pricePerUnit',
+      key: 'total_cost',
       label: 'Price',
-      render: (_, feed) => `$${(feed.quantity * feed.pricePerUnit).toFixed(2)}`,
+      render: (_, feed) => `$${(feed.total_cost || 0).toFixed(2)}`,
     },
     {
       key: 'openedDate',
@@ -134,18 +134,13 @@ export const FeedTracker = () => {
       render: (_, feed) => feed.depletedDate ? (
         `${calculateDuration(feed.openedDate, feed.depletedDate)} days`
       ) : (
-        <motion.button
+        <button
           onClick={() => handleDepleteFeed(feed.id)}
-          className="neu-button transition-all duration-200 font-medium rounded-lg px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white inline-flex items-center gap-1.5 min-w-[110px] justify-center"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          className="px-2 py-1 rounded-full text-xs font-medium text-white bg-[#544CE6] hover:bg-[#4338CA] transition-colors cursor-pointer"
           title="Mark this feed bag as depleted"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-          Mark Depleted
-        </motion.button>
+          active
+        </button>
       ),
     },
     {
@@ -174,7 +169,7 @@ export const FeedTracker = () => {
       unit: 'kg' as 'kg' | 'lbs',
       openedDate: new Date().toISOString().split('T')[0],
       batchNumber: '',
-      pricePerUnit: ''
+      total_cost: ''
     }
   });
 
@@ -211,8 +206,8 @@ export const FeedTracker = () => {
       hasErrors = true;
     }
     
-    if (!feedForm.values.pricePerUnit || parseFloat(feedForm.values.pricePerUnit) <= 0) {
-      setFieldError('pricePerUnit', 'Price per unit must be greater than 0');
+    if (!feedForm.values.total_cost || parseFloat(feedForm.values.total_cost) <= 0) {
+      setFieldError('total_cost', 'Price must be greater than 0');
       hasErrors = true;
     }
     
@@ -227,7 +222,7 @@ export const FeedTracker = () => {
       quantity: parseFloat(feedForm.values.quantity),
       unit: feedForm.values.unit,
       openedDate: feedForm.values.openedDate,
-      pricePerUnit: parseFloat(feedForm.values.pricePerUnit),
+      total_cost: parseFloat(feedForm.values.total_cost),
       // Do not include batchNumber or description here
     };
     
@@ -262,7 +257,7 @@ export const FeedTracker = () => {
         date: feedForm.values.openedDate,
         category: 'Feed',
         description: `${feedForm.values.brand} ${feedForm.values.type} (${feedForm.values.quantity} ${feedForm.values.unit})`,
-        amount: parseFloat(feedForm.values.quantity) * parseFloat(feedForm.values.pricePerUnit)
+        amount: parseFloat(feedForm.values.total_cost)
       };
 
       // Save expense without ID (let database generate UUID)
@@ -344,15 +339,15 @@ export const FeedTracker = () => {
               ]}
             />
             <NumberInput
-              label="Price per Unit ($)"
-              value={parseFloat(feedForm.values.pricePerUnit) || 0}
+              label="Price ($)"
+              value={parseFloat(feedForm.values.total_cost) || 0}
               onChange={(value) => {
-                feedForm.setValue('pricePerUnit', value.toString());
-                clearFieldError('pricePerUnit');
+                feedForm.setValue('total_cost', value.toString());
+                clearFieldError('total_cost');
               }}
               min={0}
               step={0.01}
-              errors={errors.filter(e => e.field === 'pricePerUnit')}
+              errors={errors.filter(e => e.field === 'total_cost')}
               required
             />
           </div>

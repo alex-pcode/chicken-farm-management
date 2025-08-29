@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { CustomerList } from './CustomerList';
 import { SalesList } from './SalesList';
 import { QuickSale } from './QuickSale';
-import { SalesReports } from './SalesReports';
 import AnimatedCRMPNG from './AnimatedCRMPNG';
 import { useCRMData } from '../contexts/OptimizedDataProvider';
 
@@ -19,8 +18,7 @@ export const CRM = () => {
   const tabs = [
     { id: 'customers' as CRMTab, label: 'Customers', emoji: '👥' },
     { id: 'sales' as CRMTab, label: 'Sales', emoji: '🧾' },
-    { id: 'quick-sale' as CRMTab, label: 'Quick Sale', emoji: '⚡' },
-    { id: 'reports' as CRMTab, label: 'Reports', emoji: '📊' }
+    { id: 'quick-sale' as CRMTab, label: 'Quick Sale', emoji: '⚡' }
   ];
 
   // Use silentRefresh from context for mutations to avoid showing loading state
@@ -166,10 +164,6 @@ export const CRM = () => {
               customers={data.customers || []} 
               onDataChange={handleDataChange}
             />
-          )}
-          
-          {activeTab === 'reports' && (
-            <SalesReports />
           )}
         </motion.div>
       </div>

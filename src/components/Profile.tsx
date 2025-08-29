@@ -527,9 +527,9 @@ export const Profile = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="neu-form"
+        className="neu-form !p-0"
       >
-        <h2 className="neu-title">📅 Events Timeline</h2>
+        <h2 className="neu-title" style={{ marginTop: '15px' }}>📅 Events Timeline</h2>
         
         {profile.events.length === 0 ? (
           <EmptyState
@@ -539,7 +539,8 @@ export const Profile = () => {
           />
         ) : (
           <Timeline
-            layout="alternating"
+            layout="vertical"
+            showConnector={true}
             items={[...profile.events].sort((a, b) => 
               new Date(a.date).getTime() - new Date(b.date).getTime()
             ).map((event): TimelineItem => {

@@ -211,7 +211,7 @@ async function saveFeedInventory(user: User, feedData: FeedEntry | FeedEntry[], 
           name: feed.brand,
           quantity: Number(feed.quantity), // Ensure numeric
           unit: feed.unit || 'lbs',
-          cost_per_unit: Number(feed.pricePerUnit), // Ensure numeric
+          total_cost: Number(feed.total_cost), // Ensure numeric
           purchase_date: feed.openedDate
         };
         
@@ -234,7 +234,7 @@ async function saveFeedInventory(user: User, feedData: FeedEntry | FeedEntry[], 
         name: feedData.brand,
         quantity: Number(feedData.quantity), // Ensure numeric
         unit: feedData.unit || 'lbs',
-        cost_per_unit: Number(feedData.pricePerUnit), // Ensure numeric
+        total_cost: Number(feedData.total_cost), // Ensure numeric
         purchase_date: feedData.openedDate,
         ...(feedData.depletedDate && { expiry_date: feedData.depletedDate }),
         ...(feedData.id && isValidUUID(feedData.id) && { id: feedData.id })

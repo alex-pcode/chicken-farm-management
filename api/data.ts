@@ -243,7 +243,7 @@ async function getAllData(user: AuthUser, res: VercelResponse) {
         type: feed.type || 'Layer Feed',
         quantity: feed.quantity,
         unit: feed.unit,
-        pricePerUnit: feed.cost_per_unit,
+        total_cost: feed.total_cost,
         openedDate: feed.purchase_date,
         depletedDate: feed.expiry_date,
         batchNumber: feed.batch_number || '',

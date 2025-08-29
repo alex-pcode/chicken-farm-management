@@ -100,20 +100,18 @@ export const StatCard: React.FC<StatCardProps> = ({
         </>
       )}
       
-      <div className="relative flex items-center gap-3">
-        {/* Icon Section */}
+      <div className="relative">
+        {/* Icon positioned in top-right corner */}
         {icon && (
-          <div className={`size-8 shrink-0 rounded-full flex items-center justify-center ${
-            variant === 'dark' 
-              ? 'bg-white/25 border border-white/50 text-white' 
-              : 'max-[480px]:hidden bg-indigo-600/25 border border-indigo-600/50 text-indigo-500'
+          <div className={`absolute top-0 right-0 size-6 flex items-center justify-center ${
+            variant === 'dark' ? 'text-white/70' : 'text-gray-400'
           }`}>
-            <span className="text-lg">{icon}</span>
+            <span className="text-base">{icon}</span>
           </div>
         )}
         
         {/* Content Section */}
-        <div className="flex-1">
+        <div className="pr-8">
           {/* Title */}
           <div className={`font-bold text-base lg:text-lg mb-1 ${
             variant === 'dark' ? 'text-white' : 'text-gray-900'

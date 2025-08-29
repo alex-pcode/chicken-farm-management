@@ -284,48 +284,6 @@ export const Expenses = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="space-y-6"
-      >
-        <h2 className="text-2xl font-bold text-gray-900">Expense Summary</h2>
-        {isLoading ? (
-          <LoadingSpinner />
-        ) : (
-          <>
-            {/* Enhanced Summary Cards */}
-            <GridContainer columns={4} gap="lg">
-              <MetricDisplay
-                label="This Month"
-                value={thisMonthTotal}
-                format="currency"
-                variant="default"
-              />
-              <ComparisonCard
-                title="Month Comparison"
-                before={{ value: lastMonthTotal, label: "Last Month" }}
-                after={{ value: thisMonthTotal, label: "This Month" }}
-                format="currency"
-              />
-              <MetricDisplay
-                label="This Year"
-                value={yearlyTotal}
-                format="currency"
-                variant="large"
-              />
-              <MetricDisplay
-                label="Daily Average"
-                value={thisMonthTotal / new Date().getDate()}
-                format="currency"
-                precision={2}
-                variant="compact"
-              />
-            </GridContainer>
-            
-          </>
-        )}
-      </motion.div>      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
         className="grid grid-cols-1 lg:grid-cols-2 gap-6"
       >
@@ -362,7 +320,15 @@ export const Expenses = () => {
         {/* Category Summary */}
         <div className="glass-card">
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Category Summary</h3>
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-lg font-semibold text-gray-900">Category Summary</h3>
+              <div className="text-right">
+                <div className="text-lg font-bold text-gray-900">
+                  {formatCurrency(categoryData.reduce((sum, cat) => sum + cat.total, 0))}
+                </div>
+                <div className="text-sm text-gray-500">Total</div>
+              </div>
+            </div>
             <p className="text-sm text-gray-600">Detailed breakdown of expenses by category</p>
           </div>
           
