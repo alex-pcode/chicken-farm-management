@@ -17,6 +17,7 @@ import { useFlockBatchData } from '../contexts/OptimizedDataProvider';
 import { useEggPagination } from '../hooks/pagination/useEggPagination';
 import { useTimeoutToggle } from '../hooks/utils';
 import { ConfirmDialog } from './ui/modals/ConfirmDialog';
+import { HistoricalEggTrackingModal } from './modals/HistoricalEggTrackingModal';
 
 
 export const EggCounter = () => {
@@ -206,6 +207,9 @@ export const EggCounter = () => {
     }
   }, [deleteSuccess.value]);
   
+  // Historical tracking modal state
+  const [showHistoricalModal, setShowHistoricalModal] = React.useState(false);
+  
   // Confirm dialog state
   const [confirmDialog, setConfirmDialog] = React.useState<{
     isOpen: boolean;
@@ -393,8 +397,20 @@ export const EggCounter = () => {
         className="neu-form p-6 shadow-lg transition-all duration-200 !mb-0"
       >
         <div className="mb-6">
-          <h2 className="neu-title">Log Daily Eggs</h2>
-          <p className="text-gray-600 text-sm mt-1">Record your daily egg production</p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="neu-title">Log Daily Eggs</h2>
+              <p className="text-gray-600 text-sm mt-1">Record your daily egg production</p>
+            </div>
+            <button
+              onClick={() => setShowHistoricalModal(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 text-blue-700 hover:text-blue-800 font-medium"
+              title="Add historical egg tracking data"
+            >
+              <span className="text-lg">📊</span>
+              <span>Backfill History</span>
+            </button>
+          </div>
         </div>
 
 
@@ -671,9 +687,9 @@ export const EggCounter = () => {
           transition={{ delay: 0.55 }}
         >
           <StatCard
-            title="Protein Wizard"
+            title="Protein Wiz"
             total={`${proteinGenerated} lbs`}
-            label="of pure protein generated"
+            label="of protein"
             icon="🧙‍♂️"
             variant="corner-gradient"
           />
@@ -728,6 +744,16 @@ export const EggCounter = () => {
         cancelText={confirmDialog.isSuccess ? undefined : "Cancel"}
         variant={confirmDialog.variant}
         disabled={confirmDialog.isDeleting}
+      />
+
+      {/* Historical Egg Tracking Modal */}
+      <HistoricalEggTrackingModal
+        isOpen={showHistoricalModal}
+        onClose={() => setShowHistoricalModal(false)}
+        onSuccess={() => {
+          setShowHistoricalModal(false);
+          success.setTrue();
+        }}
       />
     </motion.div>
   );

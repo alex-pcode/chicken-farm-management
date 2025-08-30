@@ -23,6 +23,7 @@ export { DataService } from './DataService';
 export { ProductionService } from './ProductionService';
 export { FlockService } from './FlockService';
 export { CRMService } from './CRMService';
+export { UserService } from './UserService';
 
 // Types and interfaces
 export * from './types';
@@ -33,6 +34,7 @@ import { DataService } from './DataService';
 import { ProductionService } from './ProductionService';
 import { FlockService } from './FlockService';
 import { CRMService } from './CRMService';
+import { UserService } from './UserService';
 import type { 
   EggEntry, 
   FeedEntry, 
@@ -53,6 +55,7 @@ export const apiService = {
   production: ProductionService.getInstance(),
   flock: FlockService.getInstance(),
   crm: CRMService.getInstance(),
+  user: UserService.getInstance(),
 };
 
 /**

@@ -18,6 +18,7 @@ export const apiService = {
   production: ProductionService.getInstance(),
   flock: FlockService.getInstance(),
   crm: CRMService.getInstance(),
+  user: UserService.getInstance(),
 };
 ```
 
@@ -30,6 +31,7 @@ export const apiService = {
 | **ProductionService** | Eggs, feed, expenses | `saveEggEntries()`, `saveExpenses()`, `saveFeedInventory()` |
 | **FlockService** | Flock profiles & events | `saveFlockProfile()`, `saveFlockEvents()`, `deleteFlockEvent()` |
 | **CRMService** | Customer & sales management | `getCustomers()`, `saveSale()`, `getCRMData()` |
+| **UserService** | User profile & onboarding | `saveUserProfile()`, `getUserPreferences()` |
 
 ## Implementation Details
 
@@ -40,14 +42,21 @@ All services extend `BaseApiService` which provides:
 ```typescript
 // src/services/api/BaseApiService.ts
 export abstract class BaseApiService {
-  protected async makeRequest<T>(
-    endpoint: string,
-    options: RequestOptions = {}
-  ): Promise<ApiResponse<T>> {
-    // Consistent error handling
-    // Authentication header management
-    // Response type validation
-  }
+  // HTTP method implementations
+  protected async get<T>(endpoint: string, dataValidator?: (data: unknown) => data is T): Promise<ApiResponse<T>>
+  protected async post<T>(endpoint: string, data: unknown, dataValidator?: (data: unknown) => data is T): Promise<ApiResponse<T>>
+  protected async put<T>(endpoint: string, data: unknown, dataValidator?: (data: unknown) => data is T): Promise<ApiResponse<T>>
+  protected async delete<T>(endpoint: string, data?: unknown, dataValidator?: (data: unknown) => data is T): Promise<ApiResponse<T>>
+
+  // Authentication & headers
+  protected async getAuthHeaders(): Promise<Record<string, string>>
+  protected getPublicHeaders(): Record<string, string>
+  
+  // Response handling with validation
+  protected async handleResponse<T>(response: Response, dataValidator?: (data: unknown) => data is T): Promise<ApiResponse<T>>
+  
+  // Request validation utilities  
+  protected validateRequestData<T>(data: unknown, validator: (data: unknown) => data is T, typeName: string): ValidationResult<T>
 }
 ```
 
@@ -185,10 +194,12 @@ src/services/api/
 ├── ProductionService.ts   # Production data operations
 ├── FlockService.ts        # Flock management
 ├── CRMService.ts         # Customer relationship management
+├── UserService.ts        # User profile & onboarding management
 ├── types.ts              # Service-specific type definitions
 ├── index.ts              # Unified exports and legacy compatibility
 └── __tests__/            # Comprehensive test coverage
     ├── AuthService.test.ts
+    ├── BaseApiService.test.ts
     ├── DataService.test.ts
     ├── ProductionService.test.ts
     ├── FlockService.test.ts

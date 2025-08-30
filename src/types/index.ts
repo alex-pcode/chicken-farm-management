@@ -231,6 +231,60 @@ export type { Customer, Sale, SaleWithCustomer, SalesSummary } from './crm';
  */
 export * from './services';
 
+/* ===== ONBOARDING TYPES ===== */
+
+/**
+ * User onboarding state and progress tracking
+ */
+export interface FarmSetupProgress {
+  hasFlockProfile: boolean;      // 50 points - Completed onboarding
+  hasRecordedProduction: boolean; // 30 points - Logged ≥1 egg entry
+  hasRecordedExpense: boolean;    // 20 points - Logged ≥1 expense  
+  hasFeedTracking: boolean;       // 20 points - Logged feed data
+}
+
+/**
+ * User onboarding profile information
+ */
+export interface UserProfile {
+  id: string;
+  user_id: string;
+  onboarding_completed: boolean;
+  onboarding_step: 'welcome' | 'setup' | 'complete';
+  setup_progress: FarmSetupProgress;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Onboarding context state
+ */
+export interface OnboardingState {
+  hasCompletedOnboarding: boolean;
+  currentStep: 'welcome' | 'setup' | 'complete';
+  setupProgress: FarmSetupProgress;
+  lastActiveDate: string;
+  showGuidance: boolean;
+}
+
+/**
+ * Onboarding wizard form data
+ */
+export interface OnboardingFormData {
+  hasChickens: boolean;
+  henCount: number;
+  roosterCount: number;
+  chickCount: number;
+  broodingCount?: number;
+  breed: string;
+  acquisitionDate: string;
+  batchName?: string;
+  ageAtAcquisition?: 'chick' | 'juvenile' | 'adult';
+  source?: string;
+  cost?: number;
+  notes?: string;
+}
+
 /* ===== UTILITY AND TEST TYPES ===== */
 
 /**

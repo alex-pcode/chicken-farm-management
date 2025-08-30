@@ -9,9 +9,9 @@ import { AnimatedCoinPNG } from './AnimatedCoinPNG';
 import { 
   TextInput, 
   NumberInput, 
-  DateInput, 
-  FormCard 
+  DateInput
 } from './forms';
+import { FormCard } from './ui/forms/FormCard';
 import { NeumorphicSelect } from './forms/NeumorphicSelect';
 import { useExpenseData } from '../hooks/data/useExpenseData';
 import { useExpenseForm } from '../hooks/forms/useExpenseForm';

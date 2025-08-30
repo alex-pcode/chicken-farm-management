@@ -8,7 +8,6 @@ export { TextareaInput } from './TextareaInput';
 // Form Layout Components
 export { FormGroup } from './FormGroup';
 export { FormRow } from './FormRow';
-export { FormCard } from './FormCard';
 export { SubmitButton } from './SubmitButton';
 
 // Re-export types for convenience

@@ -198,6 +198,14 @@ async function getAllData(user: AuthUser, res: VercelResponse) {
     .order('acquisition_date', { ascending: false });
   if (batchesError) throw batchesError;
 
+  // Fetch user profile for onboarding state
+  const { data: userProfile, error: userProfileError } = await supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('user_id', user.id)
+    .single();
+  // Don't throw error if profile doesn't exist - new users won't have one
+
   // Fetch death records  
   const { data: deathRecords, error: deathsError } = await supabase
     .from('death_records')
@@ -285,6 +293,15 @@ async function getAllData(user: AuthUser, res: VercelResponse) {
         notes: record.notes,
         created_at: record.created_at
       })) || [],
+      userProfile: userProfile ? {
+        id: userProfile.id,
+        user_id: userProfile.user_id,
+        onboarding_completed: userProfile.onboarding_completed,
+        onboarding_step: userProfile.onboarding_step,
+        setup_progress: userProfile.setup_progress,
+        created_at: userProfile.created_at,
+        updated_at: userProfile.updated_at
+      } : null,
       summary
     },
     timestamp: new Date().toISOString()

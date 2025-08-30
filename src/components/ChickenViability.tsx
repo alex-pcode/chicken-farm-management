@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { StatCard } from './testCom';
+import { StatCard } from './ui/cards/StatCard';
+import AnimatedChickenViabilityPNG from './AnimatedChickenViabilityPNG';
 
 interface FeedOption {
   id: string;
@@ -26,6 +27,15 @@ interface StartingCostOption {
   title: string;
   details: string[];
   description: string;
+}
+
+interface AcquisitionOption {
+  id: string;
+  title: string;
+  details: string[];
+  description: string;
+  layingDelayMonths: number;
+  costMultiplier: number;
 }
 
 const feedOptions: FeedOption[] = [
@@ -109,6 +119,37 @@ const productionOptions: ProductionOption[] = [
   }
 ];
 
+const acquisitionOptions: AcquisitionOption[] = [
+  {
+    id: 'baby_chicks',
+    title: 'Raise Baby Chicks',
+    details: [
+      'Lower initial cost per bird',
+      '5 months before laying begins',
+      'More feed costs before production',
+      'Higher mortality risk',
+      'Bond with chickens from day one'
+    ],
+    description: 'Start with day-old chicks (~$3-5 each)',
+    layingDelayMonths: 5,
+    costMultiplier: 0.3
+  },
+  {
+    id: 'laying_hens',
+    title: 'Buy Laying Hens',
+    details: [
+      'Higher upfront cost per bird',
+      'Immediate egg production',
+      'Already mature and healthy',
+      'Lower mortality risk',
+      'Instant gratification'
+    ],
+    description: 'Purchase ready-to-lay hens (~$15-25 each)',
+    layingDelayMonths: 0,
+    costMultiplier: 1.0
+  }
+];
+
 const startingCostOptions: StartingCostOption[] = [
   {
     id: 'minimal',
@@ -165,31 +206,46 @@ export const ChickenViability = () => {
   const [selectedFeedOption, setSelectedFeedOption] = useState<FeedOption>(feedOptions[1]); // Default to standard
   const [selectedProductionOption, setSelectedProductionOption] = useState<ProductionOption>(productionOptions[1]); // Default to realistic
   const [selectedStartingCostOption, setSelectedStartingCostOption] = useState<StartingCostOption>(startingCostOptions[1]); // Default to basic
+  const [selectedAcquisitionOption, setSelectedAcquisitionOption] = useState<AcquisitionOption>(acquisitionOptions[1]); // Default to laying hens
   const [eggPrice, setEggPrice] = useState(0.30);
   const [startingCost, setStartingCost] = useState(200);
   const [showResults, setShowResults] = useState(false);
 
   const calculateViability = () => {
     const monthlyFeedCost = birdCount * selectedFeedOption.costPerBird;
+    const layingDelayMonths = selectedAcquisitionOption.layingDelayMonths;
+    
+    // Egg production starts after laying delay
     const monthlyEggProduction = birdCount * selectedProductionOption.eggsPerBirdPerMonth;
     const monthlyEggValue = monthlyEggProduction * eggPrice;
-    const monthlyProfit = monthlyEggValue - monthlyFeedCost;
-    const breakEvenMonths = startingCost / monthlyProfit;
-    const annualFeedCost = monthlyFeedCost * 12;
-    const annualEggValue = monthlyEggValue * 12;
+    
+    // Calculate first year with laying delay
+    const layingMonths = Math.max(0, 12 - layingDelayMonths);
+    const nonLayingFeedCost = monthlyFeedCost * layingDelayMonths;
+    const layingFeedCost = monthlyFeedCost * layingMonths;
+    const annualFeedCost = nonLayingFeedCost + layingFeedCost;
+    const annualEggValue = monthlyEggValue * layingMonths;
     const annualProfit = annualEggValue - annualFeedCost;
-    const paybackPeriod = monthlyProfit > 0 ? startingCost / monthlyProfit : null;
+    
+    // Calculate ongoing monthly profit (after laying period starts)
+    const monthlyProfit = monthlyEggValue - monthlyFeedCost;
+    
+    // Calculate payback period including non-laying months
+    const totalFirstYearCost = startingCost + annualFeedCost;
+    const paybackPeriod = monthlyProfit > 0 ? 
+      (totalFirstYearCost - annualEggValue) / monthlyProfit + 12 : null;
 
     return {
       monthlyFeedCost,
       monthlyEggProduction,
       monthlyEggValue,
       monthlyProfit,
-      breakEvenMonths,
       annualFeedCost,
       annualEggValue,
       annualProfit,
-      paybackPeriod
+      paybackPeriod,
+      layingDelayMonths,
+      nonLayingFeedCost
     };
   };
 
@@ -214,30 +270,23 @@ export const ChickenViability = () => {
       animate={{ opacity: 1 }}
       className="space-y-6 max-w-6xl mx-auto p-0"
     >
-      <div className="header">
-        <h1 className="text-2xl lg:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
-          🐔 Chicken Viability Calculator
-        </h1>
-        <p className="text-gray-600 mt-2">Calculate if keeping chickens makes financial sense for you</p>
-      </div>
+      <AnimatedChickenViabilityPNG />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="glass-card"
       >
-        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-4 lg:mb-6">🏠 Starting Investment</h2>
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 lg:mb-6" style={{ color: '#111827' }}>Starting Investment</h2>
         
-        <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <div className="flex items-start gap-3">
-            <span className="text-lg mt-0.5">💡</span>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Understanding Your Initial Investment</h3>
-              <p className="text-sm text-gray-700 leading-relaxed">
-                Starting costs for chicken keeping can vary dramatically based on your situation. Some people can start with minimal investment using existing structures and gifted birds, while others need to build everything from scratch. Consider your available space, DIY skills, and whether you have existing materials or structures to work with.
-              </p>
-            </div>
-          </div>
+        <p className="text-sm text-gray-700 leading-relaxed mb-4">
+          Starting costs for chicken keeping can vary dramatically based on your situation. Some people can start with minimal investment using existing structures and gifted birds, while others need to build everything from scratch. Consider your available space, DIY skills, and whether you have existing materials or structures to work with.
+        </p>
+        
+        <div className="text-sm p-3 bg-blue-50 rounded border border-blue-200 mb-6">
+          <p className="text-blue-800">
+            <span className="font-semibold">💰 Don't forget:</span> If you're purchasing birds, include their costs in your starting investment above. Baby chicks typically cost $3-5 each, while laying hens cost $15-25 each. Many people receive birds for free from friends or neighbors!
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
@@ -246,7 +295,7 @@ export const ChickenViability = () => {
               key={option.id}
               className={`neu-form cursor-pointer transition-all duration-200 ${
                 selectedStartingCostOption.id === option.id 
-                  ? 'ring-2 ring-indigo-500 bg-indigo-50 border-2 border-indigo-500' 
+                  ? 'ring-2 ring-purple-500 bg-purple-50 border-2 border-purple-500' 
                   : 'hover:bg-gray-50 border-2 border-transparent'
               }`}
               onClick={() => setSelectedStartingCostOption(option)}
@@ -254,19 +303,19 @@ export const ChickenViability = () => {
               whileTap={{ scale: 0.98 }}
             >
               <div className="text-center mb-4">
-                <div className="text-2xl font-bold text-indigo-600 mb-2">
+                <div className="text-2xl font-bold text-purple-600 mb-2">
                   ${option.cost}
                 </div>
-                <div className="text-lg font-semibold text-gray-900 mb-2">
+                <div className="text-lg font-semibold mb-2" style={{ color: '#111827' }}>
                   {option.title}
                 </div>
-                <div className="text-sm text-gray-600 mb-4">
+                <div className="text-sm mb-4" style={{ color: '#6B7280' }}>
                   {option.description}
                 </div>
               </div>
               <ul className="space-y-2">
                 {option.details.map((detail, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
+                  <li key={index} className="flex items-start gap-2 text-sm" style={{ color: '#374151' }}>
                     <span className="text-green-500 mt-0.5">✓</span>
                     {detail}
                   </li>
@@ -276,12 +325,11 @@ export const ChickenViability = () => {
           ))}
         </div>
         
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="mt-6 p-4 glass-card">
           <div className="flex items-center gap-3 mb-3">
-            <span className="text-lg">💡</span>
-            <h3 className="font-semibold text-gray-900">Custom Amount</h3>
+            <h3 className="font-semibold" style={{ color: '#111827' }}>Custom Amount</h3>
           </div>
-          <p className="text-sm text-gray-600 mb-3">
+          <p className="text-sm mb-3" style={{ color: '#6B7280' }}>
             If your setup doesn't match these scenarios, you can enter a custom amount below:
           </p>
           <div className="flex items-center gap-3">
@@ -300,7 +348,7 @@ export const ChickenViability = () => {
               className="neu-input flex-1"
               placeholder="Enter custom amount"
             />
-            <span className="text-gray-600 text-sm">USD</span>
+            <span className="text-sm" style={{ color: '#6B7280' }}>USD</span>
           </div>
         </div>
       </motion.div>
@@ -311,10 +359,10 @@ export const ChickenViability = () => {
         transition={{ delay: 0.1 }}
         className="glass-card"
       >
-        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-4 lg:mb-6">📊 Setup Parameters</h2>
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 lg:mb-6" style={{ color: '#111827' }}>Setup Parameters</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
           <div>
-            <label className="block text-gray-600 text-sm mb-2" htmlFor="birdCount">
+            <label className="block text-sm mb-2" style={{ color: '#6B7280' }} htmlFor="birdCount">
               Number of Chickens
             </label>
             <input
@@ -324,11 +372,11 @@ export const ChickenViability = () => {
               max="100"
               value={birdCount}
               onChange={(e) => setBirdCount(parseInt(e.target.value) || 0)}
-              className="neu-input"
+              className="neu-input focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
             />
           </div>
           <div>
-            <label className="block text-gray-600 text-sm mb-2" htmlFor="eggPrice">
+            <label className="block text-sm mb-2" style={{ color: '#6B7280' }} htmlFor="eggPrice">
               Price per Egg ($)
             </label>
             <input
@@ -338,9 +386,63 @@ export const ChickenViability = () => {
               step="0.01"
               value={eggPrice}
               onChange={(e) => setEggPrice(parseFloat(e.target.value) || 0)}
-              className="neu-input"
+              className="neu-input focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
             />
           </div>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.12 }}
+        className="glass-card"
+      >
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 lg:mb-6" style={{ color: '#111827' }}>Acquisition Method</h2>
+        
+        <p className="text-sm text-gray-700 leading-relaxed mb-6">
+          Your acquisition method significantly impacts both costs and timeline. Baby chicks cost less upfront but require 5 months of feeding before they start laying eggs. Mature laying hens cost more initially but begin producing immediately. Consider your patience, budget, and desire to raise chickens from the beginning.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+          {acquisitionOptions.map((option) => (
+            <motion.div
+              key={option.id}
+              className={`neu-form cursor-pointer transition-all duration-200 ${
+                selectedAcquisitionOption.id === option.id 
+                  ? 'ring-2 ring-purple-500 bg-purple-50 border-2 border-purple-500' 
+                  : 'hover:bg-gray-50 border-2 border-transparent'
+              }`}
+              onClick={() => setSelectedAcquisitionOption(option)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="text-center mb-4">
+                <div className="text-2xl font-bold text-purple-600 mb-2">
+                  {option.id === 'baby_chicks' ? '🐣' : '🐔'}
+                </div>
+                <div className="text-lg font-semibold mb-2" style={{ color: '#111827' }}>
+                  {option.title}
+                </div>
+                <div className="text-sm mb-4" style={{ color: '#6B7280' }}>
+                  {option.description}
+                </div>
+                {option.layingDelayMonths > 0 && (
+                  <div className="text-xs px-2 py-1 rounded bg-orange-100 text-orange-600 mb-2">
+                    {option.layingDelayMonths} months until laying
+                  </div>
+                )}
+              </div>
+              <ul className="space-y-2">
+                {option.details.map((detail, index) => (
+                  <li key={index} className="flex items-start gap-2 text-sm" style={{ color: '#374151' }}>
+                    <span className="text-green-500 mt-0.5">✓</span>
+                    {detail}
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          ))}
         </div>
       </motion.div>
 
@@ -350,19 +452,11 @@ export const ChickenViability = () => {
         transition={{ delay: 0.15 }}
         className="glass-card"
       >
-        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-4 lg:mb-6">🌾 Feeding Approach</h2>
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 lg:mb-6" style={{ color: '#111827' }}>Feeding Approach</h2>
         
-        <div className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
-          <div className="flex items-start gap-3">
-            <span className="text-lg mt-0.5">🌱</span>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Understanding Your Feeding Strategy</h3>
-              <p className="text-sm text-gray-700 leading-relaxed">
-                Your feeding approach significantly impacts both costs and chicken health. Consider your available time, space for free-ranging, access to kitchen scraps, and whether you prefer organic or conventional feeds. The right approach balances cost-effectiveness with your chickens' nutritional needs and your lifestyle.
-              </p>
-            </div>
-          </div>
-        </div>
+        <p className="text-sm text-gray-700 leading-relaxed mb-6">
+          Your feeding approach significantly impacts both costs and chicken health. Consider your available time, space for free-ranging, access to kitchen scraps, and whether you prefer organic or conventional feeds. The right approach balances cost-effectiveness with your chickens' nutritional needs and your lifestyle.
+        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
           {feedOptions.map((option) => (
@@ -370,7 +464,7 @@ export const ChickenViability = () => {
               key={option.id}
               className={`neu-form cursor-pointer transition-all duration-200 ${
                 selectedFeedOption.id === option.id 
-                  ? 'ring-2 ring-indigo-500 bg-indigo-50 border-2 border-indigo-500' 
+                  ? 'ring-2 ring-purple-500 bg-purple-50 border-2 border-purple-500' 
                   : 'hover:bg-gray-50 border-2 border-transparent'
               }`}
               onClick={() => setSelectedFeedOption(option)}
@@ -378,19 +472,19 @@ export const ChickenViability = () => {
               whileTap={{ scale: 0.98 }}
             >
               <div className="text-center mb-4">
-                <div className="text-2xl font-bold text-indigo-600 mb-2">
+                <div className="text-2xl font-bold text-purple-600 mb-2">
                   ${option.costPerBird.toFixed(2)}
                 </div>
-                <div className="text-lg font-semibold text-gray-900 mb-2">
+                <div className="text-lg font-semibold mb-2" style={{ color: '#111827' }}>
                   {option.title}
                 </div>
-                <div className="text-sm text-gray-600 mb-4">
+                <div className="text-sm mb-4" style={{ color: '#6B7280' }}>
                   {option.description}
                 </div>
               </div>
               <ul className="space-y-2">
                 {option.details.map((detail, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
+                  <li key={index} className="flex items-start gap-2 text-sm" style={{ color: '#374151' }}>
                     <span className="text-green-500 mt-0.5">✓</span>
                     {detail}
                   </li>
@@ -409,19 +503,11 @@ export const ChickenViability = () => {
         transition={{ delay: 0.2 }}
         className="glass-card"
       >
-        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-4 lg:mb-6">🥚 Egg Production Scenario</h2>
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 lg:mb-6" style={{ color: '#111827' }}>Egg Production Scenario</h2>
         
-        <div className="mb-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
-          <div className="flex items-start gap-3">
-            <span className="text-lg mt-0.5">📊</span>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Understanding Egg Production Variables</h3>
-              <p className="text-sm text-gray-700 leading-relaxed">
-                Egg production varies significantly based on breed, age, season, and care quality. Younger hens in their prime (1-2 years) with good nutrition and long daylight hours will lay more eggs. Winter months, older hens, and stress can dramatically reduce production. Choose a scenario that matches your expected conditions and chicken care level.
-              </p>
-            </div>
-          </div>
-        </div>
+        <p className="text-sm text-gray-700 leading-relaxed mb-6">
+          Egg production varies significantly based on breed, age, season, and care quality. Younger hens in their prime (1-2 years) with good nutrition and long daylight hours will lay more eggs. Winter months, older hens, and stress can dramatically reduce production. Choose a scenario that matches your expected conditions and chicken care level.
+        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
           {productionOptions.map((option) => (
@@ -429,7 +515,7 @@ export const ChickenViability = () => {
               key={option.id}
               className={`neu-form cursor-pointer transition-all duration-200 ${
                 selectedProductionOption.id === option.id 
-                  ? 'ring-2 ring-indigo-500 bg-indigo-50 border-2 border-indigo-500' 
+                  ? 'ring-2 ring-purple-500 bg-purple-50 border-2 border-purple-500' 
                   : 'hover:bg-gray-50 border-2 border-transparent'
               }`}
               onClick={() => setSelectedProductionOption(option)}
@@ -437,19 +523,19 @@ export const ChickenViability = () => {
               whileTap={{ scale: 0.98 }}
             >
               <div className="text-center mb-4">
-                <div className="text-2xl font-bold text-indigo-600 mb-2">
+                <div className="text-2xl font-bold text-purple-600 mb-2">
                   {option.eggsPerBirdPerWeek}
                 </div>
-                <div className="text-lg font-semibold text-gray-900 mb-2">
+                <div className="text-lg font-semibold mb-2" style={{ color: '#111827' }}>
                   {option.title}
                 </div>
-                <div className="text-sm text-gray-600 mb-4">
+                <div className="text-sm mb-4" style={{ color: '#6B7280' }}>
                   {option.description}
                 </div>
               </div>
               <ul className="space-y-2">
                 {option.details.map((detail, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
+                  <li key={index} className="flex items-start gap-2 text-sm" style={{ color: '#374151' }}>
                     <span className="text-green-500 mt-0.5">✓</span>
                     {detail}
                   </li>
@@ -467,25 +553,28 @@ export const ChickenViability = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ delay: 0.3 }}
-              className="glass-card bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200"
+              className="glass-card bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200"
             >
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-4 lg:mb-6">💰 Financial Analysis</h2>
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 lg:mb-6" style={{ color: '#111827' }}>Financial Analysis</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
               <StatCard 
-                title="Monthly Feed Cost" 
-                total={`$${results.monthlyFeedCost.toFixed(2)}`} 
-                label="total feed expense"
-              />
-              <StatCard 
                 title="Monthly Egg Production" 
                 total={results.monthlyEggProduction} 
-                label="eggs per month"
+                label={results.layingDelayMonths > 0 ? `after ${results.layingDelayMonths} months` : "eggs per month"}
+                variant="corner-gradient"
               />
               <StatCard 
                 title="Monthly Egg Value" 
                 total={`$${results.monthlyEggValue.toFixed(2)}`} 
                 label="potential revenue"
+                variant="corner-gradient"
+              />
+              <StatCard 
+                title="Monthly Feed Cost" 
+                total={`$${results.monthlyFeedCost.toFixed(2)}`} 
+                label="total feed expense"
+                variant="corner-gradient"
               />
               <StatCard 
                 title="Monthly Profit" 
@@ -496,26 +585,62 @@ export const ChickenViability = () => {
                       ? 'bg-green-100 text-green-600' 
                       : 'bg-red-100 text-red-600'
                   }`}>
-                    {results.monthlyProfit > 0 ? 'Profitable' : 'Loss'}
+                    {results.monthlyProfit > 0 ? 'Profitable' : 'Loss'} (when laying)
                   </span>
                 }
+                variant="corner-gradient"
               />
             </div>
 
+            {results.layingDelayMonths > 0 && (
+              <div className="mb-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
+                <div className="flex items-start gap-3">
+                  <div>
+                    <h3 className="font-semibold mb-2" style={{ color: '#111827' }}>Baby Chick Timeline Impact</h3>
+                    <div className="space-y-2 text-sm text-gray-700">
+                      <p>
+                        <span className="font-semibold">Non-laying period:</span> {results.layingDelayMonths} months with $${results.nonLayingFeedCost.toFixed(2)} feed costs and no egg revenue
+                      </p>
+                      <p>
+                        <span className="font-semibold">First year production:</span> Only {12 - results.layingDelayMonths} months of egg laying
+                      </p>
+                      <p>
+                        <span className="font-semibold">Starting investment:</span> Remember to include chick costs in your starting investment above if purchasing
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
               <div className="neu-form">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">📈 Annual Summary</h3>
+                <h3 className="text-lg font-semibold mb-4" style={{ color: '#111827' }}>📈 Annual Summary</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Annual Feed Cost:</span>
-                    <span className="font-semibold">${results.annualFeedCost.toFixed(2)}</span>
+                    <span style={{ color: '#6B7280' }}>First Year Feed Cost:</span>
+                    <span className="font-semibold">
+                      ${results.annualFeedCost.toFixed(2)}
+                      <span className="text-xs ml-1 text-gray-500">(${results.monthlyFeedCost.toFixed(2)} × 12)</span>
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Annual Egg Value:</span>
-                    <span className="font-semibold">${results.annualEggValue.toFixed(2)}</span>
+                    <span style={{ color: '#6B7280' }}>First Year Egg Value:</span>
+                    <span className="font-semibold">
+                      ${results.annualEggValue.toFixed(2)}
+                      <span className="text-xs ml-1 text-gray-500">
+                        (${results.monthlyEggValue.toFixed(2)} × {12 - results.layingDelayMonths})
+                      </span>
+                    </span>
                   </div>
+                  {results.layingDelayMonths > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span style={{ color: '#6B7280' }}>• Non-laying months:</span>
+                      <span className="text-orange-600">{results.layingDelayMonths} (feed only)</span>
+                    </div>
+                  )}
                   <div className="flex justify-between border-t pt-2">
-                    <span className="text-gray-900 font-semibold">Annual Profit:</span>
+                    <span className="font-semibold" style={{ color: '#111827' }}>First Year Profit:</span>
                     <span className={`font-bold ${
                       results.annualProfit > 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
@@ -526,14 +651,14 @@ export const ChickenViability = () => {
               </div>
 
               <div className="neu-form">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">⏱️ Payback Analysis</h3>
+                <h3 className="text-lg font-semibold mb-4" style={{ color: '#111827' }}>⏱️ Payback Analysis</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Starting Investment:</span>
+                    <span style={{ color: '#6B7280' }}>Starting Investment:</span>
                     <span className="font-semibold">${startingCost}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Monthly Profit:</span>
+                    <span style={{ color: '#6B7280' }}>Monthly Profit (when laying):</span>
                     <span className={`font-semibold ${
                       results.monthlyProfit > 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
@@ -541,10 +666,10 @@ export const ChickenViability = () => {
                     </span>
                   </div>
                   <div className="flex justify-between border-t pt-2">
-                    <span className="text-gray-900 font-semibold">Payback Period:</span>
+                    <span className="font-semibold" style={{ color: '#111827' }}>Payback Period:</span>
                     <span className={`font-bold ${
                       results.paybackPeriod && results.paybackPeriod > 0 
-                        ? results.paybackPeriod <= 12 ? 'text-green-600' : 'text-orange-600'
+                        ? results.paybackPeriod <= 12 ? 'text-green-600' : results.paybackPeriod <= 24 ? 'text-orange-600' : 'text-red-600'
                         : 'text-red-600'
                     }`}>
                       {results.paybackPeriod && results.paybackPeriod > 0 
@@ -564,16 +689,15 @@ export const ChickenViability = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="glass-card bg-gradient-to-r from-green-50 to-emerald-50 border-green-200"
+          className="glass-card bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200"
         >
-        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-4 lg:mb-6">💡 Viability Assessment</h2>
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 lg:mb-6" style={{ color: '#111827' }}>💡 Viability Assessment</h2>
         
         <div className="space-y-4">
           <div className="info-point">
-            <div className="info-icon">💡</div>
             <div>
-              <h4 className="font-semibold text-gray-900 mb-1">Break-Even Analysis</h4>
-              <p className="text-gray-700 text-sm">
+              <h4 className="font-semibold mb-1" style={{ color: '#111827' }}>Break-Even Analysis</h4>
+              <p className="text-sm" style={{ color: '#374151' }}>
                 A dozen store-bought eggs costs $4-6+ in 2025. Each chicken lays about 20 eggs per month, 
                 so your feed cost per bird should be less than $6-10 to break even on eggs alone.
               </p>
@@ -581,30 +705,33 @@ export const ChickenViability = () => {
           </div>
 
           <div className="info-point">
-            <div className="info-icon">📊</div>
             <div>
-              <h4 className="font-semibold text-gray-900 mb-1">Your Assessment</h4>
-                             <p className="text-gray-700 text-sm">
+              <h4 className="font-semibold mb-1" style={{ color: '#111827' }}>Your Assessment</h4>
+                             <p className="text-sm" style={{ color: '#374151' }}>
                  {results.monthlyProfit > 0 
-                   ? `With ${birdCount} chickens using the ${selectedFeedOption.title.toLowerCase()} and ${selectedProductionOption.title.toLowerCase()}, 
-                      you'll make $${results.monthlyProfit.toFixed(2)} per month. 
+                   ? `With ${birdCount} chickens using ${selectedAcquisitionOption.title.toLowerCase()}, ${selectedFeedOption.title.toLowerCase()}, and ${selectedProductionOption.title.toLowerCase()}, 
+                      you'll make $${results.monthlyProfit.toFixed(2)} per month once laying begins. 
+                      ${results.layingDelayMonths > 0 
+                        ? `However, with baby chicks, you'll wait ${results.layingDelayMonths} months and spend $${results.nonLayingFeedCost.toFixed(2)} on feed before seeing any eggs. `
+                        : ''}
                       ${results.paybackPeriod && results.paybackPeriod > 0 
-                        ? `Your $${startingCost} investment will pay for itself in ${results.paybackPeriod.toFixed(1)} months!`
-                        : `Your $${startingCost} investment will pay for itself in ${results.paybackPeriod?.toFixed(1)} months.`
-                      }`
-                   : `With ${birdCount} chickens using the ${selectedFeedOption.title.toLowerCase()} and ${selectedProductionOption.title.toLowerCase()}, 
-                      you'll lose $${Math.abs(results.monthlyProfit).toFixed(2)} per month. 
-                      Consider reducing costs or increasing egg production to make it viable.`
+                        ? `Your $${startingCost} investment will pay for itself in ${results.paybackPeriod.toFixed(1)} months.`
+                        : ''}`
+                   : `With ${birdCount} chickens using ${selectedAcquisitionOption.title.toLowerCase()}, ${selectedFeedOption.title.toLowerCase()}, and ${selectedProductionOption.title.toLowerCase()}, 
+                      you'll lose $${Math.abs(results.monthlyProfit).toFixed(2)} per month once laying begins. 
+                      ${results.layingDelayMonths > 0 
+                        ? `With baby chicks, you'd also spend ${results.layingDelayMonths} months feeding them before any egg production. `
+                        : ''}
+                      Consider reducing costs, choosing laying hens for faster returns, or increasing egg production to make it viable.`
                  }
                </p>
             </div>
           </div>
 
           <div className="info-point">
-            <div className="info-icon">🎯</div>
             <div>
-              <h4 className="font-semibold text-gray-900 mb-1">Recommendations</h4>
-              <p className="text-gray-700 text-sm">
+              <h4 className="font-semibold mb-1" style={{ color: '#111827' }}>Recommendations</h4>
+              <p className="text-sm" style={{ color: '#374151' }}>
                 {results.monthlyProfit > 0 
                   ? "This looks like a viable chicken-keeping venture! Consider starting with a small flock and expanding as you gain experience."
                   : "Consider starting with fewer chickens, using a more budget-friendly feeding approach, or increasing your egg prices to make this viable."

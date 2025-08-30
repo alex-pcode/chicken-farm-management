@@ -151,17 +151,17 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
     refreshData();
   }, []); // Empty dependency array - only run once on mount
 
-  // TEMPORARY: Disabled automatic refresh to debug performance issue
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     if (isCacheStale() && !isLoading && document.hasFocus()) {
-  //       console.log('Optimized cache is stale, refreshing data...');
-  //       refreshData();
-  //     }
-  //   }, 5 * 60 * 1000);
+  // Background refresh when cache becomes stale
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (isCacheStale() && !isLoading && document.hasFocus()) {
+        console.log('Optimized cache is stale, refreshing data...');
+        refreshData();
+      }
+    }, 10 * 60 * 1000);
 
-  //   return () => clearInterval(interval);
-  // }, [isCacheStale, isLoading, refreshData]);
+    return () => clearInterval(interval);
+  }, [isCacheStale, isLoading, refreshData]);
 
 
   const contextValue: OptimizedDataContextType = {

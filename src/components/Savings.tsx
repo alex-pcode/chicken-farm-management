@@ -138,7 +138,7 @@ export const Savings = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="w-full mt-5 mb-12"
+        className="w-full mt-8 mb-16"
       >
         <AnimatedSavingsPNG />
       </motion.div>
@@ -181,13 +181,13 @@ export const Savings = () => {
             placeholder="0.00"
             showSpinner={false}
             disabled={timePeriod !== 'all'}
-            className={timePeriod !== 'all' ? 'opacity-60' : ''}
+            className={timePeriod !== 'all' ? 'opacity-50' : ''}
           />
         </FormGroup>
         
         {timePeriod !== 'all' && (
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm" style={{ color: '#602AE9' }}>
+          <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <p className="text-sm" style={{ color: '#4F46E5' }}>
               <strong>Note:</strong> Starting costs are only included when viewing "All Time" data.
             </p>
           </div>
@@ -196,7 +196,7 @@ export const Savings = () => {
 
       <div className="mb-8">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900" style={{ marginBottom: 0 }}>Financial Summary</h2>
+          <h2 className="text-2xl font-semibold" style={{ color: '#111827' }}>Financial Summary</h2>
           <div className="w-48">
             <SelectInput
               label=""
@@ -227,24 +227,24 @@ export const Savings = () => {
 
         {/* Custom Date Range Picker */}
         {timePeriod === 'custom' && (
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <div className="flex flex-col sm:flex-row gap-4">
+          <div className="mb-8 p-6 glass-card">
+            <div className="flex flex-col sm:flex-row gap-6">
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: '#6B7280' }}>Start Date</label>
                 <input
                   type="date"
                   value={customStartDate}
                   onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors duration-200"
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: '#6B7280' }}>End Date</label>
                 <input
                   type="date"
                   value={customEndDate}
                   onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors duration-200"
                 />
               </div>
             </div>
@@ -257,7 +257,7 @@ export const Savings = () => {
         >
           <GridContainer columns={{ sm: 1, md: 2, lg: 4 }} gap="lg">
             <StatCard
-              title="You've Collected"
+              title="You Got"
               total={savingsData.totalEggs}
               label="eggs without breaking them"
               icon="🥚"
@@ -265,7 +265,7 @@ export const Savings = () => {
             />
             
             <StatCard
-              title="You've Saved"
+              title="You Saved"
               total={formatCurrency(savingsData.totalEggs * savingsData.eggPrice)}
               label="vs buying organic eggs"
               icon="💰"
@@ -273,7 +273,7 @@ export const Savings = () => {
             />
 
             <StatCard
-              title="You've Invested"
+              title="You Invested"
               total={formatCurrency(savingsData.totalExpenses)}
               label="in chicken happiness"
               icon="❤️"
@@ -281,9 +281,9 @@ export const Savings = () => {
             />
 
             <StatCard
-              title={savingsData.netSavings >= 0 ? "Chickens Rewarded You" : "Chickens Owe You"}
+              title={savingsData.netSavings >= 0 ? "Net Result" : "Net Result"}
               total={formatCurrency(savingsData.netSavings)}
-              label={savingsData.netSavings >= 0 ? "in delicious eggs" : "in uncollected eggs"}
+              label={savingsData.netSavings >= 0 ? "of delicious egg value" : "egg value to cover costs"}
               icon={savingsData.netSavings >= 0 ? '😋' : '🤝'}
               variant="dark"
             />
@@ -292,13 +292,13 @@ export const Savings = () => {
       </div>
 
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900" style={{ marginBottom: '10px' }}>Lifestyle Impact</h2>
+        <h2 className="text-2xl font-semibold mb-3" style={{ color: '#111827' }}>Lifestyle Impact</h2>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
         >
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             <StatCard
               title="You've Gone"
               total={(() => {
@@ -310,7 +310,7 @@ export const Savings = () => {
                 const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
                 return Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
               })()}
-              label="days without needing store eggs"
+              label="days without buying eggs"
               icon="🏪"
               variant="corner-gradient"
             />
@@ -338,7 +338,7 @@ export const Savings = () => {
             />
 
             <StatCard
-              title="You've Enjoyed"
+              title="You Saw"
               total={(() => {
                 const filteredEntries = data.eggEntries.filter((entry: EggEntry) => getFilteredData(entry.date));
                 if (filteredEntries.length === 0) return 0;
@@ -355,7 +355,7 @@ export const Savings = () => {
             />
 
             <StatCard
-              title="You've Saved"
+              title="You Saved"
               total={(() => {
                 // For now, use current total birds + deaths as an approximation
                 // This isn't perfect since we don't have the actual totalInitial from the API
@@ -368,7 +368,7 @@ export const Savings = () => {
             />
 
             <StatCard
-              title="You've Raised"
+              title="You Raised"
               total={(() => {
                 if (!flockSummary?.batchSummary) return 0;
                 return flockSummary.batchSummary.filter(batch => batch.ageAtAcquisition === 'chick').length;
@@ -382,7 +382,7 @@ export const Savings = () => {
       </div>
 
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900" style={{ marginBottom: '10px' }}>Profitability Analysis</h2>
+        <h2 className="text-2xl font-semibold mb-3" style={{ color: '#111827' }}>Profitability Analysis</h2>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -399,8 +399,8 @@ export const Savings = () => {
                 color="info"
               />
             ) : (
-              <div className="glass-card p-6 text-center">
-                <p className="text-sm text-gray-500">No egg production data available</p>
+              <div className="glass-card p-8 text-center">
+                <p className="text-sm" style={{ color: '#6B7280' }}>No egg production data available</p>
               </div>
             )}
 
@@ -414,8 +414,8 @@ export const Savings = () => {
                 color={savingsData.eggPrice - (savingsData.totalExpenses / savingsData.totalEggs) >= 0 ? "success" : "danger"}
               />
             ) : (
-              <div className="glass-card p-6 text-center">
-                <p className="text-sm text-gray-500">No egg production data available</p>
+              <div className="glass-card p-8 text-center">
+                <p className="text-sm" style={{ color: '#6B7280' }}>No egg production data available</p>
               </div>
             )}
 
@@ -430,8 +430,8 @@ export const Savings = () => {
                 unit="eggs"
               />
             ) : (
-              <div className="glass-card p-6 text-center">
-                <p className="text-sm text-gray-500">Insufficient data for break-even analysis</p>
+              <div className="glass-card p-8 text-center">
+                <p className="text-sm" style={{ color: '#6B7280' }}>Insufficient data for break-even analysis</p>
               </div>
             )}
           </GridContainer>

@@ -113,7 +113,7 @@ export const StatCard: React.FC<StatCardProps> = ({
         {/* Content Section */}
         <div className="pr-8">
           {/* Title */}
-          <div className={`font-bold text-base lg:text-lg mb-1 ${
+          <div className={`font-bold text-base lg:text-lg mb-1 whitespace-nowrap ${
             variant === 'dark' ? 'text-white' : 'text-gray-900'
           }`}>
             {title}

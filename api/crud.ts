@@ -89,6 +89,10 @@ async function handleSave(user: User, operation: string, _table: string, body: u
       return await saveFlockEvents(user, body as FlockEvent | FlockEvent[], res);
     case 'flockProfile':
       return await saveFlockProfile(user, body as FlockProfile, res);
+    case 'userProfile':
+      return await saveUserProfile(user, body, res);
+    case 'completeOnboarding':
+      return await completeOnboarding(user, body, res);
     default:
       return res.status(400).json({ message: 'Invalid operation' });
   }
@@ -403,4 +407,312 @@ async function deleteEggEntry(user: User, id: string, res: VercelResponse) {
     message: 'Egg entry deleted successfully',
     timestamp: new Date().toISOString()
   });
+}
+
+// Save user profile (create or update)
+async function saveUserProfile(user: User, profileData: any, res: VercelResponse) {
+  const { profile } = profileData;
+  
+  if (!profile) {
+    return res.status(400).json({ message: 'Profile data is required' });
+  }
+
+  try {
+    // Check if profile exists
+    const { data: existingProfile } = await supabase
+      .from('user_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    const updateData: any = {
+      updated_at: new Date().toISOString()
+    };
+
+    if (profile.onboarding_completed !== undefined) {
+      updateData.onboarding_completed = profile.onboarding_completed;
+    }
+    if (profile.onboarding_step !== undefined) {
+      updateData.onboarding_step = profile.onboarding_step;
+    }
+    if (profile.setup_progress !== undefined) {
+      updateData.setup_progress = profile.setup_progress;
+    }
+
+    let data, error;
+
+    if (existingProfile) {
+      // Update existing profile
+      const result = await supabase
+        .from('user_profiles')
+        .update(updateData)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+      
+      data = result.data;
+      error = result.error;
+    } else {
+      // Create new profile
+      const createData = {
+        user_id: user.id,
+        onboarding_completed: profile.onboarding_completed || false,
+        onboarding_step: profile.onboarding_step || 'welcome',
+        setup_progress: profile.setup_progress || {
+          hasFlockProfile: false,
+          hasRecordedProduction: false,
+          hasRecordedExpense: false,
+          hasCustomer: false,
+          hasSale: false,
+          hasMultipleBatches: false,
+          hasFeedTracking: false
+        },
+        ...updateData
+      };
+
+      const result = await supabase
+        .from('user_profiles')
+        .insert(createData)
+        .select()
+        .single();
+      
+      data = result.data;
+      error = result.error;
+    }
+
+    if (error) {
+      throw error;
+    }
+
+    res.status(200).json({
+      message: 'User profile saved successfully',
+      data: { profile: data },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Save user profile error:', error);
+    res.status(500).json({
+      message: 'Failed to save user profile',
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+}
+
+// Complete onboarding with flock creation
+async function completeOnboarding(user: User, requestData: any, res: VercelResponse) {
+  const { formData } = requestData;
+  
+  if (!formData) {
+    return res.status(400).json({ message: 'Form data is required' });
+  }
+
+  try {
+    console.log('Starting onboarding completion for user:', user.id);
+    let flockCreated = false;
+
+    // If user has chickens, use the existing flock batch API
+    if (formData.hasChickens) {
+      console.log('User has chickens, creating flock profile and batch via batch API');
+      const totalCount = formData.henCount + formData.roosterCount + formData.chickCount + (formData.broodingCount || 0);
+      
+      if (totalCount > 0) {
+        // Generate simple UUID alternative to avoid import issues
+        const generateId = () => crypto.randomUUID ? crypto.randomUUID() : 
+          'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+          });
+        
+        // Create flock profile first
+        const flockProfileData = {
+          id: generateId(),
+          user_id: user.id,
+          farm_name: 'My Chicken Farm',
+          location: '',
+          flock_size: totalCount,
+          breed: formData.breed,
+          start_date: formData.acquisitionDate,
+          hens: formData.henCount,
+          roosters: formData.roosterCount,
+          chicks: formData.chickCount,
+          brooding: formData.broodingCount || 0,
+          notes: 'Created during onboarding'
+        };
+
+        console.log('Creating flock profile:', flockProfileData);
+        const { error: flockError } = await supabase
+          .from('flock_profiles')
+          .insert(flockProfileData);
+
+        if (flockError) {
+          console.error('Flock profile creation failed:', flockError);
+          throw flockError;
+        }
+        console.log('Flock profile created successfully');
+
+        // Create batch using the same logic as the Add New Batch API
+        const batchId = generateId();
+        const batchData = {
+          id: batchId,
+          user_id: user.id,
+          batch_name: formData.batchName || 'Initial Flock',
+          breed: formData.breed,
+          acquisition_date: formData.acquisitionDate,
+          initial_count: totalCount,
+          current_count: totalCount,
+          hens_count: formData.henCount,
+          roosters_count: formData.roosterCount,
+          chicks_count: formData.chickCount,
+          brooding_count: formData.broodingCount || 0,
+          type: totalCount === formData.henCount ? 'hens' : 
+                totalCount === formData.roosterCount ? 'roosters' : 
+                totalCount === formData.chickCount ? 'chicks' : 'mixed',
+          age_at_acquisition: formData.ageAtAcquisition || 'adult',
+          source: formData.source || 'onboarding',
+          cost: formData.cost || 0.00,
+          notes: formData.notes || 'Initial batch created during onboarding',
+          is_active: true
+        };
+
+        console.log('Creating flock batch:', batchData);
+        const { data: batch, error: batchError } = await supabase
+          .from('flock_batches')
+          .insert(batchData)
+          .select()
+          .single();
+
+        if (batchError) {
+          console.error('Flock batch creation failed:', batchError);
+          throw batchError;
+        }
+        console.log('Flock batch created successfully');
+
+        // Create the "flock_added" batch event just like the Add New Batch API does
+        console.log('Creating initial timeline event for batch:', batch.id);
+        const { error: eventError } = await supabase
+          .from('batch_events')
+          .insert({
+            user_id: user.id,
+            batch_id: batch.id,
+            date: formData.acquisitionDate,
+            type: 'flock_added',
+            description: 'Welcome to the Coop!',
+            affected_count: totalCount,
+            notes: `Initial batch creation: ${totalCount} ${batchData.type} acquired from ${batchData.source}`
+          });
+
+        if (eventError) {
+          console.error('Failed to create initial timeline event:', eventError);
+          // Don't fail the onboarding if event creation fails, just log the error
+        } else {
+          console.log('Initial "Welcome to the Coop!" timeline event created successfully');
+        }
+
+        // Create expense entry if cost is provided
+        if (formData.cost && formData.cost > 0) {
+          console.log('Creating expense entry for batch cost:', formData.cost);
+          const { error: expenseError } = await supabase
+            .from('expenses')
+            .insert({
+              user_id: user.id,
+              date: formData.acquisitionDate,
+              category: 'Birds',
+              description: `Batch acquisition: ${batchData.batch_name} (${totalCount} ${batchData.type})`,
+              amount: formData.cost
+            });
+
+          if (expenseError) {
+            console.error('Failed to create expense entry:', expenseError);
+            // Don't fail the onboarding if expense creation fails
+          } else {
+            console.log('Expense entry created successfully for batch cost');
+          }
+        }
+
+        flockCreated = true;
+      }
+    }
+
+    // Update user profile to mark onboarding as complete
+    const profileData = {
+      user_id: user.id,
+      onboarding_completed: true,
+      onboarding_step: 'complete',
+      setup_progress: {
+        hasFlockProfile: flockCreated,
+        hasRecordedProduction: false,
+        hasRecordedExpense: false,
+        hasCustomer: false,
+        hasSale: false,
+        hasMultipleBatches: false,
+        hasFeedTracking: false
+      },
+      updated_at: new Date().toISOString()
+    };
+
+    // Check if profile exists
+    const { data: existingProfile, error: profileCheckError } = await supabase
+      .from('user_profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    // If there was an error checking for profile (not just "not found"), throw it
+    if (profileCheckError) {
+      throw profileCheckError;
+    }
+
+    let profileResult;
+
+    console.log('Profile data to save:', profileData);
+    if (existingProfile) {
+      // Update existing profile
+      console.log('Updating existing profile');
+      profileResult = await supabase
+        .from('user_profiles')
+        .update(profileData)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+    } else {
+      // Create new profile
+      console.log('Creating new profile');
+      profileResult = await supabase
+        .from('user_profiles')
+        .insert(profileData)
+        .select()
+        .single();
+    }
+
+    if (profileResult.error) {
+      throw profileResult.error;
+    }
+
+    res.status(200).json({
+      message: 'Onboarding completed successfully',
+      data: {
+        profile: profileResult.data,
+        flockCreated
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Complete onboarding error:', error);
+    
+    // Handle Supabase errors properly
+    let errorMessage = 'Unknown error occurred';
+    if (error && typeof error === 'object' && 'message' in error) {
+      errorMessage = String(error.message);
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    } else {
+      errorMessage = String(error);
+    }
+    
+    res.status(500).json({
+      message: 'Failed to complete onboarding',
+      error: errorMessage,
+      timestamp: new Date().toISOString()
+    });
+  }
 }
