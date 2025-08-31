@@ -18,9 +18,13 @@ import { useEggPagination } from '../hooks/pagination/useEggPagination';
 import { useTimeoutToggle } from '../hooks/utils';
 import { ConfirmDialog } from './ui/modals/ConfirmDialog';
 import { HistoricalEggTrackingModal } from './modals/HistoricalEggTrackingModal';
+import { useAuth } from '../contexts/AuthContext';
 
 
 export const EggCounter = () => {
+  // Get user data for yearly goal
+  const { user } = useAuth();
+  
   // Use custom data management hook
   const { entries: eggEntries, isLoading, addEntry, deleteEntry, totalEggs, averageDaily, thisWeekTotal, thisMonthTotal, previousWeekTotal, previousMonthTotal } = useEggData();
   
@@ -63,8 +67,9 @@ export const EggCounter = () => {
     return Math.round(proteinLbs);
   }, [totalEggs]);
 
-  // Monthly goal settings (could be made configurable later)
-  const MONTHLY_EGG_GOAL = 1000;
+  // Calculate monthly goal from user's yearly goal (divided by 12)
+  const yearlyGoal = user?.user_metadata?.yearly_egg_goal || 0;
+  const MONTHLY_EGG_GOAL = Math.round(yearlyGoal / 12);
   const monthlyProgress = thisMonthTotal;
 
   // DataTable column configuration  
@@ -571,24 +576,54 @@ export const EggCounter = () => {
         </form>
       </motion.div>
 
-      {/* Monthly Goal Progress Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
-        className="!mb-0"
-      >
-        <ProgressCard
-          title="Egg Production Goal"
-          value={monthlyProgress}
-          max={MONTHLY_EGG_GOAL}
-          label="Monthly target"
-          color="success"
-          animated={true}
-          showPercentage={true}
-          showValues={true}
-        />
-      </motion.div>
+      {/* Monthly Goal Progress Card - Only show if yearly goal is set */}
+      {yearlyGoal > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="!mb-0"
+        >
+          <ProgressCard
+            title="Monthly Egg Production Goal"
+            value={monthlyProgress}
+            max={MONTHLY_EGG_GOAL}
+            label={`Monthly target (${yearlyGoal.toLocaleString()}/year)`}
+            color="success"
+            animated={true}
+            showPercentage={true}
+            showValues={true}
+          />
+        </motion.div>
+      )}
+
+      {/* No Goal Set Message */}
+      {yearlyGoal === 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="!mb-0"
+        >
+          <div className="glass-card p-6 text-center">
+            <div className="flex flex-col items-center gap-3">
+              <span className="text-4xl">🎯</span>
+              <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>
+                Set Your Annual Goal
+              </h3>
+              <p className="text-gray-600 text-sm max-w-md">
+                Visit your profile page to set a yearly egg production goal and track your monthly progress.
+              </p>
+              <button
+                onClick={() => window.location.href = '/profile?tab=goals'}
+                className="mt-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 font-medium text-sm"
+              >
+                Set Goal Now
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Comparison Cards Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 !mb-0">

@@ -80,12 +80,23 @@ interface AuthUser {
 }
 
 async function getAllData(user: AuthUser, res: VercelResponse) {
-  // Fetch user's egg entries, order by date descending
+  // First, fetch user profile to determine tier
+  const { data: userProfile } = await supabase
+    .from('user_profiles')
+    .select('subscription_status')
+    .eq('user_id', user.id)
+    .single();
+  
+  const isFreeTier = !userProfile || userProfile.subscription_status !== 'premium';
+  const eggEntriesLimit = isFreeTier ? 90 : 730; // 90 days for free, 2 years for premium
+
+  // Fetch user's egg entries with tier-based limits
   const { data: eggEntries, error } = await supabase
     .from('egg_entries')
     .select('id, date, count, size, color, notes, created_at, user_id')
     .eq('user_id', user.id)
-    .order('date', { ascending: false });
+    .order('date', { ascending: false })
+    .limit(eggEntriesLimit);
 
   if (error) throw error;
 
@@ -157,62 +168,87 @@ async function getAllData(user: AuthUser, res: VercelResponse) {
     };
   }
 
-  // Fetch user's feed inventory
-  const { data: feedInventory, error: feedError } = await supabase
-    .from('feed_inventory')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
-  if (feedError) throw feedError;
+  // Fetch user's feed inventory (premium only)
+  let feedInventory = [];
+  if (!isFreeTier) {
+    const { data: feedInventoryData, error: feedError } = await supabase
+      .from('feed_inventory')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    if (feedError) throw feedError;
+    feedInventory = feedInventoryData || [];
+  }
 
-  // Fetch user's expenses
-  const { data: expenses, error: expensesError } = await supabase
-    .from('expenses')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('date', { ascending: false });
-  if (expensesError) throw expensesError;
+  // Fetch premium features only for premium users
+  let expenses = [];
+  let customers = [];
+  let sales = [];
+  
+  if (!isFreeTier) {
+    // Fetch user's expenses (premium only)
+    const { data: expensesData, error: expensesError } = await supabase
+      .from('expenses')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('date', { ascending: false })
+      .limit(500);
+    if (expensesError) throw expensesError;
+    expenses = expensesData || [];
 
-  // Fetch customers
-  const { data: customers, error: customersError } = await supabase
-    .from('customers')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: true });
-  if (customersError) throw customersError;
+    // Fetch customers (premium only)
+    const { data: customersData, error: customersError } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: true });
+    if (customersError) throw customersError;
+    customers = customersData || [];
 
-  // Fetch sales
-  const { data: sales, error: salesError } = await supabase
-    .from('sales')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('sale_date', { ascending: false });
-  if (salesError) throw salesError;
+    // Fetch sales (premium only)
+    const { data: salesData, error: salesError } = await supabase
+      .from('sales')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('sale_date', { ascending: false })
+      .limit(200);
+    if (salesError) throw salesError;
+    sales = salesData || [];
+  }
 
-  // Fetch flock batches
-  const { data: flockBatches, error: batchesError } = await supabase
-    .from('flock_batches')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('is_active', true)
-    .order('acquisition_date', { ascending: false });
-  if (batchesError) throw batchesError;
+  // Fetch flock batches (premium only)
+  let flockBatches = [];
+  if (!isFreeTier) {
+    const { data: flockBatchesData, error: batchesError } = await supabase
+      .from('flock_batches')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .order('acquisition_date', { ascending: false });
+    if (batchesError) throw batchesError;
+    flockBatches = flockBatchesData || [];
+  }
 
-  // Fetch user profile for onboarding state
-  const { data: userProfile, error: userProfileError } = await supabase
+  // Fetch full user profile for response (we already fetched subscription_status earlier)
+  const { data: fullUserProfile, error: userProfileError } = await supabase
     .from('user_profiles')
     .select('*')
     .eq('user_id', user.id)
     .single();
   // Don't throw error if profile doesn't exist - new users won't have one
 
-  // Fetch death records  
-  const { data: deathRecords, error: deathsError } = await supabase
-    .from('death_records')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('date', { ascending: false });
-  if (deathsError) throw deathsError;
+  // Fetch death records (premium only)
+  let deathRecords = [];
+  if (!isFreeTier) {
+    const { data: deathRecordsData, error: deathsError } = await supabase
+      .from('death_records')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('date', { ascending: false })
+      .limit(150);
+    if (deathsError) throw deathsError;
+    deathRecords = deathRecordsData || [];
+  }
 
   const summary = {
     customer_count: customers?.length || 0,
@@ -293,14 +329,15 @@ async function getAllData(user: AuthUser, res: VercelResponse) {
         notes: record.notes,
         created_at: record.created_at
       })) || [],
-      userProfile: userProfile ? {
-        id: userProfile.id,
-        user_id: userProfile.user_id,
-        onboarding_completed: userProfile.onboarding_completed,
-        onboarding_step: userProfile.onboarding_step,
-        setup_progress: userProfile.setup_progress,
-        created_at: userProfile.created_at,
-        updated_at: userProfile.updated_at
+      userProfile: fullUserProfile ? {
+        id: fullUserProfile.id,
+        user_id: fullUserProfile.user_id,
+        onboarding_completed: fullUserProfile.onboarding_completed,
+        onboarding_step: fullUserProfile.onboarding_step,
+        setup_progress: fullUserProfile.setup_progress,
+        subscription_status: fullUserProfile.subscription_status || 'free',
+        created_at: fullUserProfile.created_at,
+        updated_at: fullUserProfile.updated_at
       } : null,
       summary
     },

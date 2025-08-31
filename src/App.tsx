@@ -14,46 +14,67 @@ const ChickenViability = lazy(() => import('./components/ChickenViability').then
 const FlockBatchManager = lazy(() => import('./components/FlockBatchManager').then(module => ({ default: module.FlockBatchManager })));
 const CardShowcase = lazy(() => import('./components/examples/CardShowcase').then(module => ({ default: module.default })));
 import { AuthProvider, useAuth } from './contexts/AuthContext'
-import { OptimizedDataProvider } from './contexts/OptimizedDataProvider'
+import { OptimizedDataProvider, useUserTier } from './contexts/OptimizedDataProvider'
 import { OnboardingProvider } from './contexts/OnboardingProvider'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { UserProfile } from './components/UserProfile'
+import { PremiumFeatureGate } from './components/PremiumFeatureGate'
 // Simple Modal Component
 // import { Login } from './components/Login' // Temporarily disabled
 
-// Full navigation for desktop sidebar
-const navigation = [
+// Free tier navigation items (available to all users)
+const freeNavigation = [
+  { name: 'Production', emoji: '🥚', href: '/egg-counter' },
+  { name: 'Account', emoji: '⚙️', href: '/account' },
+];
+
+// Premium tier navigation items (premium subscription required)
+const premiumNavigation = [
   { name: 'Dashboard', emoji: '🏠', href: '/' },
   { name: 'My Flock', emoji: '🐔', href: '/profile' },
-  { name: 'Production', emoji: '🥚', href: '/egg-counter' },
   { name: 'CRM', emoji: '💼', href: '/crm' },
   { name: 'Expenses', emoji: '💰', href: '/expenses' },
   { name: 'Feed Management', emoji: '🌾', href: '/feed-tracker' },
   { name: 'Savings', emoji: '📈', href: '/savings' },
   { name: 'Viability', emoji: '🧮', href: '/viability' },
   { name: 'Cards', emoji: '🎨', href: '/cards' },
-  { name: 'Account', emoji: '⚙️', href: '/account' },
 ];
 
-// Primary mobile navigation - most critical daily tasks
-const primaryMobileNav = [
-  { name: 'Dashboard', emoji: '🏠', href: '/' },
-  { name: 'Production', emoji: '🥚', href: '/egg-counter' },
-  { name: 'CRM', emoji: '💼', href: '/crm' },
-  { name: 'Expenses', emoji: '💰', href: '/expenses' }
-];
+// Function to get navigation items based on user tier
+const getNavigationItems = (userTier: 'free' | 'premium') => {
+  return userTier === 'premium' 
+    ? [...premiumNavigation, ...freeNavigation]
+    : freeNavigation;
+};
 
-// Secondary navigation - less frequent but important features  
-const secondaryMobileNav = [
-  { name: 'My Flock', emoji: '🐔', href: '/profile' },
-  { name: 'Feed Management', emoji: '🌾', href: '/feed-tracker' },
-  { name: 'Savings', emoji: '📈', href: '/savings' },
-  { name: 'Viability', emoji: '🧮', href: '/viability' },
-  { name: 'Cards', emoji: '🎨', href: '/cards' },
-  { name: 'Account Settings', emoji: '⚙️', href: '/account' },
-];
+// Function to get mobile navigation items based on user tier
+const getMobileNavigationItems = (userTier: 'free' | 'premium') => {
+  if (userTier === 'free') {
+    return {
+      primary: freeNavigation,
+      secondary: []
+    };
+  }
+  
+  return {
+    primary: [
+      { name: 'Dashboard', emoji: '🏠', href: '/' },
+      { name: 'Production', emoji: '🥚', href: '/egg-counter' },
+      { name: 'CRM', emoji: '💼', href: '/crm' },
+      { name: 'Expenses', emoji: '💰', href: '/expenses' }
+    ],
+    secondary: [
+      { name: 'My Flock', emoji: '🐔', href: '/profile' },
+      { name: 'Feed Management', emoji: '🌾', href: '/feed-tracker' },
+      { name: 'Savings', emoji: '📈', href: '/savings' },
+      { name: 'Viability', emoji: '🧮', href: '/viability' },
+      { name: 'Cards', emoji: '🎨', href: '/cards' },
+      { name: 'Account Settings', emoji: '⚙️', href: '/account' },
+    ]
+  };
+};
 
-const NavLink = ({ item }: { item: typeof navigation[0] }) => {
+const NavLink = ({ item }: { item: { name: string; emoji: string; href: string } }) => {
   const location = useLocation();
   const isActive = location.pathname === item.href;
 
@@ -95,9 +116,13 @@ function App() {
 
 const MainApp = () => {
   const { user, signOut } = useAuth();
+  const userTier = useUserTier();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const location = useLocation();
+  
+  const navigation = getNavigationItems(userTier);
+  const mobileNav = getMobileNavigationItems(userTier);
 
   // Close mobile menu when route changes and scroll to top
   useEffect(() => {
@@ -155,7 +180,7 @@ const MainApp = () => {
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 px-2 py-3">
         <div className="flex justify-around items-center max-w-screen-xl mx-auto">
           {/* Primary Navigation Items */}
-          {primaryMobileNav.map((item) => {
+          {mobileNav.primary.map((item) => {
             const isActive = location.pathname === item.href;
             return (
               <Link
@@ -177,18 +202,20 @@ const MainApp = () => {
             );
           })}
           
-          {/* More Menu Button */}
-          <button
-            onClick={() => setShowMobileMenu(true)}
-            className="flex flex-col items-center justify-center px-3 py-3 rounded-lg transition-all duration-200 min-w-0 flex-1 min-h-[48px] text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-          >
-            <span className="text-lg mb-1" role="img" aria-label="More options">
-              ⋯
-            </span>
-            <span className="text-xs font-medium text-center leading-tight">
-              More
-            </span>
-          </button>
+          {/* More Menu Button - Only show if there are secondary nav items */}
+          {mobileNav.secondary.length > 0 && (
+            <button
+              onClick={() => setShowMobileMenu(true)}
+              className="flex flex-col items-center justify-center px-3 py-3 rounded-lg transition-all duration-200 min-w-0 flex-1 min-h-[48px] text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+            >
+              <span className="text-lg mb-1" role="img" aria-label="More options">
+                ⋯
+              </span>
+              <span className="text-xs font-medium text-center leading-tight">
+                More
+              </span>
+            </button>
+          )}
         </div>
       </nav>
 
@@ -210,7 +237,7 @@ const MainApp = () => {
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                {secondaryMobileNav.map((item) => {
+                {mobileNav.secondary.map((item) => {
                   const isActive = location.pathname === item.href;
                   return (
                     <Link
@@ -282,17 +309,56 @@ const MainApp = () => {
       <main className="main-content" style={{ paddingTop: 0, paddingLeft: '17px', paddingRight: '17px' }}>
         <Suspense fallback={<ComponentLoader />}>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/account" element={<ProfilePage />} />
-            <Route path="/flock-batches" element={<FlockBatchManager />} />
+            {/* Premium Features */}
+            <Route path="/" element={
+              <PremiumFeatureGate featureName="Dashboard Analytics">
+                <Dashboard />
+              </PremiumFeatureGate>
+            } />
+            <Route path="/profile" element={
+              <PremiumFeatureGate featureName="My Flock">
+                <Profile />
+              </PremiumFeatureGate>
+            } />
+            <Route path="/flock-batches" element={
+              <PremiumFeatureGate featureName="Flock Batch Management">
+                <FlockBatchManager />
+              </PremiumFeatureGate>
+            } />
+            <Route path="/crm" element={
+              <PremiumFeatureGate featureName="Customer Management">
+                <CRM />
+              </PremiumFeatureGate>
+            } />
+            <Route path="/expenses" element={
+              <PremiumFeatureGate featureName="Expense Tracking">
+                <Expenses />
+              </PremiumFeatureGate>
+            } />
+            <Route path="/feed-tracker" element={
+              <PremiumFeatureGate featureName="Feed Management">
+                <FeedTracker />
+              </PremiumFeatureGate>
+            } />
+            <Route path="/savings" element={
+              <PremiumFeatureGate featureName="Savings Analysis">
+                <Savings />
+              </PremiumFeatureGate>
+            } />
+            <Route path="/viability" element={
+              <PremiumFeatureGate featureName="Viability Calculator">
+                <ChickenViability />
+              </PremiumFeatureGate>
+            } />
+            <Route path="/cards" element={
+              <PremiumFeatureGate featureName="Design Showcase">
+                <CardShowcase />
+              </PremiumFeatureGate>
+            } />
+            
+            {/* Free Features - Available to all users */}
             <Route path="/egg-counter" element={<EggCounter />} />
-            <Route path="/crm" element={<CRM />} />
-            <Route path="/expenses" element={<Expenses />} />
-            <Route path="/feed-tracker" element={<FeedTracker />} />
-            <Route path="/savings" element={<Savings />} />
-            <Route path="/viability" element={<ChickenViability />} />
-            <Route path="/cards" element={<CardShowcase />} />
+            <Route path="/account" element={<ProfilePage />} />
           </Routes>
         </Suspense>
       </main>

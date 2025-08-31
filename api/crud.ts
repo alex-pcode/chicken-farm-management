@@ -438,6 +438,9 @@ async function saveUserProfile(user: User, profileData: any, res: VercelResponse
     if (profile.setup_progress !== undefined) {
       updateData.setup_progress = profile.setup_progress;
     }
+    if (profile.subscription_status !== undefined) {
+      updateData.subscription_status = profile.subscription_status;
+    }
 
     let data, error;
 
@@ -467,6 +470,7 @@ async function saveUserProfile(user: User, profileData: any, res: VercelResponse
           hasMultipleBatches: false,
           hasFeedTracking: false
         },
+        subscription_status: profile.subscription_status || 'free',
         ...updateData
       };
 

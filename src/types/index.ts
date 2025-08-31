@@ -241,6 +241,9 @@ export interface FarmSetupProgress {
   hasRecordedProduction: boolean; // 30 points - Logged ≥1 egg entry
   hasRecordedExpense: boolean;    // 20 points - Logged ≥1 expense  
   hasFeedTracking: boolean;       // 20 points - Logged feed data
+  hasCustomer: boolean;           // 10 points - Added ≥1 customer
+  hasSale: boolean;               // 10 points - Recorded ≥1 sale
+  hasMultipleBatches: boolean;    // 5 points - Multiple flock batches
 }
 
 /**
@@ -252,6 +255,7 @@ export interface UserProfile {
   onboarding_completed: boolean;
   onboarding_step: 'welcome' | 'setup' | 'complete';
   setup_progress: FarmSetupProgress;
+  subscription_status: 'free' | 'premium';
   created_at: string;
   updated_at: string;
 }
@@ -304,6 +308,7 @@ export interface AppData {
   customers?: Customer[];
   sales?: SaleWithCustomer[];
   summary?: SalesSummary;
+  userProfile?: UserProfile | null;
 }
 
 /**

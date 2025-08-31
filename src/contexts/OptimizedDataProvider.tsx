@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { apiService } from '../services/api';
 import { browserCache, CACHE_KEYS } from '../utils/browserCache';
-import type { EggEntry, Expense, FeedEntry, FlockProfile, FlockEvent, FlockBatch, DeathRecord } from '../types';
+import type { EggEntry, Expense, FeedEntry, FlockProfile, FlockEvent, FlockBatch, DeathRecord, UserProfile } from '../types';
 import type { Customer, SaleWithCustomer, SalesSummary } from '../types/crm';
 
 interface AppData {
@@ -15,6 +15,7 @@ interface AppData {
   summary: SalesSummary | undefined;
   flockBatches: FlockBatch[];
   deathRecords: DeathRecord[];
+  userProfile: UserProfile | null;
 }
 
 interface OptimizedDataContextType {
@@ -24,6 +25,7 @@ interface OptimizedDataContextType {
   refreshData: () => Promise<void>;
   silentRefresh: () => Promise<void>;
   lastFetched: Date | null;
+  userTier: 'free' | 'premium';
 }
 
 const OptimizedDataContext = createContext<OptimizedDataContextType | undefined>(undefined);
@@ -49,7 +51,8 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
       sales: [],
       summary: undefined,
       flockBatches: [],
-      deathRecords: []
+      deathRecords: [],
+      userProfile: null
     };
   });
   
@@ -71,7 +74,8 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
         flockEvents: [],
         customers: [],
         sales: [],
-        summary: undefined
+        summary: undefined,
+        userProfile: null
       };
       
 
@@ -85,7 +89,8 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
         sales: dbData?.sales || [],
         summary: dbData?.summary || undefined,
         flockBatches: dbData?.flockBatches || [],
-        deathRecords: dbData?.deathRecords || []
+        deathRecords: dbData?.deathRecords || [],
+        userProfile: dbData?.userProfile || null
       };
       
       setData(newData);
@@ -115,7 +120,8 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
         flockEvents: [],
         customers: [],
         sales: [],
-        summary: undefined
+        summary: undefined,
+        userProfile: null
       };
       
       const newData = {
@@ -128,7 +134,8 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
         sales: dbData?.sales || [],
         summary: dbData?.summary || undefined,
         flockBatches: dbData?.flockBatches || [],
-        deathRecords: dbData?.deathRecords || []
+        deathRecords: dbData?.deathRecords || [],
+        userProfile: dbData?.userProfile || null
       };
       
       setData(newData);
@@ -170,7 +177,8 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
     error,
     refreshData,
     silentRefresh,
-    lastFetched
+    lastFetched,
+    userTier: (data.userProfile?.subscription_status === 'premium') ? 'premium' : 'free'
   };
 
   return (
@@ -336,4 +344,16 @@ export const useFlockBatchData = () => {
     error: context.error,
     refreshData: context.refreshData
   };
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const useUserTier = () => {
+  const { userTier } = useOptimizedAppData();
+  return userTier;
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const useUserProfile = () => {
+  const { data } = useOptimizedAppData();
+  return data.userProfile;
 };

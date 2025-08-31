@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth, supabase } from '../contexts/AuthContext';
 import { UserService } from '../services/api/UserService';
+import { useUserTier, useOptimizedAppData } from '../contexts/OptimizedDataProvider';
 import { FormCard } from './ui/forms/FormCard';
 import { FormButton } from './ui/forms/FormButton';
 import { FormField } from './ui/forms/FormField';
@@ -22,6 +23,8 @@ interface ProfileFormData {
 
 export const ProfilePage: React.FC = () => {
   const { user } = useAuth();
+  const userTier = useUserTier();
+  const { refreshData } = useOptimizedAppData();
   const [activeTab, setActiveTab] = useState<string>('profile');
   const [formData, setFormData] = useState<ProfileFormData>({
     email: user?.email || '',
@@ -121,6 +124,39 @@ export const ProfilePage: React.FC = () => {
     }
 
     return newErrors;
+  };
+
+  // Handle tier change for testing
+  const handleTierChange = async (newTier: 'free' | 'premium') => {
+    setLoading(prev => ({ ...prev, profile: true }));
+    setErrors([]);
+    setSuccessMessage('');
+
+    try {
+      const response = await userService.updateUserProfile({
+        subscription_status: newTier
+      });
+
+      if (response.success) {
+        setSuccessMessage(`Tier changed to ${newTier.toUpperCase()} successfully!`);
+        await refreshData(); // Refresh to update tier state
+      } else {
+        setErrors([{
+          field: 'tier',
+          message: response.error?.message || 'Failed to update tier',
+          type: 'invalid'
+        }]);
+      }
+    } catch (error) {
+      console.error('Tier update error:', error);
+      setErrors([{
+        field: 'tier',
+        message: 'Failed to update tier. Please try again.',
+        type: 'invalid'
+      }]);
+    } finally {
+      setLoading(prev => ({ ...prev, profile: false }));
+    }
   };
 
   // Handle form submission for basic profile info
@@ -415,19 +451,62 @@ export const ProfilePage: React.FC = () => {
           <StatCard 
             variant="gradient"
             title="Current Plan"
-            total="Free"
-            label="Full access to all features"
-            icon="✨"
-            className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200"
+            total={userTier.charAt(0).toUpperCase() + userTier.slice(1)}
+            label={userTier === 'premium' ? 'Full access to all features' : 'Basic features available'}
+            icon={userTier === 'premium' ? '⭐' : '✨'}
+            className={userTier === 'premium' 
+              ? 'bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200'
+              : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
+            }
           />
 
+          {/* Admin Testing Controls */}
+          <div className="space-y-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+            <h4 className="font-semibold text-gray-900 flex items-center gap-2" style={{ fontFamily: 'Fraunces, serif' }}>
+              🔧 Testing Controls (Admin)
+            </h4>
+            <p className="text-sm text-gray-600">Switch between tiers to test feature access</p>
+            
+            {getFieldError('tier') && (
+              <div className="error-state p-3 rounded-lg">
+                <p className="text-red-700">{getFieldError('tier')}</p>
+              </div>
+            )}
+            
+            <div className="flex gap-2">
+              <FormButton
+                variant={userTier === 'free' ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => handleTierChange('free')}
+                loading={loading.profile}
+                type="button"
+              >
+                🆓 Set Free Tier
+              </FormButton>
+              <FormButton
+                variant={userTier === 'premium' ? 'primary' : 'secondary'}
+                size="sm"
+                onClick={() => handleTierChange('premium')}
+                loading={loading.profile}
+                type="button"
+              >
+                ⭐ Set Premium Tier
+              </FormButton>
+            </div>
+          </div>
+
           <div className="space-y-3">
-            <h4 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>Premium Features Coming Soon:</h4>
+            <h4 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>
+              {userTier === 'premium' ? 'Premium Features:' : 'Premium Features (Available after upgrade):'}
+            </h4>
             <ul className="text-gray-600 text-sm space-y-2">
-              <li className="flex items-center gap-2">📊 Advanced analytics and reporting</li>
-              <li className="flex items-center gap-2">🏢 Multi-farm management</li>
-              <li className="flex items-center gap-2">💼 Integration with accounting software</li>
-              <li className="flex items-center gap-2">🎧 Priority support</li>
+              <li className="flex items-center gap-2">📊 Dashboard analytics and insights</li>
+              <li className="flex items-center gap-2">🐔 My Flock management</li>
+              <li className="flex items-center gap-2">💼 Customer relationship management</li>
+              <li className="flex items-center gap-2">💰 Expense tracking</li>
+              <li className="flex items-center gap-2">🌾 Feed management</li>
+              <li className="flex items-center gap-2">📈 Savings analysis</li>
+              <li className="flex items-center gap-2">🧮 Viability calculator</li>
             </ul>
           </div>
 

@@ -44,40 +44,40 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
       {
         field: 'startDate',
         validator: (value) => {
-          if (!value) return { isValid: false, message: 'Start date is required' };
+          if (!value) return 'Start date is required';
           const date = new Date(value as string);
           const today = new Date();
-          if (date > today) return { isValid: false, message: 'Start date cannot be in the future' };
-          return { isValid: true };
+          if (date > today) return 'Start date cannot be in the future';
+          return null;
         },
         required: true
       },
       {
         field: 'endDate',
         validator: (value) => {
-          if (!value) return { isValid: false, message: 'End date is required' };
+          if (!value) return 'End date is required';
           const startDate = new Date(form.values.startDate);
           const endDate = new Date(value as string);
           const today = new Date();
           
-          if (endDate > today) return { isValid: false, message: 'End date cannot be in the future' };
-          if (endDate <= startDate) return { isValid: false, message: 'End date must be after start date' };
+          if (endDate > today) return 'End date cannot be in the future';
+          if (endDate <= startDate) return 'End date must be after start date';
           
           const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
-          if (daysDiff > 365) return { isValid: false, message: 'Date range cannot exceed 365 days' };
+          if (daysDiff > 365) return 'Date range cannot exceed 365 days';
           
-          return { isValid: true };
+          return null;
         },
         required: true
       },
       {
         field: 'averageDaily',
         validator: (value) => {
-          if (!value) return { isValid: false, message: 'Average daily eggs is required' };
+          if (!value) return 'Average daily eggs is required';
           const num = parseFloat(value as string);
-          if (isNaN(num) || num < 0) return { isValid: false, message: 'Must be a valid positive number' };
-          if (num > 1000) return { isValid: false, message: 'Daily average seems too high (max 1000)' };
-          return { isValid: true };
+          if (isNaN(num) || num < 0) return 'Must be a valid positive number';
+          if (num > 1000) return 'Daily average seems too high (max 1000)';
+          return null;
         },
         required: true
       }
@@ -179,13 +179,14 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
       onSubmit={step === 'form' ? handleSubmit : undefined}
       submitText={
         step === 'intro' ? undefined :
-        step === 'form' ? (isSubmitting ? 'Generating Entries...' : 'Generate Historical Data') :
+        step === 'form' ? 'Generate Historical Data' :
         'Close'
       }
       cancelText={step === 'success' ? undefined : 'Cancel'}
       showFooter={step !== 'intro'}
       size="lg"
-      disabled={isSubmitting}
+      loading={isSubmitting}
+      submitDisabled={isSubmitting}
     >
       {step === 'intro' && (
         <div className="space-y-6">
@@ -347,6 +348,19 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
               </div>
             </motion.div>
           )}
+          
+          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <div className="flex items-start gap-3">
+              <span className="text-blue-600 text-lg mt-0.5">⏱️</span>
+              <div>
+                <h4 className="font-medium text-blue-900 mb-1">Processing Time</h4>
+                <p className="text-sm text-blue-800">
+                  Generating historical entries may take a few minutes, especially for longer date ranges. 
+                  Please be patient and don't close this window during processing.
+                </p>
+              </div>
+            </div>
+          </div>
           
           {errors.find(e => e.field === 'submit') && (
             <div className="bg-red-50 rounded-lg p-4 border border-red-200">
