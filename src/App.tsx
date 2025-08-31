@@ -8,6 +8,7 @@ const Expenses = lazy(() => import('./components/Expenses').then(module => ({ de
 const FeedTracker = lazy(() => import('./components/FeedTracker').then(module => ({ default: module.FeedTracker })));
 const Savings = lazy(() => import('./components/Savings').then(module => ({ default: module.Savings })));
 const Profile = lazy(() => import('./components/Profile').then(module => ({ default: module.Profile })));
+const ProfilePage = lazy(() => import('./components/ProfilePage').then(module => ({ default: module.ProfilePage })));
 const CRM = lazy(() => import('./components/CRM').then(module => ({ default: module.CRM })));
 const ChickenViability = lazy(() => import('./components/ChickenViability').then(module => ({ default: module.ChickenViability })));
 const FlockBatchManager = lazy(() => import('./components/FlockBatchManager').then(module => ({ default: module.FlockBatchManager })));
@@ -31,6 +32,7 @@ const navigation = [
   { name: 'Savings', emoji: '📈', href: '/savings' },
   { name: 'Viability', emoji: '🧮', href: '/viability' },
   { name: 'Cards', emoji: '🎨', href: '/cards' },
+  { name: 'Account', emoji: '⚙️', href: '/account' },
 ];
 
 // Primary mobile navigation - most critical daily tasks
@@ -48,6 +50,7 @@ const secondaryMobileNav = [
   { name: 'Savings', emoji: '📈', href: '/savings' },
   { name: 'Viability', emoji: '🧮', href: '/viability' },
   { name: 'Cards', emoji: '🎨', href: '/cards' },
+  { name: 'Account Settings', emoji: '⚙️', href: '/account' },
 ];
 
 const NavLink = ({ item }: { item: typeof navigation[0] }) => {
@@ -281,6 +284,7 @@ const MainApp = () => {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/account" element={<ProfilePage />} />
             <Route path="/flock-batches" element={<FlockBatchManager />} />
             <Route path="/egg-counter" element={<EggCounter />} />
             <Route path="/crm" element={<CRM />} />

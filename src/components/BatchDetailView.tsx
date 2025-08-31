@@ -8,7 +8,7 @@ import { FormCard } from './ui/forms/FormCard';
 import { FormField } from './ui/forms/FormField';
 import { FormButton } from './ui/forms/FormButton';
 import { FormModal } from './ui/modals/FormModal';
-import { MetricDisplay } from './ui/cards/MetricDisplay';
+import { StatCard } from './ui/cards/StatCard';
 
 interface BatchDetailViewProps {
   batch: FlockBatch;
@@ -336,23 +336,25 @@ export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: Bat
   return (
     <div className={`space-y-6 ${className || ''}`}>
       {/* Header with Back Button */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+          className="flex items-center gap-2 px-4 py-3 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors min-h-[44px] self-start sm:self-auto"
         >
           ← Back to Batches
         </button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-            <span className="text-2xl">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3 flex-wrap">
+            <span className="text-xl sm:text-2xl flex-shrink-0">
               {batch.type === 'hens' ? '🐔' : 
                batch.type === 'roosters' ? '🐓' : 
                batch.type === 'chicks' ? '🐥' : '🐔'}
             </span>
-            {batch.batchName}
+            <span className="break-words min-w-0">{batch.batchName}</span>
           </h1>
-          <p className="text-gray-600">{batch.breed} • {batch.type.charAt(0).toUpperCase() + batch.type.slice(1)}</p>
+          <p className="text-sm sm:text-base text-gray-600 mt-1 break-words">
+            {batch.breed} • {batch.type.charAt(0).toUpperCase() + batch.type.slice(1)}
+          </p>
         </div>
       </div>
 
@@ -381,76 +383,77 @@ export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: Bat
       </AnimatePresence>
 
       {/* Batch Composition */}
-      <div className="neu-form">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="neu-title !mb-0">Batch Composition</h2>
-          <button
-            onClick={openEditComposition}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm font-medium"
-          >
-            ✏️ Edit Composition
-          </button>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="glass-card p-4">
-            <MetricDisplay
-              value={batch.currentCount}
-              label="Current Total"
-              format="number"
-              precision={0}
-              variant="default"
-              color="default"
-              testId="current-total-metric"
-            />
-          </div>
-          <div className="glass-card p-4">
-            <MetricDisplay
-              value={batch.hensCount || 0}
-              label="Hens"
-              format="number"
-              precision={0}
-              variant="default"
-              color="success"
-              testId="hens-count-metric"
-            />
-          </div>
-          <div className="glass-card p-4">
-            <MetricDisplay
-              value={batch.broodingCount || 0}
-              label="Brooding"
-              format="number"
-              precision={0}
-              variant="default"
-              color="warning"
-              testId="brooding-count-metric"
-            />
-          </div>
-          <div className="glass-card p-4">
-            <MetricDisplay
-              value={batch.roostersCount || 0}
-              label="Roosters"
-              format="number"
-              precision={0}
-              variant="default"
-              color="info"
-              testId="roosters-count-metric"
-            />
-          </div>
-          <div className="glass-card p-4">
-            <MetricDisplay
-              value={batch.chicksCount || 0}
-              label="Chicks"
-              format="number"
-              precision={0}
-              variant="default"
-              color="warning"
-              testId="chicks-count-metric"
-            />
-          </div>
-        </div>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Batch Composition</h2>
+        <button
+          onClick={openEditComposition}
+          className="flex items-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm font-medium min-h-[44px] w-full sm:w-auto justify-center sm:justify-start"
+        >
+          ✏️ Edit Composition
+        </button>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <StatCard
+          title="Hens"
+          total={batch.hensCount || 0}
+          label={batch.actualLayingStartDate ? 'Laying active' : 'Not laying yet'}
+          icon="🐔"
+          variant="default"
+          testId="hens-count-metric"
+        />
+        <StatCard
+          title="Roosters"
+          total={batch.roostersCount || 0}
+          label="Male birds"
+          icon="🐓"
+          variant="default"
+          testId="roosters-count-metric"
+        />
+      </div>
 
-        {/* Additional Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <StatCard
+          title="Brooding"
+          total={batch.broodingCount || 0}
+          label={(batch.broodingCount || 0) > 0 ? 'Currently brooding' : 'Available for breeding'}
+          icon="🪺"
+          variant="default"
+          testId="brooding-count-metric"
+        />
+        <StatCard
+          title="Chicks"
+          total={batch.chicksCount || 0}
+          label={(batch.chicksCount || 0) > 0 ? 'Growing birds' : 'No chicks currently'}
+          icon="🐥"
+          variant="default"
+          testId="chicks-count-metric"
+        />
+      </div>
+      
+      <div className="space-y-4 mb-6">
+        <StatCard
+          title="Batch Age"
+          total={`${Math.ceil((Date.now() - new Date(batch.acquisitionDate).getTime()) / (1000 * 60 * 60 * 24 * 7))} weeks`}
+          label={`Since ${new Date(batch.acquisitionDate).toLocaleDateString()}`}
+          icon="📅"
+          variant="default"
+          testId="batch-age-metric"
+        />
+        <StatCard
+          title="Batch Cost"
+          total={batch.cost && batch.cost > 0 ? `$${batch.cost.toFixed(2)}` : 'Free'}
+          label={batch.cost && batch.cost > 0 ? `$${(batch.cost / batch.initialCount).toFixed(2)} per bird` : 'No cost recorded'}
+          icon="💰"
+          variant="default"
+          testId="batch-cost-metric"
+        />
+      </div>
+
+      {/* Additional Details */}
+      <div className="neu-form !px-[10px]">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Batch Details</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Acquired</label>
             <p className="text-gray-900">{new Date(batch.acquisitionDate).toLocaleDateString()}</p>
@@ -490,9 +493,9 @@ export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: Bat
             </div>
           </div>
           {batch.notes && (
-            <div className="md:col-span-2 lg:col-span-3">
+            <div className="sm:col-span-2 lg:col-span-3">
               <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-              <p className="text-gray-900 text-sm">{batch.notes}</p>
+              <p className="text-gray-900 text-sm break-words">{batch.notes}</p>
             </div>
           )}
         </div>
@@ -504,83 +507,87 @@ export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: Bat
         subtitle="Record important events for this batch"
         onSubmit={addEvent}
         loading={isLoading}
+        className="!p-4 sm:!p-6"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField label="Date" required>
-            <input
-              type="date"
-              value={newEvent.date}
-              onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-              className="neu-input"
-              required
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Date" required>
+              <input
+                type="date"
+                value={newEvent.date}
+                onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
+                className="neu-input"
+                required
+              />
+            </FormField>
+            <FormField label="Event Type" required>
+              <select
+                value={newEvent.type}
+                onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value })}
+                className="neu-input"
+                required
+              >
+                <option value="health_check">🩺 Health Check</option>
+                <option value="vaccination">💉 Vaccination</option>
+                <option value="relocation">🏠 Relocation</option>
+                <option value="breeding">💕 Breeding</option>
+                <option value="laying_start">🥚 Laying Start</option>
+                <option value="brooding_start">🪺 Brooding Start</option>
+                <option value="brooding_stop">🐔 Brooding Stop</option>
+                <option value="production_note">📝 Production Note</option>
+                <option value="flock_added">🎉 Flock Added</option>
+                <option value="flock_loss">💔 Flock Loss</option>
+                <option value="other">📋 Other</option>
+              </select>
+            </FormField>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Description" required>
+              <input
+                type="text"
+                value={newEvent.description}
+                onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                className="neu-input"
+                placeholder="Brief description of the event..."
+                required
+              />
+            </FormField>
+            <FormField label="Affected Count">
+              <input
+                type="number"
+                min="0"
+                value={newEvent.affectedCount || ''}
+                onChange={(e) => setNewEvent({ ...newEvent, affectedCount: e.target.value ? parseInt(e.target.value) : null })}
+                className="neu-input"
+                placeholder="Number of birds affected"
+              />
+            </FormField>
+          </div>
+          
+          <FormField label="Notes">
+            <textarea
+              value={newEvent.notes}
+              onChange={(e) => setNewEvent({ ...newEvent, notes: e.target.value })}
+              className="neu-input min-h-[80px]"
+              placeholder="Additional details..."
+              rows={3}
             />
-          </FormField>
-          <FormField label="Event Type" required>
-            <select
-              value={newEvent.type}
-              onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value })}
-              className="neu-input"
-              required
-            >
-              <option value="health_check">🩺 Health Check</option>
-              <option value="vaccination">💉 Vaccination</option>
-              <option value="relocation">🏠 Relocation</option>
-              <option value="breeding">💕 Breeding</option>
-              <option value="laying_start">🥚 Laying Start</option>
-              <option value="brooding_start">🪺 Brooding Start</option>
-              <option value="brooding_stop">🐔 Brooding Stop</option>
-              <option value="production_note">📝 Production Note</option>
-              <option value="flock_added">🎉 Flock Added</option>
-              <option value="flock_loss">💔 Flock Loss</option>
-              <option value="other">📋 Other</option>
-            </select>
           </FormField>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField label="Description" required>
-            <input
-              type="text"
-              value={newEvent.description}
-              onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-              className="neu-input"
-              placeholder="Brief description of the event..."
-              required
-            />
-          </FormField>
-          <FormField label="Affected Count">
-            <input
-              type="number"
-              min="0"
-              value={newEvent.affectedCount || ''}
-              onChange={(e) => setNewEvent({ ...newEvent, affectedCount: e.target.value ? parseInt(e.target.value) : null })}
-              className="neu-input"
-              placeholder="Number of birds affected"
-            />
-          </FormField>
-        </div>
-        
-        <FormField label="Notes">
-          <textarea
-            value={newEvent.notes}
-            onChange={(e) => setNewEvent({ ...newEvent, notes: e.target.value })}
-            className="neu-input min-h-[80px]"
-            placeholder="Additional details..."
-            rows={3}
-          />
-        </FormField>
         
         <FormButton 
           type="submit" 
           loading={isLoading}
           fullWidth
+          className="min-h-[44px]"
         >
           Add Event
         </FormButton>
       </FormCard>
 
       {/* Timeline */}
-      <div className="neu-form">
+      <div className="neu-form !px-[10px]">
         <h2 className="neu-title">Timeline</h2>
         <Timeline
           items={convertToTimelineItems(events)}
@@ -613,7 +620,7 @@ export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: Bat
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField label="🐔 Hens">
               <input
                 type="number"

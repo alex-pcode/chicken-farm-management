@@ -190,6 +190,8 @@ export const Expenses = () => {
       <FormCard
         title="Add New Expense"
         description="Track your farm expenses to maintain accurate financial records"
+        icon="💰"
+        asFormWrapper={false}
       >
         {/* Success/Error Messages */}
         {successState.value && (

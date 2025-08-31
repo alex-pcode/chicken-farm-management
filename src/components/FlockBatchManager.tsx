@@ -10,7 +10,6 @@ import { FormField } from './ui/forms/FormField';
 import { FormButton } from './ui/forms/FormButton';
 import { FormModal } from './ui/modals/FormModal';
 import { MetricDisplay } from './ui/cards/MetricDisplay';
-import { StatCard } from './ui/cards/StatCard';
 import { DataTable, TableColumn } from './ui/tables/DataTable';
 import { EmptyState } from './ui/tables/EmptyState';
 import { PageContainer } from './ui/layout/PageContainer';
@@ -129,7 +128,6 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
         throw new Error('Failed to add batch');
       }
 
-      const responseData = response.data as { batch: FlockBatch };
       
       // Reset form
       setNewBatch({
@@ -236,7 +234,6 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
         throw new Error('Failed to log death');
       }
 
-      const responseData = response.data as { record: DeathRecord };
       
       // Reset form
       setNewDeath({
@@ -293,16 +290,16 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
       render: (_, batch) => (
         <button
           onClick={() => setSelectedBatch(batch)}
-          className="flex items-center gap-3 text-left hover:bg-gray-50 p-2 rounded-lg transition-colors w-full"
+          className="flex items-center gap-3 text-left hover:bg-gray-50 p-3 rounded-lg transition-colors w-full min-h-[44px]"
         >
-          <span className="text-xl">
+          <span className="text-xl flex-shrink-0">
             {batch.type === 'hens' ? '🐔' : 
              batch.type === 'roosters' ? '🐓' : 
              batch.type === 'chicks' ? '🐥' : '🐔'}
           </span>
-          <div>
-            <div className="font-semibold text-gray-900 hover:text-indigo-600">{batch.batchName}</div>
-            <div className="text-sm text-gray-600">{batch.breed}</div>
+          <div className="min-w-0 flex-1">
+            <div className="font-semibold text-gray-900 hover:text-indigo-600 break-words">{batch.batchName}</div>
+            <div className="text-sm text-gray-600 break-words">{batch.breed}</div>
           </div>
         </button>
       )
@@ -614,7 +611,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
             id="batches-panel"
             aria-labelledby="batches-tab"
           >
-            <div className="neu-form">
+            <div className="neu-form !px-[10px]">
               <h2 className="neu-title">Manage Batches</h2>
               {!selectedBatch && batches.length > 0 && (
                 <p className="text-sm text-gray-600 mb-4">
@@ -637,20 +634,21 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
                   onBack={() => setSelectedBatch(null)}
                   onBatchUpdate={handleBatchUpdate}
                 />
-              ) : (
-                <DataTable<FlockBatch>
-                  data={batches}
-                  columns={batchColumns}
-                  loading={isLoading}
-                  sortable={true}
-                  onSort={(column, direction) => {
-                    // Sorting will be handled by the table component itself
-                    // since we're not managing local state anymore
-                  }}
-                  responsive={true}
-                />
-              )}
+              ) : null}
             </div>
+            {batches.length > 0 && !selectedBatch && (
+              <DataTable<FlockBatch>
+                data={batches}
+                columns={batchColumns}
+                loading={isLoading}
+                sortable={true}
+                onSort={() => {
+                  // Sorting will be handled by the table component itself
+                  // since we're not managing local state anymore
+                }}
+                responsive={true}
+              />
+            )}
           </motion.div>
         )}
 
@@ -771,7 +769,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
                   columns={deathRecordsColumns}
                   loading={isLoading}
                   sortable={true}
-                  onSort={(column, direction) => {
+                  onSort={() => {
                     // Sorting will be handled by the table component itself
                     // since we're not managing local state anymore
                   }}
