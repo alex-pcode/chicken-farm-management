@@ -39,7 +39,27 @@ if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
 // Initialize Web Vitals monitoring
 initializeWebVitalsMonitoring()
 
-// No PWA service worker registration
+// PWA Service Worker Registration
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  // Use dynamic import to avoid loading workbox in development
+  import('workbox-window').then(({ Workbox }) => {
+    const wb = new Workbox('/sw.js')
+    
+    wb.addEventListener('controlling', () => {
+      window.location.reload()
+    })
+    
+    wb.addEventListener('waiting', () => {
+      if (confirm('New app version available. Refresh now?')) {
+        wb.messageSkipWaiting()
+      }
+    })
+    
+    wb.register()
+  }).catch(err => {
+    console.warn('PWA service worker registration failed:', err)
+  })
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
