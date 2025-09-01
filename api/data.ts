@@ -1,6 +1,46 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import type { FlockEvent } from '../src/types/index';
+import type { FlockEvent, FlockBatch, FeedEntry, Expense, Customer, Sale, DeathRecord } from '../src/types/index';
+
+// Database record types (snake_case as they come from Supabase)
+interface DBFeedInventory {
+  id: string;
+  user_id: string;
+  name: string;
+  type?: string;
+  quantity: number;
+  unit: string;
+  total_cost: number;
+  purchase_date: string;
+  expiry_date?: string;
+  batch_number?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface DBFlockBatch {
+  id: string;
+  user_id: string;
+  batch_name: string;
+  breed: string;
+  acquisition_date: string;
+  initial_count: number;
+  current_count: number;
+  type: string;
+  age_at_acquisition: string;
+  expected_laying_start_date?: string;
+  actual_laying_start_date?: string;
+  source: string;
+  cost?: number;
+  notes?: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  hens_count?: number;
+  roosters_count?: number;
+  chicks_count?: number;
+  brooding_count?: number;
+}
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -169,7 +209,7 @@ async function getAllData(user: AuthUser, res: VercelResponse) {
   }
 
   // Fetch user's feed inventory (premium only)
-  let feedInventory = [];
+  let feedInventory: DBFeedInventory[] = [];
   if (!isFreeTier) {
     const { data: feedInventoryData, error: feedError } = await supabase
       .from('feed_inventory')
@@ -181,9 +221,9 @@ async function getAllData(user: AuthUser, res: VercelResponse) {
   }
 
   // Fetch premium features only for premium users
-  let expenses = [];
-  let customers = [];
-  let sales = [];
+  let expenses: Expense[] = [];
+  let customers: Customer[] = [];
+  let sales: Sale[] = [];
   
   if (!isFreeTier) {
     // Fetch user's expenses (premium only)
@@ -208,16 +248,24 @@ async function getAllData(user: AuthUser, res: VercelResponse) {
     // Fetch sales (premium only)
     const { data: salesData, error: salesError } = await supabase
       .from('sales')
-      .select('*')
+      .select(`
+        *,
+        customers!inner(name)
+      `)
       .eq('user_id', user.id)
       .order('sale_date', { ascending: false })
       .limit(200);
     if (salesError) throw salesError;
-    sales = salesData || [];
+    
+    // Transform the data to include customer_name
+    sales = (salesData || []).map(sale => ({
+      ...sale,
+      customer_name: sale.customers?.name || 'Unknown Customer'
+    }));
   }
 
   // Fetch flock batches (premium only)
-  let flockBatches = [];
+  let flockBatches: DBFlockBatch[] = [];
   if (!isFreeTier) {
     const { data: flockBatchesData, error: batchesError } = await supabase
       .from('flock_batches')
@@ -230,7 +278,7 @@ async function getAllData(user: AuthUser, res: VercelResponse) {
   }
 
   // Fetch full user profile for response (we already fetched subscription_status earlier)
-  const { data: fullUserProfile, error: userProfileError } = await supabase
+  const { data: fullUserProfile } = await supabase
     .from('user_profiles')
     .select('*')
     .eq('user_id', user.id)
@@ -238,7 +286,7 @@ async function getAllData(user: AuthUser, res: VercelResponse) {
   // Don't throw error if profile doesn't exist - new users won't have one
 
   // Fetch death records (premium only)
-  let deathRecords = [];
+  let deathRecords: any[] = [];
   if (!isFreeTier) {
     const { data: deathRecordsData, error: deathsError } = await supabase
       .from('death_records')

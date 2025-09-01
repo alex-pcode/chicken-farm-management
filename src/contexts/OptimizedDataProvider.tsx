@@ -156,7 +156,7 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
   // Auto-refresh data on mount - always fetch fresh data
   useEffect(() => {
     refreshData();
-  }, []); // Empty dependency array - only run once on mount
+  }, [refreshData]); // Add refreshData to dependency array
 
   // Background refresh when cache becomes stale
   useEffect(() => {

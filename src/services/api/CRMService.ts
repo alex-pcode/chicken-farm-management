@@ -75,6 +75,13 @@ export class CRMService extends BaseApiService implements ICrmService {
   }
 
   /**
+   * Delete a sale record
+   */
+  public async deleteSale(saleId: string): Promise<ApiResponse<{ success: boolean }>> {
+    return this.delete<{ success: boolean }>('/sales', { id: saleId });
+  }
+
+  /**
    * Get CRM-specific data (customers, recent sales, sales summary)
    */
   public async getCRMData(): Promise<ApiResponse<{

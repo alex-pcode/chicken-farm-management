@@ -208,6 +208,7 @@ export interface FeedEntry {
   depletedDate?: string;
   batchNumber?: string;
   total_cost: number;
+  pricePerUnit?: number;
   description?: string;
   created_at?: string;
   updated_at?: string;

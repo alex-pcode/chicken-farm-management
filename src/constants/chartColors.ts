@@ -3,7 +3,7 @@
 
 export const CHART_COLORS = {
   // Primary palette
-  primary: '#544CE6',
+  primary: '#4F39F6',
   secondary: '#2A2580', 
   tertiary: '#191656',
   accent: '#6B5CE6',

@@ -19,7 +19,7 @@ export interface UseDataFetchReturn<T> {
 }
 
 // Simple in-memory cache with typed data
-const cache = new Map<string, { data: any; timestamp: number; staleTime: number }>();
+const cache = new Map<string, { data: unknown; timestamp: number; staleTime: number }>();
 
 export const useDataFetch = <T>(options: UseDataFetchOptions<T>): UseDataFetchReturn<T> => {
   const {
@@ -101,7 +101,7 @@ export const useDataFetch = <T>(options: UseDataFetchOptions<T>): UseDataFetchRe
     // Check cache first
     const cached = cache.get(key);
     if (cached && Date.now() - cached.timestamp < cacheTime) {
-      setData(cached.data);
+      setData(cached.data as T);
       setIsLoading(false);
       
       // If data is stale, refetch in background

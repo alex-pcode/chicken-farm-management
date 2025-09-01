@@ -7,16 +7,6 @@ import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { OnboardingFormData } from '../../types';
 
-// Import shared form components
-import { FormCard } from '../ui/forms/FormCard';
-import { FormField } from '../ui/forms/FormField';
-import { FormButton } from '../ui/forms/FormButton';
-import { TextInput } from '../forms/TextInput';
-import { NumberInput } from '../forms/NumberInput';
-import { DateInput } from '../forms/DateInput';
-import { NeumorphicSelect } from '../forms/NeumorphicSelect';
-import { TextareaInput } from '../forms/TextareaInput';
-
 interface OnboardingWizardProps {
   onComplete: (formData: OnboardingFormData) => void;
   onBack: () => void;

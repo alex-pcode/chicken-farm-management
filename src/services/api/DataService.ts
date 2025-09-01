@@ -30,7 +30,7 @@ export class DataService extends BaseApiService implements IDataService {
    * Type guard for application data structure
    */
    
-  // @ts-ignore - Type guard utility function for future use
+  // @ts-expect-error - Type guard utility function for future use
   private _isAppData(data: unknown): data is {
     feedInventory: FeedEntry[];
     eggEntries: EggEntry[];

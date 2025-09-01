@@ -6,6 +6,7 @@ import { useUserTier, useOptimizedAppData } from '../contexts/OptimizedDataProvi
 import { FormCard } from './ui/forms/FormCard';
 import { FormButton } from './ui/forms/FormButton';
 import { FormField } from './ui/forms/FormField';
+import { NumberInput, SelectInput } from './forms';
 import { StatCard } from './ui/cards/StatCard';
 import { PageContainer } from './ui/layout/PageContainer';
 import { TabNavigation, Tab } from './ui/TabNavigation';
@@ -19,6 +20,8 @@ interface ProfileFormData {
   email: string;
   displayName: string;
   yearlyEggGoal: number;
+  eggPrice: number;
+  chickenGoal: 'hobby' | 'business';
 }
 
 export const ProfilePage: React.FC = () => {
@@ -29,7 +32,9 @@ export const ProfilePage: React.FC = () => {
   const [formData, setFormData] = useState<ProfileFormData>({
     email: user?.email || '',
     displayName: user?.user_metadata?.display_name || user?.email?.split('@')[0] || '',
-    yearlyEggGoal: 0
+    yearlyEggGoal: 0,
+    eggPrice: 0.30,
+    chickenGoal: 'hobby'
   });
   const [, setUserProfile] = useState<UserProfileType | null>(null);
   const [errors, setErrors] = useState<ValidationError[]>([]);
@@ -69,11 +74,13 @@ export const ProfilePage: React.FC = () => {
         const response = await userService.getUserProfile();
         if (response.success && response.data) {
           setUserProfile(response.data);
-          // Update form with any existing goal data from user metadata
-          if (user?.user_metadata?.yearly_egg_goal) {
+          // Update form with any existing data from user metadata
+          if (user?.user_metadata) {
             setFormData(prev => ({
               ...prev,
-              yearlyEggGoal: user.user_metadata.yearly_egg_goal
+              yearlyEggGoal: user.user_metadata.yearly_egg_goal || 0,
+              eggPrice: user.user_metadata.egg_price || 0.30,
+              chickenGoal: user.user_metadata.chicken_goal || 'hobby'
             }));
           }
         }
@@ -119,6 +126,14 @@ export const ProfilePage: React.FC = () => {
       newErrors.push({
         field: 'yearlyEggGoal',
         message: 'Yearly goal cannot be negative',
+        type: 'range'
+      });
+    }
+
+    if (formData.eggPrice < 0) {
+      newErrors.push({
+        field: 'eggPrice',
+        message: 'Egg price cannot be negative',
         type: 'range'
       });
     }
@@ -177,7 +192,9 @@ export const ProfilePage: React.FC = () => {
       const { error: updateError } = await supabase.auth.updateUser({
         data: {
           display_name: formData.displayName,
-          yearly_egg_goal: formData.yearlyEggGoal
+          yearly_egg_goal: formData.yearlyEggGoal,
+          egg_price: formData.eggPrice,
+          chicken_goal: formData.chickenGoal
         }
       });
 
@@ -529,7 +546,108 @@ export const ProfilePage: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
+      className="space-y-8"
     >
+      {/* Chicken Goal Section */}
+      <FormCard 
+        title="Your Chicken Goals" 
+        subtitle="Help us customize your experience based on your primary goal"
+        icon="🐔"
+      >
+        <div className="space-y-4">
+          <SelectInput
+            label="What's your primary goal with raising chickens?"
+            value={formData.chickenGoal}
+            onChange={(value) => setFormData(prev => ({ ...prev, chickenGoal: value as 'hobby' | 'business' }))}
+            options={[
+              { 
+                value: 'hobby', 
+                label: 'Hobby/Family Use'
+              },
+              { 
+                value: 'business', 
+                label: 'Business/Profit'
+              }
+            ]}
+          />
+          
+          {/* Hobby/Family Context */}
+          {formData.chickenGoal === 'hobby' && (
+            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+              <div className="flex items-start gap-3">
+                <span className="text-green-600 text-lg">🏠</span>
+                <div>
+                  <h4 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>
+                    Hobby/Family Focus
+                  </h4>
+                  <p className="text-gray-600 text-sm mt-2 leading-relaxed">
+                    Perfect for backyard chicken enthusiasts! You're raising chickens primarily to:
+                  </p>
+                  <ul className="text-gray-600 text-sm mt-2 space-y-1 ml-4">
+                    <li>• Feed your family fresh, healthy eggs</li>
+                    <li>• Share extras with neighbors and friends</li>
+                    <li>• Sell some eggs here and there for pocket money</li>
+                    <li>• Enjoy the therapeutic hobby of chicken keeping</li>
+                    <li>• Save money compared to buying expensive organic eggs</li>
+                  </ul>
+                  <div className="mt-3 p-3 bg-white rounded-lg border border-green-100">
+                    <p className="text-sm font-medium text-gray-900">📊 Your Savings tab will show:</p>
+                    <p className="text-sm text-gray-600 mt-1">Money saved vs buying organic store eggs - perfect for tracking household cost benefits!</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Business/Profit Context */}
+          {formData.chickenGoal === 'business' && (
+            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="flex items-start gap-3">
+                <span className="text-purple-600 text-lg">💼</span>
+                <div>
+                  <h4 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>
+                    Business/Profit Focus
+                  </h4>
+                  <p className="text-gray-600 text-sm mt-2 leading-relaxed">
+                    Great for aspiring egg entrepreneurs! You're raising chickens primarily to:
+                  </p>
+                  <ul className="text-gray-600 text-sm mt-2 space-y-1 ml-4">
+                    <li>• Generate consistent income from egg sales</li>
+                    <li>• Build customer relationships and a local brand</li>
+                    <li>• Scale your operation for maximum profitability</li>
+                    <li>• Track real business metrics and cash flow</li>
+                  </ul>
+                  <div className="mt-3 p-3 bg-white rounded-lg border border-purple-100">
+                    <p className="text-sm font-medium text-gray-900">📈 Your Savings tab will show:</p>
+                    <p className="text-sm text-gray-600 mt-1">Actual revenue vs expenses - ideal for monitoring business profitability and growth!</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </FormCard>
+
+      {/* Pricing Configuration Section */}
+      <FormCard 
+        title="Pricing Configuration" 
+        subtitle="Set your egg pricing preferences"
+        icon="💰"
+      >
+        <NumberInput
+          label="Price per Egg ($)"
+          value={formData.eggPrice}
+          onChange={(value) => setFormData(prev => ({ ...prev, eggPrice: value }))}
+          step={0.01}
+          min={0}
+          placeholder="0.30"
+          showSpinner={false}
+          selectAllOnFocus={true}
+          errors={errors}
+        />
+      </FormCard>
+
+      {/* Production Goals Section */}
       <FormCard 
         title="Production Goals" 
         subtitle="Track your annual egg production target"
@@ -611,7 +729,7 @@ export const ProfilePage: React.FC = () => {
             fullWidth
             type="button"
           >
-            🎯 Save Goal
+            💾 Save Preferences
           </FormButton>
         </div>
       </FormCard>

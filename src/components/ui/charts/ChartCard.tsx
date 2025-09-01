@@ -21,7 +21,6 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   subtitle,
   height = 240,
   loading = false,
-  variant = 'default',
   showBorder = true,
   children,
   className = '',

@@ -90,9 +90,29 @@ async function handleSave(user: User, operation: string, _table: string, body: u
     case 'flockProfile':
       return await saveFlockProfile(user, body as FlockProfile, res);
     case 'userProfile':
-      return await saveUserProfile(user, body, res);
+      return await saveUserProfile(user, body as {
+        profile: {
+          onboarding_completed?: boolean;
+          onboarding_step?: string;
+          setup_progress?: Record<string, unknown>;
+          subscription_status?: string;
+        }
+      }, res);
     case 'completeOnboarding':
-      return await completeOnboarding(user, body, res);
+      return await completeOnboarding(user, body as {
+        formData: {
+          hasChickens?: boolean;
+          henCount?: number;
+          roosterCount?: number;
+          chickCount?: number;
+          broodingCount?: number;
+          breed?: string;
+          acquisitionDate?: string;
+          batchName?: string;
+          cost?: number;
+          [key: string]: unknown;
+        }
+      }, res);
     default:
       return res.status(400).json({ message: 'Invalid operation' });
   }
@@ -210,7 +230,16 @@ async function saveExpenses(user: User, expenseData: Expense | Expense[], res: V
 async function saveFeedInventory(user: User, feedData: FeedEntry | FeedEntry[], res: VercelResponse) {
   const feedWithUser = Array.isArray(feedData) 
     ? feedData.map(feed => {
-        const mapped: Record<string, any> = {
+        const mapped: {
+          user_id: string;
+          name: string;
+          quantity: number;
+          unit: string;
+          total_cost: number;
+          purchase_date: string;
+          expiry_date?: string;
+          id?: string;
+        } = {
           user_id: user.id,
           name: feed.brand,
           quantity: Number(feed.quantity), // Ensure numeric
@@ -410,7 +439,14 @@ async function deleteEggEntry(user: User, id: string, res: VercelResponse) {
 }
 
 // Save user profile (create or update)
-async function saveUserProfile(user: User, profileData: any, res: VercelResponse) {
+async function saveUserProfile(user: User, profileData: {
+  profile: {
+    onboarding_completed?: boolean;
+    onboarding_step?: string;
+    setup_progress?: Record<string, unknown>;
+    subscription_status?: string;
+  }
+}, res: VercelResponse) {
   const { profile } = profileData;
   
   if (!profile) {
@@ -425,7 +461,13 @@ async function saveUserProfile(user: User, profileData: any, res: VercelResponse
       .eq('user_id', user.id)
       .single();
 
-    const updateData: any = {
+    const updateData: {
+      updated_at: string;
+      onboarding_completed?: boolean;
+      onboarding_step?: string;
+      setup_progress?: Record<string, unknown>;
+      subscription_status?: string;
+    } = {
       updated_at: new Date().toISOString()
     };
 
@@ -503,7 +545,20 @@ async function saveUserProfile(user: User, profileData: any, res: VercelResponse
 }
 
 // Complete onboarding with flock creation
-async function completeOnboarding(user: User, requestData: any, res: VercelResponse) {
+async function completeOnboarding(user: User, requestData: {
+  formData: {
+    hasChickens?: boolean;
+    henCount?: number;
+    roosterCount?: number;
+    chickCount?: number;
+    broodingCount?: number;
+    breed?: string;
+    acquisitionDate?: string;
+    batchName?: string;
+    cost?: number;
+    [key: string]: unknown;
+  }
+}, res: VercelResponse) {
   const { formData } = requestData;
   
   if (!formData) {
@@ -517,7 +572,7 @@ async function completeOnboarding(user: User, requestData: any, res: VercelRespo
     // If user has chickens, use the existing flock batch API
     if (formData.hasChickens) {
       console.log('User has chickens, creating flock profile and batch via batch API');
-      const totalCount = formData.henCount + formData.roosterCount + formData.chickCount + (formData.broodingCount || 0);
+      const totalCount = (formData.henCount || 0) + (formData.roosterCount || 0) + (formData.chickCount || 0) + (formData.broodingCount || 0);
       
       if (totalCount > 0) {
         // Generate simple UUID alternative to avoid import issues

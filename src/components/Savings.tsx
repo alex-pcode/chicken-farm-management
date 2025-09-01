@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useOptimizedAppData, useSalesSummary } from '../contexts/OptimizedDataProvider';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   StatCard, 
   MetricDisplay, 
@@ -9,7 +10,7 @@ import {
 } from './ui';
 import { LoadingSpinner } from './LoadingSpinner';
 import AnimatedSavingsPNG from './AnimatedSavingsPNG';
-import { SelectInput, NumberInput, FormGroup } from './forms';
+import { SelectInput } from './forms';
 import { apiService } from '../services/api';
 import type { EggEntry, Expense, FlockSummary } from '../types';
 
@@ -18,10 +19,13 @@ type TimePeriod = 'all' | 'month' | 'year' | 'custom';
 export const Savings = () => {
   const { data, isLoading } = useOptimizedAppData();
   const salesSummary = useSalesSummary();
+  const { user } = useAuth();
   const [flockSummary, setFlockSummary] = useState<FlockSummary | null>(null);
   const [flockLoading, setFlockLoading] = useState(true);
-  const [eggPrice, setEggPrice] = useState('0.30'); // Default price per egg
-  const [startingCost, setStartingCost] = useState('0.00'); // Default starting cost
+  
+  // Get egg price from user metadata, fallback to default
+  const eggPrice = user?.user_metadata?.egg_price || 0.30;
+  const [startingCost] = useState('0.00'); // Default starting cost
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
@@ -79,15 +83,19 @@ export const Savings = () => {
     }
   }, [timePeriod, customStartDate, customEndDate]);
 
+  // Check if user is business-focused
+  const isBusinessGoal = user?.user_metadata?.chicken_goal === 'business';
+
   // Memoized savings calculations
   const savingsData = useMemo(() => {
     if (isLoading) {
       return {
-        eggPrice: parseFloat(eggPrice),
+        eggPrice: eggPrice,
         startingCost: parseFloat(startingCost),
         totalEggs: 0,
         totalExpenses: 0,
-        netSavings: 0
+        netSavings: 0,
+        actualRevenue: 0
       };
     }
 
@@ -102,26 +110,29 @@ export const Savings = () => {
 
     // Only include startup costs for "All Time" view, not for specific periods
     const totalStartupCosts = timePeriod === 'all' ? parseFloat(startingCost) : 0;
-    const totalEggValue = totalEggs * parseFloat(eggPrice);
-    const netSavings = totalEggValue - operatingExpenses - totalStartupCosts;
+    
+    // For hobby users: theoretical value based on store egg prices
+    const totalEggValue = totalEggs * eggPrice;
+    
+    // For business users: actual revenue from sales
+    const actualRevenue = salesSummary?.total_revenue || 0;
+    
+    // Calculate net result based on user goal
+    const netResult = isBusinessGoal 
+      ? actualRevenue - operatingExpenses - totalStartupCosts  // Profit for business users
+      : totalEggValue - operatingExpenses - totalStartupCosts; // Savings for hobby users
 
     return {
-      eggPrice: parseFloat(eggPrice),
+      eggPrice: eggPrice,
       startingCost: totalStartupCosts,
       totalEggs,
       totalExpenses: operatingExpenses + totalStartupCosts,
-      netSavings
+      netSavings: netResult,
+      actualRevenue
     };
-  }, [data, eggPrice, startingCost, getFilteredData, isLoading, timePeriod]);
+  }, [data, eggPrice, startingCost, getFilteredData, isLoading, timePeriod, isBusinessGoal, salesSummary]);
 
 
-  const handleEggPriceChange = (value: number) => {
-    setEggPrice(value.toString());
-  };
-
-  const handleStartingCostChange = (value: number) => {
-    setStartingCost(value.toString());
-  };
 
   // Format currency for display
   const formatCurrency = (amount: number) => {
@@ -149,54 +160,12 @@ export const Savings = () => {
         </div>
       ) : (
         <>
-          <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="neu-form mb-16"
-      >
-        <FormGroup 
-          title="Pricing Configuration"
-          description="Set your egg pricing and initial investment costs"
-          columns={2}
-          gap="lg"
-        >
-          <NumberInput
-            label="Price per Egg ($)"
-            value={parseFloat(eggPrice) || 0}
-            onChange={handleEggPriceChange}
-            step={0.01}
-            min={0}
-            placeholder="0.30"
-            showSpinner={false}
-            selectAllOnFocus={true}
-          />
-          
-          <NumberInput
-            label="Total Starting Cost ($)"
-            value={parseFloat(startingCost) || 0}
-            onChange={handleStartingCostChange}
-            step={0.01}
-            min={0}
-            placeholder="0.00"
-            showSpinner={false}
-            disabled={timePeriod !== 'all'}
-            className={timePeriod !== 'all' ? 'opacity-50' : ''}
-          />
-        </FormGroup>
-        
-        {timePeriod !== 'all' && (
-          <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-            <p className="text-sm" style={{ color: '#4F46E5' }}>
-              <strong>Note:</strong> Starting costs are only included when viewing "All Time" data.
-            </p>
-          </div>
-        )}
-      </motion.div>
 
       <div className="mb-8">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-semibold" style={{ color: '#111827' }}>Financial Summary</h2>
+          <h2 className="text-2xl font-semibold" style={{ color: '#111827', marginBottom: 0 }}>
+            {isBusinessGoal ? "Business Performance" : "Financial Summary"}
+          </h2>
           <div className="w-48">
             <SelectInput
               label=""
@@ -265,9 +234,9 @@ export const Savings = () => {
             />
             
             <StatCard
-              title="You Saved"
-              total={formatCurrency(savingsData.totalEggs * savingsData.eggPrice)}
-              label="vs buying organic eggs"
+              title={isBusinessGoal ? "You Earned" : "You Saved"}
+              total={formatCurrency(isBusinessGoal ? savingsData.actualRevenue : savingsData.totalEggs * savingsData.eggPrice)}
+              label={isBusinessGoal ? "from egg sales" : "vs buying organic eggs"}
               icon="💰"
               variant="dark"
             />
@@ -281,10 +250,13 @@ export const Savings = () => {
             />
 
             <StatCard
-              title={savingsData.netSavings >= 0 ? "Net Result" : "Net Result"}
+              title={isBusinessGoal ? "Net Profit" : "Net Savings"}
               total={formatCurrency(savingsData.netSavings)}
-              label={savingsData.netSavings >= 0 ? "of delicious egg value" : "egg value to cover costs"}
-              icon={savingsData.netSavings >= 0 ? '😋' : '🤝'}
+              label={isBusinessGoal 
+                ? (savingsData.netSavings >= 0 ? "business profit" : "to break even")
+                : (savingsData.netSavings >= 0 ? "of delicious egg value" : "egg value to cover costs")
+              }
+              icon={savingsData.netSavings >= 0 ? (isBusinessGoal ? '📈' : '😋') : '🤝'}
               variant="dark"
             />
           </GridContainer>
@@ -292,7 +264,7 @@ export const Savings = () => {
       </div>
 
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-3" style={{ color: '#111827' }}>Lifestyle Impact</h2>
+        <h2 className="text-2xl font-semibold mb-3" style={{ color: '#111827' }}>Lifetime Impact</h2>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -302,10 +274,11 @@ export const Savings = () => {
             <StatCard
               title="You've Gone"
               total={(() => {
-                const filteredEntries = data.eggEntries.filter((entry: EggEntry) => getFilteredData(entry.date));
-                if (filteredEntries.length === 0) return 0;
+                // Use all egg entries for lifetime calculation
+                const allEntries = data.eggEntries;
+                if (allEntries.length === 0) return 0;
                 
-                const dates = filteredEntries.map((entry: EggEntry) => new Date(entry.date));
+                const dates = allEntries.map((entry: EggEntry) => new Date(entry.date));
                 const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
                 const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
                 return Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
@@ -318,7 +291,7 @@ export const Savings = () => {
             <StatCard
               title="You've Given"
               total={salesSummary?.free_eggs_given || 0}
-              label="eggs for free (all time)"
+              label="eggs for free (lifetime)"
               icon="🎁"
               variant="corner-gradient"
             />
@@ -326,10 +299,11 @@ export const Savings = () => {
             <StatCard
               title="You've Eaten"
               total={(() => {
-                const totalEggs = savingsData.totalEggs;
+                // Use all eggs for lifetime calculation
+                const totalLifetimeEggs = data.eggEntries.reduce((sum: number, entry: { count: number }) => sum + entry.count, 0);
                 const eggsSold = salesSummary?.total_eggs_sold || 0;
                 const eggsGiven = salesSummary?.free_eggs_given || 0;
-                const eggsConsumed = totalEggs - eggsSold - eggsGiven;
+                const eggsConsumed = totalLifetimeEggs - eggsSold - eggsGiven;
                 return Math.floor(eggsConsumed / 5);
               })()}
               label="omelettes (5 eggs each)"
@@ -340,10 +314,11 @@ export const Savings = () => {
             <StatCard
               title="You Saw"
               total={(() => {
-                const filteredEntries = data.eggEntries.filter((entry: EggEntry) => getFilteredData(entry.date));
-                if (filteredEntries.length === 0) return 0;
+                // Use all egg entries for lifetime calculation
+                const allEntries = data.eggEntries;
+                if (allEntries.length === 0) return 0;
                 
-                const dates = filteredEntries.map((entry: EggEntry) => new Date(entry.date));
+                const dates = allEntries.map((entry: EggEntry) => new Date(entry.date));
                 const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
                 const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
                 const totalDays = Math.ceil((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
@@ -382,7 +357,9 @@ export const Savings = () => {
       </div>
 
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-3" style={{ color: '#111827' }}>Profitability Analysis</h2>
+        <h2 className="text-2xl font-semibold mb-3" style={{ color: '#111827' }}>
+          {isBusinessGoal ? "Profitability Analysis" : "Cost Analysis"}
+        </h2>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

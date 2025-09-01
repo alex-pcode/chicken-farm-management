@@ -32,6 +32,7 @@ interface OnboardingContextValue {
 
 const OnboardingContext = createContext<OnboardingContextValue | undefined>(undefined);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useOnboarding = () => {
   const context = useContext(OnboardingContext);
   if (context === undefined) {
@@ -212,7 +213,9 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
         setOnboardingState({
           hasCompletedOnboarding: false,
           currentStep: 'welcome',
-          setupProgress: response.data.setup_progress
+          setupProgress: response.data.setup_progress,
+          lastActiveDate: new Date().toISOString(),
+          showGuidance: true
         });
       }
     } catch (error) {

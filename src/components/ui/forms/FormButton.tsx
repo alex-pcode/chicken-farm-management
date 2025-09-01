@@ -15,6 +15,7 @@ interface FormButtonProps extends BaseUIComponentProps {
   disabled?: boolean;
   fullWidth?: boolean;
   onClick?: () => void;
+  style?: React.CSSProperties;
 }
 
 const variantClasses = {
@@ -40,6 +41,7 @@ export const FormButton: React.FC<FormButtonProps> = ({
   children,
   className = '',
   testId,
+  style,
 }) => {
   const baseClasses = 'neu-button transition-all duration-200 font-medium rounded-lg';
   const variantClass = variantClasses[variant];
@@ -54,6 +56,7 @@ export const FormButton: React.FC<FormButtonProps> = ({
       onClick={onClick}
       disabled={disabled || loading}
       className={combinedClassName}
+      style={style}
       whileHover={{ scale: disabled || loading ? 1 : 1.02 }}
       whileTap={{ scale: disabled || loading ? 1 : 0.98 }}
       data-testid={testId}

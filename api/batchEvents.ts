@@ -7,7 +7,7 @@ const supabase = createClient(
 );
 
 // Function to delete corresponding flock event when batch event is deleted
-async function deleteCorrespondingFlockEvent(batchEvent: any, userId: string) {
+async function deleteCorrespondingFlockEvent(batchEvent: { description: string; date: string }, userId: string) {
   try {
     // Find and delete the corresponding flock event
     // We'll match by date, description pattern, and user
@@ -31,7 +31,13 @@ async function deleteCorrespondingFlockEvent(batchEvent: any, userId: string) {
 }
 
 // Function to create flock-level event when batch event is created
-async function createFlockEventFromBatchEvent(batchEvent: any, batchName: string, userId: string) {
+async function createFlockEventFromBatchEvent(batchEvent: { 
+  type: string; 
+  description: string; 
+  date: string; 
+  affected_count?: number; 
+  notes?: string 
+}, batchName: string, userId: string) {
   try {
     // Map batch event types to flock event types and descriptions
     const eventMapping = {

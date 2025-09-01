@@ -7,7 +7,7 @@
 ## 🎨 Core Brand Identity
 
 ### Primary Color Palette
-- **Primary Purple**: `#4F46E5` (rgb(79, 70, 229))
+- **Primary Purple**: `#4F39F6` (rgb(79, 57, 246))
 - **Secondary Purple**: `#2A2580` (rgb(42, 37, 128)) 
 - **Dark Purple**: `#191656` (rgb(25, 22, 86))
 - **Light Purple**: `#6B5CE6` (rgb(107, 92, 230))
@@ -76,10 +76,10 @@ Primary design pattern featuring:
   - Filter: `blur(60px)`
 
 ### Dark Theme Cards
-- **Background**: Linear gradient `135deg, #4F46E5, #7C3AED`
+- **Background**: Linear gradient `135deg, #4F39F6, #7C3AED`
 - **Text**: White with high contrast
 - **Border**: `1px solid rgba(255, 255, 255, 0.1)`
-- **Shadow**: `0 4px 20px rgba(79, 70, 229, 0.2)`
+- **Shadow**: `0 4px 20px rgba(79, 57, 246, 0.2)`
 
 ---
 
@@ -418,18 +418,81 @@ import { StatCard, FormButton, Modal } from '../ui';
 - **Typography**: Fraunces for headlines, clean sans-serif for body
 - **Layout**: Card-based design with generous white space
 - **Data Viz**: Purple color scheme for charts and infographics
+  - Use CHART_COLORS palette for consistency with application
+  - Category-specific colors for expense breakdowns
+  - Extended 8-color series for complex multi-data visualizations
 
 ---
 
 ## 📊 Data Visualization Style
 
-### Chart Styling
-- **Primary Data**: `#544CE6`
-- **Secondary Data**: `#2A2580`  
-- **Tertiary Data**: `#191656`
+### Chart Color Palette
+Based on our purple-first brand identity, all charts use a cohesive color scheme:
+
+#### Primary Chart Colors
+- **Primary**: `#4F39F6` (rgb(79, 57, 246)) - Main data series
+- **Secondary**: `#2A2580` (rgb(42, 37, 128)) - Secondary data series
+- **Tertiary**: `#191656` (rgb(25, 22, 86)) - Third data series
+- **Accent**: `#6B5CE6` (rgb(107, 92, 230)) - Highlighted values
+- **Highlight**: `#8833D7` (rgb(136, 51, 215)) - Special emphasis
+
+#### Extended Color Series
+For multi-series charts and complex visualizations:
+1. `#544CE6` - Primary variant
+2. `#2A2580` - Secondary
+3. `#191656` - Tertiary
+4. `#6B5CE6` - Accent
+5. `#4A3DC7` - Medium purple
+6. `#8833D7` - Highlight
+7. `#66319E` - Alternative purple
+8. `#7C4CE6` - Light variant
+
+#### Category-Specific Colors
+Consistent colors for expense categories and data types:
+- **Birds**: `#544CE6` - Primary operations
+- **Feed**: `#2A2580` - Feeding operations  
+- **Equipment**: `#191656` - Infrastructure costs
+- **Veterinary**: `#6B5CE6` - Health management
+- **Maintenance**: `#4A3DC7` - Upkeep activities
+- **Supplies**: `#8833D7` - General supplies
+- **Start-up**: `#66319E` - Initial investments
+- **Other**: `#544CE6` - Miscellaneous expenses
+
+#### Chart Type Defaults
+- **Bar Charts**: `#544CE6` (Primary variant)
+- **Line Charts**: `#2A2580` (Secondary)
+- **Area Charts**: `#544CE6` (Primary variant)
+- **Pie Charts**: `#544CE6` (Primary variant)
+
+### Chart Layout Standards
+- **Margins**: 
+  - Default: `{ top: 5, right: 5, left: 0, bottom: 5 }`
+  - Compact: `{ top: 5, right: 15, left: 10, bottom: 5 }`
+  - Detailed: `{ top: 10, right: 10, left: 0, bottom: 10 }`
+- **Y-Axis Width**: 25px for consistent spacing
 - **Background**: White/light gray
 - **Grid Lines**: Light gray with low opacity
 - **Text**: Dark gray for readability
+
+### Implementation Reference
+All chart colors are defined in `src/constants/chartColors.ts`:
+
+```typescript
+import { CHART_COLORS } from '../constants/chartColors';
+
+// Use predefined chart colors
+const chartConfig = {
+  data: CHART_COLORS.primary,
+  secondary: CHART_COLORS.secondary,
+  categories: CHART_COLORS.categories
+};
+
+// For specific expense categories
+<BarChart fill={CHART_COLORS.categories.Feed} />
+
+// For chart type defaults
+<LineChart stroke={CHART_COLORS.line} />
+```
 
 ### Status/Progress Colors
 - **Positive/Success**: Green `#10B981`

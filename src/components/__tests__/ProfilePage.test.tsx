@@ -1,9 +1,8 @@
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import { ProfilePage } from '../ProfilePage';
 import { AuthContext } from '../../contexts/AuthContext';
-import { UserService } from '../../services/api/UserService';
 import { supabase } from '../../contexts/AuthContext';
 import type { User } from '@supabase/supabase-js';
 import type { UserProfile } from '../../types';
@@ -131,7 +130,11 @@ describe('ProfilePage', () => {
           hasRecordedProduction: true,
           hasRecordedExpense: false,
           hasFeedTracking: false,
+          hasCustomer: false,
+          hasSale: false,
+          hasMultipleBatches: false,
         },
+        subscription_status: 'free',
         created_at: '2024-01-01T00:00:00.000Z',
         updated_at: '2024-01-01T00:00:00.000Z',
       };

@@ -37,3 +37,6 @@ dist-ssr
 .bmad-core
 .claude
 .docs
+
+# WordPress theme files
+.WordPress

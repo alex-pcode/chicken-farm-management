@@ -125,7 +125,8 @@ describe('Auth API Utils - Type Safety', () => {
         quantity: 50,
         unit: 'kg',
         openedDate: '2025-08-09',
-        pricePerUnit: 1.20
+        pricePerUnit: 1.20,
+        total_cost: 60.00
       }]
 
       const result = await saveFeedInventory(inventory)
@@ -405,7 +406,8 @@ describe('Auth API Utils - Type Safety', () => {
         quantity: 10,
         unit: 'kg',
         openedDate: '2025-08-09',
-        pricePerUnit: 1.0
+        pricePerUnit: 1.0,
+        total_cost: 10.0
       }
 
       // If these compile without error, type checking is working

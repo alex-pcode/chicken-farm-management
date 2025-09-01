@@ -167,6 +167,7 @@ describe('ProductionService', () => {
           quantity: 50,
           unit: 'kg',
           pricePerUnit: 25.00,
+          total_cost: 1250.00,
           openedDate: '2025-01-01',
           created_at: '2025-01-01T10:00:00Z'
         }

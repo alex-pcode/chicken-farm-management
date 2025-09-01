@@ -17,6 +17,7 @@ interface HistoricalFormData {
   endDate: string;
   averageDaily: string;
   notes: string;
+  [key: string]: unknown;
 }
 
 export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProps> = ({

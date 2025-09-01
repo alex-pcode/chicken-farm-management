@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useOnboarding } from '../contexts/OnboardingProvider';
 import { AuthComponent } from './Auth';
 import { LoadingSpinner } from './LoadingSpinner';
-import { WelcomeScreen, OnboardingWizard } from './onboarding';
+import { WelcomeScreen } from './onboarding';
 import { OnboardingWizardUpdated } from './onboarding/OnboardingWizardUpdated';
 import type { OnboardingFormData } from '../types';
 

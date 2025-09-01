@@ -39,6 +39,8 @@ if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
 // Initialize Web Vitals monitoring
 initializeWebVitalsMonitoring()
 
+// No PWA service worker registration
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Router>

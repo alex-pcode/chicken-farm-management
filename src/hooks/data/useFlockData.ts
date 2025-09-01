@@ -119,7 +119,7 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
       await refreshData();
       throw err;
     }
-  }, [refreshData]);
+  }, [profile, refreshData]);
 
   // Update existing flock event
   const updateEvent = useCallback(async (id: string, eventData: Partial<FlockEvent>) => {
@@ -157,7 +157,7 @@ export const useFlockData = (options: UseFlockDataOptions = {}): UseFlockDataRet
       await refreshData();
       throw err;
     }
-  }, [refreshData]);
+  }, [profile, refreshData]);
 
   // Flock statistics and calculations
   const statistics = useMemo(() => {

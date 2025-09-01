@@ -103,7 +103,7 @@ class BrowserCache {
         totalEntries: keys.length,
         totalSize
       };
-    } catch (error) {
+    } catch {
       return { totalEntries: 0, totalSize: 0 };
     }
   }

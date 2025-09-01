@@ -13,6 +13,7 @@ const CRM = lazy(() => import('./components/CRM').then(module => ({ default: mod
 const ChickenViability = lazy(() => import('./components/ChickenViability').then(module => ({ default: module.ChickenViability })));
 const FlockBatchManager = lazy(() => import('./components/FlockBatchManager').then(module => ({ default: module.FlockBatchManager })));
 const CardShowcase = lazy(() => import('./components/examples/CardShowcase').then(module => ({ default: module.default })));
+const LandingPage = lazy(() => import('./components/LandingPage').then(module => ({ default: module.LandingPage })));
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { OptimizedDataProvider, useUserTier } from './contexts/OptimizedDataProvider'
 import { OnboardingProvider } from './contexts/OnboardingProvider'
@@ -38,6 +39,7 @@ const premiumNavigation = [
   { name: 'Savings', emoji: '📈', href: '/savings' },
   { name: 'Viability', emoji: '🧮', href: '/viability' },
   { name: 'Cards', emoji: '🎨', href: '/cards' },
+  { name: 'Landing', emoji: '🎨', href: '/landing' },
 ];
 
 // Function to get navigation items based on user tier
@@ -359,6 +361,7 @@ const MainApp = () => {
             {/* Free Features - Available to all users */}
             <Route path="/egg-counter" element={<EggCounter />} />
             <Route path="/account" element={<ProfilePage />} />
+            <Route path="/landing" element={<LandingPage />} />
           </Routes>
         </Suspense>
       </main>

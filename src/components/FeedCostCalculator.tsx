@@ -350,6 +350,7 @@ export const FeedCostCalculator = () => {
     // Sort by start date
     periods.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
     setFeedPeriods(periods);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feedInventory, flockHistory]);
 
   const getFlockSizeAtDate = useCallback((date: string): FlockSizeAtDate => {
@@ -375,7 +376,8 @@ export const FeedCostCalculator = () => {
   }, [flockHistory]);
 
    
-  // @ts-ignore - Utility function for future use
+  // @ts-expect-error - Utility function for future use
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _getFlockChangesDuringPeriod = useCallback((startDate: string, endDate: string): FlockSizeAtDate[] => {
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -398,7 +400,6 @@ export const FeedCostCalculator = () => {
     setSelectedPeriod: (period: FeedPeriod | null) => void; 
   }) => {
     const isSelected = selectedPeriod?.feedEntry.id === period.feedEntry.id;
-    const hasSubPeriods = period.subPeriods && period.subPeriods.length > 0;
     
     return (
       <div className="space-y-2">
@@ -539,7 +540,8 @@ export const FeedCostCalculator = () => {
   };
 
    
-  // @ts-ignore - Utility function for future use  
+  // @ts-expect-error - Utility function for future use  
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _calculateSubPeriods = useCallback((feed: FeedEntry, flockChanges: FlockSizeAtDate[], startDate: string, endDate: string): FeedPeriod[] => {
     const subPeriods: FeedPeriod[] = [];
     const totalCost = feed.total_cost;

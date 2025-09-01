@@ -67,7 +67,7 @@ export const useExpenseForm = (options: UseExpenseFormOptions = {}): UseExpenseF
     description: initialExpense?.description || '',
     amount: initialExpense?.amount?.toString() || '',
     date: initialExpense?.date || new Date().toISOString().split('T')[0],
-    notes: (initialExpense as any)?.notes || ''
+    notes: (initialExpense as Expense & { notes?: string })?.notes || ''
   }), [initialExpense, categories]);
 
   // Form submission handler
@@ -186,9 +186,10 @@ export const useExpenseForm = (options: UseExpenseFormOptions = {}): UseExpenseF
       case 'description':
         return String(value).trim().length > 0;
         
-      case 'category':
+      case 'category': {
         const categoryValue = String(value);
         return categoryValue.trim().length > 0 && categories.includes(categoryValue);
+      }
         
       case 'date':
         if (!value) {

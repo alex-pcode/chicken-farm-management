@@ -221,6 +221,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    if (req.method === 'DELETE') {
+      // Delete sale
+      const { id } = req.body;
+
+      if (!id) {
+        return res.status(400).json({ 
+          success: false,
+          error: { message: 'Sale ID is required' }
+        });
+      }
+
+      const { data, error } = await supabase
+        .from('sales')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', userId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (!data) {
+        return res.status(404).json({ 
+          success: false,
+          error: { message: 'Sale not found' }
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: { success: true }
+      });
+    }
+
     return res.status(405).json({ 
       success: false,
       error: { message: 'Method not allowed' }

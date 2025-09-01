@@ -40,7 +40,7 @@ describe('OptimizedDataProvider Tier Functionality', () => {
 
   describe('useUserTier hook', () => {
     it('should return "free" when user profile is null', async () => {
-      mockApiService.data.fetchAllData.mockResolvedValue({
+      (mockApiService.data.fetchAllData as any).mockResolvedValue({
         data: {
           eggEntries: [],
           expenses: [],
@@ -73,16 +73,20 @@ describe('OptimizedDataProvider Tier Functionality', () => {
         onboarding_completed: true,
         onboarding_step: 'complete',
         setup_progress: {
-          flockSetup: false,
-          initialInventory: false,
-          preferences: false
+          hasFlockProfile: false,
+          hasRecordedProduction: false,
+          hasRecordedExpense: false,
+          hasFeedTracking: false,
+          hasCustomer: false,
+          hasSale: false,
+          hasMultipleBatches: false,
         },
+        subscription_status: 'free',
         created_at: '2024-01-01T00:00:00Z',
         updated_at: '2024-01-01T00:00:00Z'
-        // subscription_status is undefined
       } as UserProfile;
 
-      mockApiService.data.fetchAllData.mockResolvedValue({
+      (mockApiService.data.fetchAllData as any).mockResolvedValue({
         data: {
           eggEntries: [],
           expenses: [],
@@ -114,16 +118,20 @@ describe('OptimizedDataProvider Tier Functionality', () => {
         onboarding_completed: true,
         onboarding_step: 'complete',
         setup_progress: {
-          flockSetup: false,
-          initialInventory: false,
-          preferences: false
+          hasFlockProfile: false,
+          hasRecordedProduction: false,
+          hasRecordedExpense: false,
+          hasFeedTracking: false,
+          hasCustomer: false,
+          hasSale: false,
+          hasMultipleBatches: false,
         },
         subscription_status: 'free',
         created_at: '2024-01-01T00:00:00Z',
         updated_at: '2024-01-01T00:00:00Z'
       };
 
-      mockApiService.data.fetchAllData.mockResolvedValue({
+      (mockApiService.data.fetchAllData as any).mockResolvedValue({
         data: {
           eggEntries: [],
           expenses: [],
@@ -155,16 +163,20 @@ describe('OptimizedDataProvider Tier Functionality', () => {
         onboarding_completed: true,
         onboarding_step: 'complete',
         setup_progress: {
-          flockSetup: false,
-          initialInventory: false,
-          preferences: false
+          hasFlockProfile: false,
+          hasRecordedProduction: false,
+          hasRecordedExpense: false,
+          hasFeedTracking: false,
+          hasCustomer: false,
+          hasSale: false,
+          hasMultipleBatches: false,
         },
         subscription_status: 'premium',
         created_at: '2024-01-01T00:00:00Z',
         updated_at: '2024-01-01T00:00:00Z'
       };
 
-      mockApiService.data.fetchAllData.mockResolvedValue({
+      (mockApiService.data.fetchAllData as any).mockResolvedValue({
         data: {
           eggEntries: [],
           expenses: [],
@@ -198,16 +210,20 @@ describe('OptimizedDataProvider Tier Functionality', () => {
         onboarding_completed: true,
         onboarding_step: 'complete',
         setup_progress: {
-          flockSetup: true,
-          initialInventory: true,
-          preferences: true
+          hasFlockProfile: true,
+          hasRecordedProduction: true,
+          hasRecordedExpense: true,
+          hasFeedTracking: true,
+          hasCustomer: true,
+          hasSale: true,
+          hasMultipleBatches: true,
         },
         subscription_status: 'premium',
         created_at: '2024-01-01T00:00:00Z',
         updated_at: '2024-01-01T00:00:00Z'
       };
 
-      mockApiService.data.fetchAllData.mockResolvedValue({
+      (mockApiService.data.fetchAllData as any).mockResolvedValue({
         data: {
           eggEntries: [],
           expenses: [],
@@ -233,7 +249,7 @@ describe('OptimizedDataProvider Tier Functionality', () => {
     });
 
     it('should return null when no user profile exists', async () => {
-      mockApiService.data.fetchAllData.mockResolvedValue({
+      (mockApiService.data.fetchAllData as any).mockResolvedValue({
         data: {
           eggEntries: [],
           expenses: [],

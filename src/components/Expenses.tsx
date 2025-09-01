@@ -16,14 +16,9 @@ import { NeumorphicSelect } from './forms/NeumorphicSelect';
 import { useExpenseData } from '../hooks/data/useExpenseData';
 import { useExpenseForm } from '../hooks/forms/useExpenseForm';
 import { useTimeoutToggle } from '../hooks/utils';
-import { 
-  GridContainer 
-} from './ui';
 import { PaginatedDataTable } from './ui/tables/PaginatedDataTable';
 import type { TableColumn } from './ui/tables/DataTable';
 // Import showcase components
-import { MetricDisplay } from './ui/cards/MetricDisplay';
-import { ComparisonCard } from './ui/cards/ComparisonCard';
 import { ChartCard } from './ui/charts/ChartCard';
 import { FormButton } from './ui/forms/FormButton';
 
@@ -45,7 +40,6 @@ export const Expenses = () => {
     expenses, 
     isLoading, 
     deleteExpense, 
-    thisMonthTotal, 
     expensesByCategory 
   } = useExpenseData();
 
@@ -130,28 +124,6 @@ export const Expenses = () => {
   const handleSubmit = expenseForm.handleSubmit;
   
   // Summary calculations are now provided by useExpenseData hook
-  const calculateYearlyTotal = () => {
-    const now = new Date();
-    const currentYear = now.getFullYear();
-    return expenses
-      .filter(expense => {
-        const expenseDate = new Date(expense.date);
-        return expenseDate.getFullYear() === currentYear;
-      })
-      .reduce((sum, expense) => sum + expense.amount, 0);
-  };
-  
-  const calculateLastMonthTotal = () => {
-    const now = new Date();
-    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1);
-    return expenses
-      .filter(expense => {
-        const expenseDate = new Date(expense.date);
-        return expenseDate.getFullYear() === lastMonth.getFullYear() && 
-               expenseDate.getMonth() === lastMonth.getMonth();
-      })
-      .reduce((sum, expense) => sum + expense.amount, 0);
-  };
   
   const categoryData = useMemo(() => {
     return CATEGORIES.map(category => ({
@@ -160,9 +132,6 @@ export const Expenses = () => {
       color: CHART_COLORS.categories[category as keyof typeof CHART_COLORS.categories] || CHART_COLORS.primary
     }));
   }, [expensesByCategory]);
-
-  const yearlyTotal = calculateYearlyTotal();
-  const lastMonthTotal = calculateLastMonthTotal();
 
   // Early return if form values are not initialized (after all hooks)
   if (!expenseForm.values) {
