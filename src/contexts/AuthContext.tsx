@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../utils/supabase';
+import { browserCache } from '../utils/browserCache';
 
 // Re-export supabase for backward compatibility
 // eslint-disable-next-line react-refresh/only-export-components
@@ -46,16 +47,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const previousUserId = user?.id;
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // Clear cache when user signs out or switches users
+      if (event === 'SIGNED_OUT' || (previousUserId && session?.user?.id !== previousUserId)) {
+        console.log('User signed out or changed, clearing cache for user:', previousUserId);
+        browserCache.clearAll(previousUserId);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   const signOut = async () => {
+    // Clear cache before signing out
+    if (user?.id) {
+      console.log('Clearing cache for user before sign out:', user.id);
+      browserCache.clearAll(user.id);
+    }
     await supabase.auth.signOut();
   };
 

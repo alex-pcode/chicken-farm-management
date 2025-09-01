@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { apiService } from '../services/api';
 import { browserCache, CACHE_KEYS } from '../utils/browserCache';
+import { useAuth } from './AuthContext';
 import type { EggEntry, Expense, FeedEntry, FlockProfile, FlockEvent, FlockBatch, DeathRecord, UserProfile } from '../types';
 import type { Customer, SaleWithCustomer, SalesSummary } from '../types/crm';
 
@@ -38,22 +39,21 @@ interface OptimizedDataProviderProps {
 const CACHE_DURATION = 10 * 60 * 1000;
 
 export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ children }) => {
-  // Initialize with cached data if available
-  const [data, setData] = useState<AppData>(() => {
-    const cachedData = browserCache.get<AppData>(CACHE_KEYS.APP_DATA);
-    return cachedData || {
-      eggEntries: [],
-      expenses: [],
-      feedInventory: [],
-      flockProfile: null,
-      flockEvents: [],
-      customers: [],
-      sales: [],
-      summary: undefined,
-      flockBatches: [],
-      deathRecords: [],
-      userProfile: null
-    };
+  const { user, loading: authLoading } = useAuth();
+  
+  // Initialize with empty data - we'll load cached data after auth is confirmed
+  const [data, setData] = useState<AppData>({
+    eggEntries: [],
+    expenses: [],
+    feedInventory: [],
+    flockProfile: null,
+    flockEvents: [],
+    customers: [],
+    sales: [],
+    summary: undefined,
+    flockBatches: [],
+    deathRecords: [],
+    userProfile: null
   });
   
   const [isLoading, setIsLoading] = useState(true);
@@ -61,6 +61,11 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
 
   const refreshData = useCallback(async () => {
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     
@@ -95,8 +100,8 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
       
       setData(newData);
       
-      // Cache the data in browser storage for faster subsequent loads
-      browserCache.set(CACHE_KEYS.APP_DATA, newData, 10); // 10 minutes cache
+      // Cache the data in browser storage with user-specific key
+      browserCache.set(CACHE_KEYS.APP_DATA, newData, 10, user.id);
       
       setLastFetched(new Date());
     } catch (err) {
@@ -106,10 +111,12 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user?.id]);
 
   // Silent refresh that doesn't show loading state - for after mutations
   const silentRefresh = useCallback(async () => {
+    if (!user?.id) return;
+
     try {
       const response = await apiService.data.fetchAllData();
       const dbData = response.data || {
@@ -139,13 +146,13 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
       };
       
       setData(newData);
-      browserCache.set(CACHE_KEYS.APP_DATA, newData, 10);
+      browserCache.set(CACHE_KEYS.APP_DATA, newData, 10, user.id);
       setLastFetched(new Date());
     } catch (err) {
       console.error('Silent refresh failed:', err);
       // Don't set error state for silent refresh failures
     }
-  }, []);
+  }, [user?.id]);
 
   // Check if cache is stale
   const isCacheStale = useCallback(() => {
@@ -153,10 +160,39 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
     return Date.now() - lastFetched.getTime() > CACHE_DURATION;
   }, [lastFetched]);
 
-  // Auto-refresh data on mount - always fetch fresh data
+  // Load cached data when user is authenticated, then refresh
   useEffect(() => {
-    refreshData();
-  }, [refreshData]); // Add refreshData to dependency array
+    if (authLoading) return; // Wait for auth to complete
+
+    if (user?.id) {
+      // Try to load cached data first for faster initial render
+      const cachedData = browserCache.get<AppData>(CACHE_KEYS.APP_DATA, user.id);
+      if (cachedData) {
+        console.log('Loading cached data for user:', user.id);
+        setData(cachedData);
+        setLastFetched(new Date()); // Set a recent timestamp to avoid immediate refresh
+      }
+      
+      // Always refresh to get latest data
+      refreshData();
+    } else {
+      // User not authenticated, clear data
+      setData({
+        eggEntries: [],
+        expenses: [],
+        feedInventory: [],
+        flockProfile: null,
+        flockEvents: [],
+        customers: [],
+        sales: [],
+        summary: undefined,
+        flockBatches: [],
+        deathRecords: [],
+        userProfile: null
+      });
+      setIsLoading(false);
+    }
+  }, [user?.id, authLoading, refreshData]);
 
   // Background refresh when cache becomes stale
   useEffect(() => {

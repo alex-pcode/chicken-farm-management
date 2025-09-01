@@ -22,27 +22,29 @@ class BrowserCache {
   }
 
   /**
-   * Store data in localStorage with TTL
+   * Store data in localStorage with TTL (user-specific)
    */
-  set<T>(key: string, data: T, ttlMinutes: number = 5): void {
+  set<T>(key: string, data: T, ttlMinutes: number = 5, userId?: string): void {
     try {
       const item: CacheItem<T> = {
         data,
         timestamp: Date.now(),
         ttl: ttlMinutes * 60 * 1000
       };
-      localStorage.setItem(`bmad_cache_${key}`, JSON.stringify(item));
+      const cacheKey = userId ? `bmad_cache_${userId}_${key}` : `bmad_cache_${key}`;
+      localStorage.setItem(cacheKey, JSON.stringify(item));
     } catch (error) {
       console.warn('Failed to cache data in localStorage:', error);
     }
   }
 
   /**
-   * Retrieve data from localStorage if not expired
+   * Retrieve data from localStorage if not expired (user-specific)
    */
-  get<T>(key: string): T | null {
+  get<T>(key: string, userId?: string): T | null {
     try {
-      const cached = localStorage.getItem(`bmad_cache_${key}`);
+      const cacheKey = userId ? `bmad_cache_${userId}_${key}` : `bmad_cache_${key}`;
+      const cached = localStorage.getItem(cacheKey);
       if (!cached) return null;
 
       const item: CacheItem<T> = JSON.parse(cached);
@@ -50,7 +52,7 @@ class BrowserCache {
       
       // Check if expired
       if (now - item.timestamp > item.ttl) {
-        this.remove(key);
+        this.remove(key, userId);
         return null;
       }
       
@@ -62,25 +64,39 @@ class BrowserCache {
   }
 
   /**
-   * Remove specific cache entry
+   * Remove specific cache entry (user-specific)
    */
-  remove(key: string): void {
+  remove(key: string, userId?: string): void {
     try {
-      localStorage.removeItem(`bmad_cache_${key}`);
+      const cacheKey = userId ? `bmad_cache_${userId}_${key}` : `bmad_cache_${key}`;
+      localStorage.removeItem(cacheKey);
     } catch (error) {
       console.warn('Failed to remove cache entry:', error);
     }
   }
 
   /**
-   * Clear all app cache entries
+   * Clear all app cache entries (optionally for specific user)
    */
-  clearAll(): void {
+  clearAll(userId?: string): void {
+    try {
+      const prefix = userId ? `bmad_cache_${userId}_` : 'bmad_cache_';
+      const keys = Object.keys(localStorage).filter(key => key.startsWith(prefix));
+      keys.forEach(key => localStorage.removeItem(key));
+    } catch (error) {
+      console.warn('Failed to clear cache:', error);
+    }
+  }
+
+  /**
+   * Clear cache for all users (admin function)
+   */
+  clearAllUsers(): void {
     try {
       const keys = Object.keys(localStorage).filter(key => key.startsWith('bmad_cache_'));
       keys.forEach(key => localStorage.removeItem(key));
     } catch (error) {
-      console.warn('Failed to clear cache:', error);
+      console.warn('Failed to clear all user cache:', error);
     }
   }
 
