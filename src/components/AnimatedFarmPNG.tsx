@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 const AnimatedFarmPNG: React.FC = () => {
   return (
-    <div className="w-full" style={{ marginBottom: 0 }}>
+    <div className="w-full">
       <motion.div 
         className="relative w-full h-64 flex justify-center items-center overflow-hidden mt-[60px] md:mt-0"
         initial={{ opacity: 0 }}

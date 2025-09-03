@@ -23,34 +23,41 @@ import { PremiumFeatureGate } from './components/PremiumFeatureGate'
 // Simple Modal Component
 // import { Login } from './components/Login' // Temporarily disabled
 
+// Navigation item type
+type NavigationItem = {
+  name: string;
+  emoji: string;
+  href: string;
+};
+
 // Free tier navigation items (available to all users)
-const freeNavigation = [
-  { name: 'Production', emoji: '🥚', href: '/egg-counter' },
-  { name: 'Account', emoji: '⚙️', href: '/account' },
+const freeNavigation: NavigationItem[] = [
 ];
 
 // Premium tier navigation items (premium subscription required)
-const premiumNavigation = [
+const premiumNavigation: NavigationItem[] = [
   { name: 'Dashboard', emoji: '🏠', href: '/' },
+  { name: 'Eggs', emoji: '🥚', href: '/egg-counter' },
   { name: 'My Flock', emoji: '🐔', href: '/profile' },
-  { name: 'CRM', emoji: '💼', href: '/crm' },
+  { name: 'Sales', emoji: '💼', href: '/crm' },
   { name: 'Expenses', emoji: '💰', href: '/expenses' },
-  { name: 'Feed Management', emoji: '🌾', href: '/feed-tracker' },
+  { name: 'Feed', emoji: '🌾', href: '/feed-tracker' },
   { name: 'Savings', emoji: '📈', href: '/savings' },
   { name: 'Viability', emoji: '🧮', href: '/viability' },
+  { name: 'Account', emoji: '⚙️', href: '/account' },
   { name: 'Cards', emoji: '🎨', href: '/cards' },
   { name: 'Landing', emoji: '🎨', href: '/landing' },
 ];
 
 // Function to get navigation items based on user tier
-const getNavigationItems = (userTier: 'free' | 'premium') => {
+const getNavigationItems = (userTier: 'free' | 'premium'): NavigationItem[] => {
   return userTier === 'premium' 
     ? [...premiumNavigation, ...freeNavigation]
     : freeNavigation;
 };
 
 // Function to get mobile navigation items based on user tier
-const getMobileNavigationItems = (userTier: 'free' | 'premium') => {
+const getMobileNavigationItems = (userTier: 'free' | 'premium'): { primary: NavigationItem[]; secondary: NavigationItem[] } => {
   if (userTier === 'free') {
     return {
       primary: freeNavigation,
@@ -61,13 +68,13 @@ const getMobileNavigationItems = (userTier: 'free' | 'premium') => {
   return {
     primary: [
       { name: 'Dashboard', emoji: '🏠', href: '/' },
-      { name: 'Production', emoji: '🥚', href: '/egg-counter' },
-      { name: 'CRM', emoji: '💼', href: '/crm' },
+      { name: 'Eggs', emoji: '🥚', href: '/egg-counter' },
+      { name: 'Sales', emoji: '💼', href: '/crm' },
       { name: 'Expenses', emoji: '💰', href: '/expenses' }
     ],
     secondary: [
       { name: 'My Flock', emoji: '🐔', href: '/profile' },
-      { name: 'Feed Management', emoji: '🌾', href: '/feed-tracker' },
+      { name: 'Feed', emoji: '🌾', href: '/feed-tracker' },
       { name: 'Savings', emoji: '📈', href: '/savings' },
       { name: 'Viability', emoji: '🧮', href: '/viability' },
       { name: 'Cards', emoji: '🎨', href: '/cards' },
@@ -76,7 +83,7 @@ const getMobileNavigationItems = (userTier: 'free' | 'premium') => {
   };
 };
 
-const NavLink = ({ item }: { item: { name: string; emoji: string; href: string } }) => {
+const NavLink = ({ item }: { item: NavigationItem }) => {
   const location = useLocation();
   const isActive = location.pathname === item.href;
 
@@ -132,13 +139,27 @@ const MainApp = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.pathname]);
 
+  // Special case: Landing page gets full viewport without app layout
+  if (location.pathname === '/landing') {
+    return (
+      <Suspense fallback={<ComponentLoader />}>
+        <LandingPage />
+      </Suspense>
+    );
+  }
+
   return (
     <div className="flex min-h-screen">
       {/* Desktop Sidebar */}
       <aside className="sidebar hidden lg:block">
         <div className="brand">
-          <span className="text-2xl" role="img" aria-label="brand">🐔</span>
-          <h1>Chicken Manager</h1>
+          <div className="flex items-center gap-3">
+            <span className="text-2xl" role="img" aria-label="brand">🐔</span>
+            <div>
+              <h1 style={{ marginBottom: '5px' }}>ChickenCare</h1>
+              <p className="text-xs text-gray-500 leading-tight">Egg-ceptional flock management</p>
+            </div>
+          </div>
         </div>
 
         <nav className="space-y-8">
@@ -165,7 +186,10 @@ const MainApp = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xl" role="img" aria-label="brand">🐔</span>
-            <h1 className="text-lg font-semibold">Chicken Manager</h1>
+            <div>
+              <h1 className="text-lg font-semibold" style={{ marginBottom: '2px' }}>ChickenCare</h1>
+              <p className="text-[10px] text-gray-500 leading-tight">Egg-ceptional flock management</p>
+            </div>
           </div>
           <div className="relative">
             <button
@@ -361,7 +385,6 @@ const MainApp = () => {
             {/* Free Features - Available to all users */}
             <Route path="/egg-counter" element={<EggCounter />} />
             <Route path="/account" element={<ProfilePage />} />
-            <Route path="/landing" element={<LandingPage />} />
           </Routes>
         </Suspense>
       </main>

@@ -18,7 +18,8 @@ export const CRM = () => {
   const tabs = [
     { id: 'customers' as CRMTab, label: 'Customers', emoji: '👥' },
     { id: 'sales' as CRMTab, label: 'Sales', emoji: '🧾' },
-    { id: 'quick-sale' as CRMTab, label: 'Quick Sale', emoji: '⚡' }
+    { id: 'quick-sale' as CRMTab, label: 'Quick Sale', emoji: '⚡' },
+    { id: 'reports' as CRMTab, label: 'Reports', emoji: '📊' }
   ];
 
   // Use silentRefresh from context for mutations to avoid showing loading state
@@ -164,6 +165,18 @@ export const CRM = () => {
               customers={data.customers || []} 
               onDataChange={handleDataChange}
             />
+          )}
+          
+          {activeTab === 'reports' && (
+            <div className="p-8 text-center">
+              <div className="flex flex-col items-center gap-4">
+                <span className="text-6xl">📊</span>
+                <h3 className="text-xl font-semibold text-gray-900">Reports Coming Soon</h3>
+                <p className="text-gray-600 max-w-md">
+                  Advanced sales analytics, customer insights, and performance reports will be available here.
+                </p>
+              </div>
+            </div>
           )}
         </motion.div>
       </div>

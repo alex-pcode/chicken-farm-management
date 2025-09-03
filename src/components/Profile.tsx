@@ -280,9 +280,10 @@ export const Profile = () => {
       // Update event in database using consolidated API service
       const result = await apiService.flock.saveFlockEvent(profile.id || '1', updatedEventData, editingEvent);
       
-      if (result && result.data && (result.data as { event?: FlockEvent }).event) {
-        // Use the database event data
-        const dbEvent = (result.data as { event: FlockEvent }).event;
+      if (result && result.data && (result.data as { flockEvents?: FlockEvent[] }).flockEvents) {
+        // Use the database event data - API returns array, take first item for single event update
+        const dbEvents = (result.data as { flockEvents: FlockEvent[] }).flockEvents;
+        const dbEvent = dbEvents[0]; // For single event updates, take the first/only event
         const eventForState: FlockEvent = {
           id: dbEvent.id.toString(),
           date: dbEvent.date,

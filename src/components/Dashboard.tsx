@@ -2,10 +2,13 @@ import { useMemo } from 'react'
 import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts'
 import { useOptimizedAppData } from '../contexts/OptimizedDataProvider'
 import { useOnboarding } from '../contexts/OnboardingProvider'
+import { useAuth } from '../contexts/AuthContext'
 import { SetupProgress } from './onboarding'
 import { StatCard, PageContainer, SectionContainer, GridContainer, ChartCard } from './ui'
+import { UpcomingEvents } from './UpcomingEvents'
 
 export const Dashboard = () => {
+  const { user } = useAuth();
   const { data, isLoading } = useOptimizedAppData();
   const { onboardingState, calculateProgress, restartOnboarding } = useOnboarding();
   
@@ -188,6 +191,10 @@ export const Dashboard = () => {
       };
   }, [data, isLoading]);
 
+  // Create mobile-friendly revenue data (last 6 weeks)
+  const mobileWeeklyRevenueData = stats.weeklyRevenueData.slice(-6);
+
+
   // Calculate setup progress for new users
   const progressInfo = useMemo(() => {
     if (!onboardingState.showGuidance) return null;
@@ -240,7 +247,7 @@ export const Dashboard = () => {
     >
       <div className="header mb-0 mt-4" style={{ marginBottom: 'unset' }}>
         <h1 className="text-2xl lg:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
-          Dashboard Overview
+          Welcome {user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'User'}
         </h1>
       </div>
 
@@ -347,10 +354,10 @@ export const Dashboard = () => {
         height={300}
         className="glass-card"
       >
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={285}>
           <BarChart
             data={stats.last30DaysData}
-            margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+            margin={{ top: 5, right: 5, left: 5, bottom: 0 }}
           >
             <Tooltip
               contentStyle={{
@@ -417,87 +424,83 @@ export const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Revenue Chart - 2 columns */}
           <div className="lg:col-span-2">
-            <ChartCard 
-              title="Revenue Trend"
-              subtitle="Weekly revenue over last 12 weeks"
-              height={320}
-            >
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart
-                  data={stats.weeklyRevenueData}
-                  margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="week" 
-                  />
-                  <YAxis width={35} />
-                  <Tooltip 
-                    formatter={(value) => [`$${value}`, 'Weekly Revenue']}
-                    labelFormatter={(label) => `Week of ${label}`}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    stroke="#544CE6" 
-                    fill="#544CE6"
-                    fillOpacity={0.3}
-                    strokeWidth={2}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </ChartCard>
+            {/* Mobile Chart - 6 weeks */}
+            <div className="lg:hidden">
+              <ChartCard 
+                title="Revenue Trend"
+                subtitle="Weekly revenue over last 6 weeks"
+                height={280}
+              >
+                <ResponsiveContainer width="100%" height={265}>
+                  <AreaChart
+                    data={mobileWeeklyRevenueData}
+                    margin={{ top: 5, right: 5, left: 0, bottom: -5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="week" 
+                    />
+                    <YAxis 
+                      width={35} 
+                      domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.2)]}
+                    />
+                    <Tooltip 
+                      formatter={(value) => [`$${value}`, 'Weekly Revenue']}
+                      labelFormatter={(label) => `Week of ${label}`}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="revenue" 
+                      stroke="#544CE6" 
+                      fill="#544CE6"
+                      fillOpacity={0.3}
+                      strokeWidth={2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            </div>
+
+            {/* Desktop Chart - 12 weeks */}
+            <div className="hidden lg:block">
+              <ChartCard 
+                title="Revenue Trend"
+                subtitle="Weekly revenue over last 12 weeks"
+                height={400}
+              >
+                <ResponsiveContainer width="100%" height={385}>
+                  <AreaChart
+                    data={stats.weeklyRevenueData}
+                    margin={{ top: 5, right: 5, left: 0, bottom: -5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="week" 
+                    />
+                    <YAxis 
+                      width={35} 
+                      domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.2)]}
+                    />
+                    <Tooltip 
+                      formatter={(value) => [`$${value}`, 'Weekly Revenue']}
+                      labelFormatter={(label) => `Week of ${label}`}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="revenue" 
+                      stroke="#544CE6" 
+                      fill="#544CE6"
+                      fillOpacity={0.3}
+                      strokeWidth={2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            </div>
           </div>
           
           {/* Upcoming Events - 1 column */}
-          <div className="lg:col-span-1">
-            <ChartCard 
-              title="Upcoming Events"
-              subtitle="Important dates and milestones"
-              height={320}
-              className="overflow-hidden"
-            >
-              <div className="p-4 h-full overflow-y-auto">
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                    <span className="text-xl" role="img" aria-label="brooding">🐣</span>
-                    <div>
-                      <h4 className="font-medium text-amber-800">Baby Chickens Expected</h4>
-                      <p className="text-sm text-amber-600">~10 days remaining</p>
-                      <p className="text-xs text-amber-500 mt-1">1 brooding hen</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <span className="text-xl" role="img" aria-label="vaccination">💉</span>
-                    <div>
-                      <h4 className="font-medium text-blue-800">Vaccination Due</h4>
-                      <p className="text-sm text-blue-600">Next week</p>
-                      <p className="text-xs text-blue-500 mt-1">Annual health check</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                    <span className="text-xl" role="img" aria-label="feed">🌾</span>
-                    <div>
-                      <h4 className="font-medium text-green-800">Feed Restock</h4>
-                      <p className="text-sm text-green-600">3 days</p>
-                      <p className="text-xs text-green-500 mt-1">Current supply low</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                    <span className="text-xl" role="img" aria-label="cleaning">🧽</span>
-                    <div>
-                      <h4 className="font-medium text-purple-800">Coop Cleaning</h4>
-                      <p className="text-sm text-purple-600">Weekly schedule</p>
-                      <p className="text-xs text-purple-500 mt-1">Deep clean recommended</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </ChartCard>
-          </div>
+          <UpcomingEvents data={data} isLoading={isLoading} />
         </div>
       </SectionContainer>
 

@@ -658,6 +658,29 @@ export const FeedCostCalculator = () => {
     );
   };
 
+  const calculateTotalFeedPurchased = () => {
+    const now = new Date();
+    const filterDate = new Date();
+    
+    switch (timeRange) {
+      case '3months':
+        filterDate.setMonth(now.getMonth() - 3);
+        break;
+      case '6months':
+        filterDate.setMonth(now.getMonth() - 6);
+        break;
+      case '12months':
+        filterDate.setFullYear(now.getFullYear() - 1);
+        break;
+      case 'all':
+        return feedInventory.reduce((sum, feed) => sum + (feed.total_cost || 0), 0);
+    }
+    
+    return feedInventory
+      .filter(feed => new Date(feed.openedDate) >= filterDate)
+      .reduce((sum, feed) => sum + (feed.total_cost || 0), 0);
+  };
+
   const calculateAverages = () => {
     const filteredPeriods = getFilteredPeriods();
     if (filteredPeriods.length === 0) return null;
@@ -743,8 +766,12 @@ export const FeedCostCalculator = () => {
   };
 
   const averages = calculateAverages();
+  const totalFeedPurchased = calculateTotalFeedPurchased();
   const filteredPeriods = getFilteredPeriods();
   const monthlyTrends = calculateMonthlyTrends();
+  
+  // Create mobile-friendly trends data (last 6 months)
+  const mobileTrends = monthlyTrends.slice(-6);
 
   return (
     <div className="space-y-6">
@@ -782,18 +809,18 @@ export const FeedCostCalculator = () => {
               icon="📅"
             />
             <StatCard 
-              title="Daily Cost" 
-              total={`$${averages.avgCostPerBirdPerDay.toFixed(3)}`} 
-              label="per bird"
+              title="Total Feed Purchased" 
+              total={`$${totalFeedPurchased.toFixed(2)}`} 
+              label="all feed inventory"
               variant="corner-gradient"
-              icon="🌅"
+              icon="💸"
             />
             <StatCard 
-              title="Total Spent" 
+              title="Depleted Feed Cost" 
               total={`$${averages.totalCost.toFixed(2)}`} 
               label={`over ${averages.totalDays} days`}
               variant="corner-gradient"
-              icon="💸"
+              icon="📊"
             />
             <StatCard 
               title="Feed Cycles" 
@@ -813,79 +840,127 @@ export const FeedCostCalculator = () => {
           description="Monthly feed cost per bird, total monthly costs, and flock size over time"
           variant="glass"
         >
-          <ChartCard
-            title="Feed Cost Analysis Over Time"
-            subtitle="Monthly feed cost per bird, total monthly cost, and flock size trends"
-            height={360}
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={monthlyTrends} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="month" 
-                  fontSize={12}
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis 
-                  yAxisId="cost"
-                  domain={['dataMin - 1', 'dataMax + 1']}
-                  width={20}
-                  fontSize={12}
-                  tick={false}
-                />
-                <YAxis 
-                  yAxisId="total"
-                  orientation="right"
-                  domain={['dataMin - 10', 'dataMax + 10']}
-                  width={20}
-                  fontSize={12}
-                  tick={false}
-                />
-                <Tooltip 
-                  formatter={(value, name) => {
-                    if (name === 'Cost Per Bird') return [`$${Number(value).toFixed(2)}`, name];
-                    if (name === 'Total Cost') return [`$${Number(value).toFixed(2)}`, name];
-                    if (name === 'Avg Flock Size') return [`${value} birds`, name];
-                    return [value, name];
-                  }}
-                  labelStyle={{ fontSize: 12 }}
-                  contentStyle={{ fontSize: 12 }}
-                />
-                <Legend />
-                <Line 
-                  yAxisId="cost"
-                  type="monotone" 
-                  dataKey="costPerBirdPerMonth" 
-                  stroke="#10B981" 
-                  strokeWidth={3}
-                  name="Cost Per Bird"
-                  dot={{ r: 5, fill: '#10B981' }}
-                  activeDot={{ r: 7, fill: '#059669' }}
-                />
-                <Line 
-                  yAxisId="total"
-                  type="monotone" 
-                  dataKey="totalCost" 
-                  stroke="#F59E0B" 
-                  strokeWidth={3}
-                  name="Total Cost"
-                  dot={{ r: 5, fill: '#F59E0B' }}
-                  activeDot={{ r: 7, fill: '#D97706' }}
-                />
-                <Line 
-                  yAxisId="cost"
-                  type="monotone" 
-                  dataKey="avgFlockSize" 
-                  stroke="#3B82F6" 
-                  strokeWidth={2}
-                  strokeDasharray="5 5"
-                  name="Avg Flock Size"
-                  dot={{ r: 3, fill: '#3B82F6' }}
-                  activeDot={{ r: 5, fill: '#2563EB' }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartCard>
+          {/* Mobile Chart - 6 months */}
+          <div className="lg:hidden">
+            <ChartCard
+              title="Feed Cost Trends"
+              subtitle="Monthly feed cost trends over last 6 months"
+              height={280}
+            >
+              <ResponsiveContainer width="100%" height={265}>
+                <LineChart data={mobileTrends} margin={{ top: 5, right: 5, left: 0, bottom: -5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="month"
+                    fontSize={10}
+                    tick={{ fontSize: 10 }}
+                  />
+                  <YAxis 
+                    yAxisId="cost"
+                    width={25}
+                    fontSize={10}
+                    tick={{ fontSize: 10 }}
+                  />
+                  <Tooltip 
+                    formatter={(value, name) => {
+                      if (name === 'Cost Per Bird') return [`$${Number(value).toFixed(2)}`, name];
+                      if (name === 'Total Cost') return [`$${Number(value).toFixed(2)}`, name];
+                      return [value, name];
+                    }}
+                    labelFormatter={(label) => `Month: ${label}`}
+                    contentStyle={{ fontSize: 11 }}
+                  />
+                  <Line 
+                    yAxisId="cost"
+                    type="monotone" 
+                    dataKey="costPerBirdPerMonth" 
+                    stroke="#10B981" 
+                    strokeWidth={2}
+                    name="Cost Per Bird"
+                    dot={{ r: 3, fill: '#10B981' }}
+                    activeDot={{ r: 5, fill: '#059669' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </div>
+
+          {/* Desktop Chart - All months */}
+          <div className="hidden lg:block">
+            <ChartCard
+              title="Feed Cost Analysis Over Time"
+              subtitle="Monthly feed cost per bird, total monthly cost, and flock size trends"
+              height={360}
+            >
+              <ResponsiveContainer width="100%" height={340}>
+                <LineChart data={monthlyTrends} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="month" 
+                    fontSize={12}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis 
+                    yAxisId="cost"
+                    domain={['dataMin - 1', 'dataMax + 1']}
+                    width={20}
+                    fontSize={12}
+                    tick={false}
+                  />
+                  <YAxis 
+                    yAxisId="total"
+                    orientation="right"
+                    domain={['dataMin - 10', 'dataMax + 10']}
+                    width={20}
+                    fontSize={12}
+                    tick={false}
+                  />
+                  <Tooltip 
+                    formatter={(value, name) => {
+                      if (name === 'Cost Per Bird') return [`$${Number(value).toFixed(2)}`, name];
+                      if (name === 'Total Cost') return [`$${Number(value).toFixed(2)}`, name];
+                      if (name === 'Avg Flock Size') return [`${value} birds`, name];
+                      return [value, name];
+                    }}
+                    labelStyle={{ fontSize: 12 }}
+                    contentStyle={{ fontSize: 12 }}
+                  />
+                  <Legend />
+                  <Line 
+                    yAxisId="cost"
+                    type="monotone" 
+                    dataKey="costPerBirdPerMonth" 
+                    stroke="#10B981" 
+                    strokeWidth={3}
+                    name="Cost Per Bird"
+                    dot={{ r: 5, fill: '#10B981' }}
+                    activeDot={{ r: 7, fill: '#059669' }}
+                  />
+                  <Line 
+                    yAxisId="total"
+                    type="monotone" 
+                    dataKey="totalCost" 
+                    stroke="#F59E0B" 
+                    strokeWidth={3}
+                    name="Total Cost"
+                    dot={{ r: 5, fill: '#F59E0B' }}
+                    activeDot={{ r: 7, fill: '#D97706' }}
+                  />
+                  <Line 
+                    yAxisId="cost"
+                    type="monotone" 
+                    dataKey="avgFlockSize" 
+                    stroke="#3B82F6" 
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    name="Avg Flock Size"
+                    dot={{ r: 3, fill: '#3B82F6' }}
+                    activeDot={{ r: 5, fill: '#2563EB' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartCard>
+          </div>
         </SectionContainer>
       )}
 

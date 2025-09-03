@@ -62,7 +62,15 @@ export const ChartCard: React.FC<ChartCardProps> = ({
         <h3 className="text-base lg:text-lg font-semibold text-gray-900">{title}</h3>
         {subtitle && <p className="text-xs lg:text-sm text-gray-600 mt-1">{subtitle}</p>}
       </div>
-      <div className="chart-container w-full" style={{ height }}>
+      <div 
+        className="chart-container w-full" 
+        style={{ 
+          height, 
+          minHeight: height,
+          minWidth: '200px',
+          position: 'relative'
+        }}
+      >
         {children}
       </div>
     </motion.div>

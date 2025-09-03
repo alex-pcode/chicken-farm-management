@@ -2222,7 +2222,7 @@ select.neu-input:focus {
 }
 
 /* Ensure proper containment for all elements */
-.main-content, #root {
+.main-content {
   max-width: 100vw;
   overflow-x: auto;
 }

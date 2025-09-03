@@ -39,7 +39,7 @@ const AnimatedFeedPNG: React.FC = () => {
       </motion.div>
 
       {/* Welcome Message - now below animation */}
-      <div className="mt-4 flex justify-start pl-4">
+      <div className="mb-4 flex justify-start pl-4">
         <motion.div 
           className="bg-white/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg border border-gray-200"
           initial={{ opacity: 0, x: -20 }}

@@ -103,7 +103,7 @@ export const StatCard: React.FC<StatCardProps> = ({
       <div className="relative">
         {/* Icon positioned in top-right corner */}
         {icon && (
-          <div className={`absolute top-0 right-0 size-6 flex items-center justify-center ${
+          <div className={`absolute -top-1 -right-1 size-6 flex items-center justify-center ${
             variant === 'dark' ? 'text-white/70' : 'text-gray-400'
           }`}>
             <span className="text-base">{icon}</span>
@@ -111,9 +111,9 @@ export const StatCard: React.FC<StatCardProps> = ({
         )}
         
         {/* Content Section */}
-        <div className="pr-8">
+        <div className="pr-[10px]">
           {/* Title */}
-          <div className={`font-bold text-base lg:text-lg mb-1 whitespace-nowrap ${
+          <div className={`font-bold text-base lg:text-lg mb-2 leading-tight ${
             variant === 'dark' ? 'text-white' : 'text-gray-900'
           }`}>
             {title}
@@ -127,7 +127,7 @@ export const StatCard: React.FC<StatCardProps> = ({
           </div>
           
           {/* Label and Change */}
-          <div className={`text-xs ${
+          <div className={`text-xs lg:text-sm leading-relaxed ${
             variant === 'dark' ? 'text-white/90' : 'text-gray-500'
           }`}>
             {change !== undefined && (

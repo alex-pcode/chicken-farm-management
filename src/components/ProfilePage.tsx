@@ -13,6 +13,7 @@ import { TabNavigation, Tab } from './ui/TabNavigation';
 import { Avatar } from './ui/Avatar';
 import { Breadcrumbs } from './ui/Breadcrumbs';
 import { ConfirmDialog } from './ui/modals/ConfirmDialog';
+import { HistoricalEggTrackingModal } from './modals/HistoricalEggTrackingModal';
 import { useEggData } from '../hooks/data/useEggData';
 import type { ValidationError, UserProfile as UserProfileType } from '../types';
 
@@ -44,6 +45,7 @@ export const ProfilePage: React.FC = () => {
     password: false,
     goal: false
   });
+  const [showHistoricalModal, setShowHistoricalModal] = useState(false);
 
   const tabs: Tab[] = [
     { id: 'profile', label: 'Profile', icon: '👤' },
@@ -55,7 +57,7 @@ export const ProfilePage: React.FC = () => {
   const userService = UserService.getInstance();
   
   // Get real egg production data
-  const { totalEggs, thisMonthTotal, thisWeekTotal } = useEggData();
+  const { totalEggs, thisMonthTotal, thisWeekTotal, entries: eggEntries } = useEggData();
 
   // Confirmation dialog state
   const [confirmDialog, setConfirmDialog] = useState({
@@ -733,6 +735,40 @@ export const ProfilePage: React.FC = () => {
           </FormButton>
         </div>
       </FormCard>
+
+      {/* Backfill History Section - Only show if user has egg entries */}
+      {eggEntries.length > 0 && (
+        <FormCard 
+          title="Historical Data" 
+          subtitle="Import historical egg tracking data"
+          icon="📊"
+        >
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <span className="text-blue-600 text-lg">💡</span>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>Backfill Historical Data</h3>
+                <p className="text-gray-600 text-sm mt-1">
+                  Add egg production data for dates before you started using ChickenCare. This helps create more accurate analytics and trends.
+                </p>
+              </div>
+            </div>
+
+            <FormButton
+              variant="secondary"
+              size="lg"
+              onClick={() => setShowHistoricalModal(true)}
+              fullWidth={false}
+              type="button"
+            >
+              <span className="flex items-center gap-2">
+                <span className="text-lg">📊</span>
+                <span>Import Historical Data</span>
+              </span>
+            </FormButton>
+          </div>
+        </FormCard>
+      )}
     </motion.div>
   );
 
@@ -807,6 +843,14 @@ export const ProfilePage: React.FC = () => {
         variant={confirmDialog.variant}
         confirmText="Continue"
         cancelText="Cancel"
+      />
+
+      <HistoricalEggTrackingModal
+        isOpen={showHistoricalModal}
+        onClose={() => setShowHistoricalModal(false)}
+        onSuccess={() => {
+          setShowHistoricalModal(false);
+        }}
       />
     </PageContainer>
   );
