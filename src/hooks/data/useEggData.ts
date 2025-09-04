@@ -123,20 +123,37 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
       averageDaily = thisMonthTotal / lastDateThisMonth;
     }
     
-    // Calculate this week's total (last 7 days inclusive)
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    oneWeekAgo.setHours(0, 0, 0, 0); // Set to start of day to be inclusive
+    // Calculate this week's total (last 7 days inclusive - days 0 to 6 going back)
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // End of today
+    
+    const sixDaysAgo = new Date();
+    sixDaysAgo.setDate(sixDaysAgo.getDate() - 6); // 6 days back + today = 7 days
+    sixDaysAgo.setHours(0, 0, 0, 0); // Start of day
     
     const thisWeekTotal = validEntries
-      .filter(entry => entry?.date && new Date(entry.date + 'T00:00:00') >= oneWeekAgo)
+      .filter(entry => {
+        if (!entry?.date) return false;
+        const entryDate = new Date(entry.date + 'T00:00:00');
+        return entryDate >= sixDaysAgo && entryDate <= today;
+      })
       .reduce((sum, entry) => sum + (entry?.count || 0), 0);
     
-    // Calculate previous week's total
-    const twoWeeksAgo = new Date();
-    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+    // Calculate previous week's total (days 7 to 13 going back)
+    const thirteenDaysAgo = new Date();
+    thirteenDaysAgo.setDate(thirteenDaysAgo.getDate() - 13); // 13 days back
+    thirteenDaysAgo.setHours(0, 0, 0, 0);
+    
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7); // 7 days back
+    sevenDaysAgo.setHours(23, 59, 59, 999); // End of 7th day back
+    
     const previousWeekTotal = validEntries
-      .filter(entry => entry?.date && new Date(entry.date) >= twoWeeksAgo && new Date(entry.date) < oneWeekAgo)
+      .filter(entry => {
+        if (!entry?.date) return false;
+        const entryDate = new Date(entry.date + 'T00:00:00');
+        return entryDate >= thirteenDaysAgo && entryDate <= sevenDaysAgo;
+      })
       .reduce((sum, entry) => sum + (entry?.count || 0), 0);
     
     // Calculate previous month's total

@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
-import { Routes, Route, Link, useLocation } from 'react-router-dom'
+import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom'
 
 // Code-split route components for better performance
 const Dashboard = lazy(() => import('./components/Dashboard').then(module => ({ default: module.Dashboard })));
@@ -36,17 +36,16 @@ const freeNavigation: NavigationItem[] = [
 
 // Premium tier navigation items (premium subscription required)
 const premiumNavigation: NavigationItem[] = [
-  { name: 'Dashboard', emoji: '🏠', href: '/' },
-  { name: 'Eggs', emoji: '🥚', href: '/egg-counter' },
-  { name: 'My Flock', emoji: '🐔', href: '/profile' },
-  { name: 'Sales', emoji: '💼', href: '/crm' },
-  { name: 'Expenses', emoji: '💰', href: '/expenses' },
-  { name: 'Feed', emoji: '🌾', href: '/feed-tracker' },
-  { name: 'Savings', emoji: '📈', href: '/savings' },
-  { name: 'Viability', emoji: '🧮', href: '/viability' },
-  { name: 'Account', emoji: '⚙️', href: '/account' },
-  { name: 'Cards', emoji: '🎨', href: '/cards' },
-  { name: 'Landing', emoji: '🎨', href: '/landing' },
+  { name: 'Dashboard', emoji: '🏠', href: '/app/dashboard' },
+  { name: 'Eggs', emoji: '🥚', href: '/app/egg-counter' },
+  { name: 'My Flock', emoji: '🐔', href: '/app/profile' },
+  { name: 'Sales', emoji: '💼', href: '/app/crm' },
+  { name: 'Expenses', emoji: '💰', href: '/app/expenses' },
+  { name: 'Feed', emoji: '🌾', href: '/app/feed-tracker' },
+  { name: 'Savings', emoji: '📈', href: '/app/savings' },
+  { name: 'Viability', emoji: '🧮', href: '/app/viability' },
+  { name: 'Account', emoji: '⚙️', href: '/app/account' },
+  { name: 'Cards', emoji: '🎨', href: '/app/cards' },
 ];
 
 // Function to get navigation items based on user tier
@@ -67,18 +66,18 @@ const getMobileNavigationItems = (userTier: 'free' | 'premium'): { primary: Navi
   
   return {
     primary: [
-      { name: 'Dashboard', emoji: '🏠', href: '/' },
-      { name: 'Eggs', emoji: '🥚', href: '/egg-counter' },
-      { name: 'Sales', emoji: '💼', href: '/crm' },
-      { name: 'Expenses', emoji: '💰', href: '/expenses' }
+      { name: 'Dashboard', emoji: '🏠', href: '/app/dashboard' },
+      { name: 'Eggs', emoji: '🥚', href: '/app/egg-counter' },
+      { name: 'Sales', emoji: '💼', href: '/app/crm' },
+      { name: 'Expenses', emoji: '💰', href: '/app/expenses' }
     ],
     secondary: [
-      { name: 'My Flock', emoji: '🐔', href: '/profile' },
-      { name: 'Feed', emoji: '🌾', href: '/feed-tracker' },
-      { name: 'Savings', emoji: '📈', href: '/savings' },
-      { name: 'Viability', emoji: '🧮', href: '/viability' },
-      { name: 'Cards', emoji: '🎨', href: '/cards' },
-      { name: 'Account Settings', emoji: '⚙️', href: '/account' },
+      { name: 'My Flock', emoji: '🐔', href: '/app/profile' },
+      { name: 'Feed', emoji: '🌾', href: '/app/feed-tracker' },
+      { name: 'Savings', emoji: '📈', href: '/app/savings' },
+      { name: 'Viability', emoji: '🧮', href: '/app/viability' },
+      { name: 'Cards', emoji: '🎨', href: '/app/cards' },
+      { name: 'Account Settings', emoji: '⚙️', href: '/app/account' },
     ]
   };
 };
@@ -112,13 +111,21 @@ const ComponentLoader = () => (
 function App() {
   return (
     <AuthProvider>
-      <OnboardingProvider>
-        <ProtectedRoute>
-          <OptimizedDataProvider>
-            <MainApp />
-          </OptimizedDataProvider>
-        </ProtectedRoute>
-      </OnboardingProvider>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<PublicLandingPage />} />
+        
+        {/* Protected Routes */}
+        <Route path="/app/*" element={
+          <OnboardingProvider>
+            <ProtectedRoute>
+              <OptimizedDataProvider>
+                <MainApp />
+              </OptimizedDataProvider>
+            </ProtectedRoute>
+          </OnboardingProvider>
+        } />
+      </Routes>
     </AuthProvider>
   );
 }
@@ -139,14 +146,6 @@ const MainApp = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [location.pathname]);
 
-  // Special case: Landing page gets full viewport without app layout
-  if (location.pathname === '/landing') {
-    return (
-      <Suspense fallback={<ComponentLoader />}>
-        <LandingPage />
-      </Suspense>
-    );
-  }
 
   return (
     <div className="flex min-h-screen">
@@ -335,60 +334,72 @@ const MainApp = () => {
       <main className="main-content" style={{ paddingTop: 0, paddingLeft: '17px', paddingRight: '17px' }}>
         <Suspense fallback={<ComponentLoader />}>
           <Routes>
+            {/* Default redirect from /app to /app/dashboard */}
+            <Route index element={<Navigate to="/app/dashboard" replace />} />
+            
             {/* Premium Features */}
-            <Route path="/" element={
+            <Route path="dashboard" element={
               <PremiumFeatureGate featureName="Dashboard Analytics">
                 <Dashboard />
               </PremiumFeatureGate>
             } />
-            <Route path="/profile" element={
+            <Route path="profile" element={
               <PremiumFeatureGate featureName="My Flock">
                 <Profile />
               </PremiumFeatureGate>
             } />
-            <Route path="/flock-batches" element={
+            <Route path="flock-batches" element={
               <PremiumFeatureGate featureName="Flock Batch Management">
                 <FlockBatchManager />
               </PremiumFeatureGate>
             } />
-            <Route path="/crm" element={
+            <Route path="crm" element={
               <PremiumFeatureGate featureName="Customer Management">
                 <CRM />
               </PremiumFeatureGate>
             } />
-            <Route path="/expenses" element={
+            <Route path="expenses" element={
               <PremiumFeatureGate featureName="Expense Tracking">
                 <Expenses />
               </PremiumFeatureGate>
             } />
-            <Route path="/feed-tracker" element={
+            <Route path="feed-tracker" element={
               <PremiumFeatureGate featureName="Feed Management">
                 <FeedTracker />
               </PremiumFeatureGate>
             } />
-            <Route path="/savings" element={
+            <Route path="savings" element={
               <PremiumFeatureGate featureName="Savings Analysis">
                 <Savings />
               </PremiumFeatureGate>
             } />
-            <Route path="/viability" element={
+            <Route path="viability" element={
               <PremiumFeatureGate featureName="Viability Calculator">
                 <ChickenViability />
               </PremiumFeatureGate>
             } />
-            <Route path="/cards" element={
+            <Route path="cards" element={
               <PremiumFeatureGate featureName="Design Showcase">
                 <CardShowcase />
               </PremiumFeatureGate>
             } />
             
             {/* Free Features - Available to all users */}
-            <Route path="/egg-counter" element={<EggCounter />} />
-            <Route path="/account" element={<ProfilePage />} />
+            <Route path="egg-counter" element={<EggCounter />} />
+            <Route path="account" element={<ProfilePage />} />
           </Routes>
         </Suspense>
       </main>
     </div>
+  );
+};
+
+// Public Landing Page Component (no authentication required)
+const PublicLandingPage = () => {
+  return (
+    <Suspense fallback={<ComponentLoader />}>
+      <LandingPage />
+    </Suspense>
   );
 };
 

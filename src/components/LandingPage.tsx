@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 // TypeScript Interfaces
 interface TestimonialData {
@@ -42,12 +43,6 @@ interface ProblemData {
   description: string;
 }
 
-interface BenefitData {
-  id: string;
-  icon: string;
-  title: string;
-  description: string;
-}
 
 
 // Custom hook for device type detection
@@ -105,29 +100,9 @@ const problems: ProblemData[] = [
   }
 ];
 
-const benefits: BenefitData[] = [
-  {
-    id: 'real-time-cost',
-    icon: '📊',
-    title: 'Real-time Cost Per Egg',
-    description: 'See your actual costs update instantly as you log feed purchases - no more guessing if you\'re saving money.'
-  },
-  {
-    id: 'performance-alerts',
-    icon: '⚠️',
-    title: 'Performance Alerts',
-    description: 'Get notified before problems become expensive - spot production drops and cost spikes early.'
-  },
-  {
-    id: 'timeline-intelligence',
-    icon: '📅',
-    title: 'Timeline Intelligence',
-    description: 'Understand your flock\'s lifecycle with insights that suggest what to watch for at each stage.'
-  }
-];
 
 // Helper function to get responsive image source
-const getResponsiveImageSrc = (baseName: string, isMobile: boolean, prefersReducedMotion: boolean, imageIndex?: number) => {
+const getResponsiveImageSrc = (baseName: string, isMobile: boolean, _prefersReducedMotion: boolean, imageIndex?: number) => {
   // Available screenshots mapping with multiple versions
   const availableScreenshots = {
     'dashboard': { desktop: true, mobile: true, hasMultiple: false },
@@ -324,6 +299,7 @@ const pricingPlans: PricingPlanData[] = [
 
 // Main Component
 export const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
   const prefersReducedMotion = useReducedMotion();
   const isMobile = useDeviceType();
 
@@ -336,6 +312,7 @@ export const LandingPage: React.FC = () => {
 
   // Swiper state for features with multiple images
   const [currentImageIndex, setCurrentImageIndex] = useState<{[key: string]: number}>({});
+  const [hoveredFeature, setHoveredFeature] = useState<string | null>(null);
 
   // Handle keyboard events for modal
   useEffect(() => {
@@ -410,18 +387,18 @@ export const LandingPage: React.FC = () => {
   };
 
   const handleStartTrial = () => {
-    // Placeholder for trial signup
-    console.log('Start trial clicked');
+    // Navigate to the app - authentication will be handled by ProtectedRoute
+    navigate('/app');
   };
 
   const handleGetStartedFree = () => {
-    // Placeholder for free signup
-    console.log('Get started free clicked');
+    // Navigate to the app - authentication will be handled by ProtectedRoute
+    navigate('/app');
   };
 
   const handleSeeHowItWorks = () => {
-    // Placeholder for demo
-    console.log('See how it works clicked');
+    // Placeholder for demo - could navigate to app or show demo video
+    navigate('/app');
   };
 
   return (
@@ -498,6 +475,15 @@ export const LandingPage: React.FC = () => {
         
         .feature-showcase {
           scroll-margin-top: 100px;
+        }
+        
+        /* Ensure hover states are properly triggered for image navigation */
+        .image-navigation-container:hover .navigation-arrow {
+          opacity: 1;
+        }
+        
+        .image-navigation-container:hover .navigation-hint {
+          opacity: 1;
         }
       `}</style>
       
@@ -949,10 +935,10 @@ export const LandingPage: React.FC = () => {
                     const hasMultipleImages = images.length > 1;
                     
                     return (
-                      <motion.div 
+                      <div 
                         className="relative group cursor-pointer"
-                        whileHover={{ scale: 1.02, y: -8 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                        onMouseEnter={() => setHoveredFeature(feature.id)}
+                        onMouseLeave={() => setHoveredFeature(null)}
                         onClick={() => openFullscreen(
                           images[currentIndex],
                           `${feature.title} demonstration`,
@@ -963,7 +949,7 @@ export const LandingPage: React.FC = () => {
                         <div className="absolute -inset-4 bg-gradient-to-br from-purple-200/30 to-purple-400/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
                         
                         {/* Main image container */}
-                        <div className="relative bg-white/80 backdrop-blur-sm border border-white/40 rounded-3xl p-4 shadow-2xl group-hover:shadow-3xl transition-all duration-500">
+                        <div className="relative bg-white/80 backdrop-blur-sm border border-white/40 rounded-3xl p-4 shadow-2xl group-hover:shadow-3xl transition-all duration-500 image-navigation-container">
                           <div className="relative overflow-hidden rounded-2xl">
                             <img 
                               src={images[currentIndex]}
@@ -984,7 +970,9 @@ export const LandingPage: React.FC = () => {
                                     e.stopPropagation();
                                     prevImage(feature.id, images.length);
                                   }}
-                                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 shadow-lg hover:shadow-xl hover:scale-110"
+                                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-full flex items-center justify-center transition-all duration-200 z-20 shadow-lg hover:shadow-xl hover:scale-110 ${
+                                    hoveredFeature === feature.id ? 'opacity-100' : 'opacity-20 hover:opacity-100'
+                                  }`}
                                   aria-label="Previous image"
                                 >
                                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -998,7 +986,9 @@ export const LandingPage: React.FC = () => {
                                     e.stopPropagation();
                                     nextImage(feature.id, images.length);
                                   }}
-                                  className="absolute right-3 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 shadow-lg hover:shadow-xl hover:scale-110"
+                                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-full flex items-center justify-center transition-all duration-200 z-20 shadow-lg hover:shadow-xl hover:scale-110 ${
+                                    hoveredFeature === feature.id ? 'opacity-100' : 'opacity-20 hover:opacity-100'
+                                  }`}
                                   aria-label="Next image"
                                 >
                                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1011,8 +1001,15 @@ export const LandingPage: React.FC = () => {
                                   {currentIndex + 1}/{images.length}
                                 </div>
 
+                                {/* Hover hint for navigation */}
+                                <div className={`absolute top-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded-full text-xs font-medium transition-opacity duration-200 ${
+                                  hoveredFeature === feature.id ? 'opacity-100' : 'opacity-40'
+                                }`}>
+                                  ← →
+                                </div>
+
                                 {/* Dots indicator */}
-                                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1">
+                                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1 opacity-70 group-hover:opacity-100 transition-opacity duration-200">
                                   {images.map((_, dotIndex) => (
                                     <button
                                       key={dotIndex}
@@ -1050,7 +1047,7 @@ export const LandingPage: React.FC = () => {
                         <div className="absolute -bottom-4 -right-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg opacity-0 group-hover:opacity-100 group-hover:scale-100 scale-95 transition-all duration-300">
                           {hasMultipleImages ? `${currentIndex + 1}/${images.length} - Click to Expand` : 'Click to Expand'}
                         </div>
-                      </motion.div>
+                      </div>
                     );
                   })()}
                 </div>
@@ -1297,7 +1294,7 @@ export const LandingPage: React.FC = () => {
             {/* Close button */}
             <button
               onClick={closeFullscreen}
-              className="absolute top-4 right-4 z-10 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-full p-2 transition-all duration-200"
+              className="absolute top-4 right-4 z-10 bg-purple-600 hover:bg-purple-700 text-white rounded-full p-2 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105"
               aria-label="Close fullscreen image"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
