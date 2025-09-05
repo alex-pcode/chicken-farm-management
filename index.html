@@ -15,6 +15,14 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#f8fafc" />
     
+    <!-- React 19 Scheduler Fix -->
+    <script>
+      // Simple fix for React 19 scheduler issue
+      if (typeof globalThis !== 'undefined' && typeof performance !== 'undefined') {
+        globalThis.unstable_now = performance.now.bind(performance);
+      }
+    </script>
+
     <!-- Performance Resource Hints -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">

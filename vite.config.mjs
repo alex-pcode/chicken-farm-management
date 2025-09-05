@@ -90,31 +90,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Optimize chunk splitting for better caching
-        manualChunks(id) {
-          // Vendor libs
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-            return 'vendor';
-          }
-          
-          // Charts - only load when needed
-          if (id.includes('node_modules/recharts') || id.includes('recharts')) {
-            return 'charts';
-          }
-          
-          // Supabase
-          if (id.includes('@supabase')) {
-            return 'supabase';
-          }
-          
-          // Animation libs
-          if (id.includes('framer-motion') || id.includes('@headlessui')) {
-            return 'ui';
-          }
-          
-          // Other large libraries that should be separated
-          if (id.includes('node_modules')) {
-            return 'vendor-misc';
-          }
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          supabase: ['@supabase/supabase-js'],
+          charts: ['recharts'],
+          ui: ['framer-motion', '@headlessui/react'],
         },
         assetFileNames: (assetInfo) => {
           const info = assetInfo.name.split('.')
