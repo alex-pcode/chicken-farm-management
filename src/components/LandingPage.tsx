@@ -573,17 +573,40 @@ export const LandingPage: React.FC = () => {
                 src={getResponsiveImageSrc('dashboard', isMobile, prefersReducedMotion)}
                 alt="Chicken Manager dashboard showing egg production insights and cost analysis - Click to watch demo video"
                 className="rounded-2xl shadow-2xl w-full mx-auto transition-all duration-300 group-hover:shadow-3xl"
-                loading="lazy"
+                fetchPriority="high"
+                decoding="async"
               />
               
               {/* Video Play Button Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-20 h-20 md:w-24 md:h-24 bg-white bg-opacity-90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-2xl group-hover:bg-opacity-100 transition-all duration-300 group-hover:scale-110">
-                  <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-r from-purple-600 to-purple-700 rounded-full flex items-center justify-center shadow-lg">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div 
+                  className="bg-white bg-opacity-90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-2xl group-hover:bg-opacity-100 transition-all duration-300 group-hover:scale-110 pointer-events-auto"
+                  style={{
+                    width: 'clamp(5rem, 6vw, 6rem)',
+                    height: 'clamp(5rem, 6vw, 6rem)',
+                    minWidth: '5rem',
+                    minHeight: '5rem'
+                  }}
+                >
+                  <div 
+                    className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-full flex items-center justify-center shadow-lg"
+                    style={{
+                      width: 'clamp(4rem, 5vw, 5rem)',
+                      height: 'clamp(4rem, 5vw, 5rem)',
+                      minWidth: '4rem',
+                      minHeight: '4rem'
+                    }}
+                  >
                     <svg 
-                      className="w-8 h-8 md:w-10 md:h-10 text-white ml-1" 
+                      className="text-white ml-1" 
                       fill="currentColor" 
                       viewBox="0 0 24 24"
+                      style={{
+                        width: 'clamp(2rem, 2.5vw, 2.5rem)',
+                        height: 'clamp(2rem, 2.5vw, 2.5rem)',
+                        minWidth: '2rem',
+                        minHeight: '2rem'
+                      }}
                     >
                       <path d="M8 5v14l11-7z"/>
                     </svg>

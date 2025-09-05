@@ -11,7 +11,7 @@
  * Info: Blue for informational content, neutral states, help text
  */
 :root {
-  --font-fraunces: 'Fraunces', serif;
+  --font-fraunces: 'Fraunces', 'Fraunces-fallback', 'Times New Roman', 'Georgia', serif;
   --primary: oklch(0.205 0 0);
   --neu-1: #ecf0f3;
   --neu-2: #d1d9e6;
@@ -68,12 +68,24 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* Font loading optimization for CLS prevention */
+@font-face {
+  font-family: 'Fraunces-fallback';
+  src: local('Times New Roman'), local('Georgia');
+  size-adjust: 108%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
 /* Base typography */
 body {
   font-family: var(--font-fraunces);
   font-optical-sizing: auto;
   font-variation-settings: 'opsz' 14;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-display: optional;
 }
 
 /* Typography Scale Standardization based on CardShowcase patterns

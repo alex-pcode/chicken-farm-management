@@ -15,6 +15,15 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#f8fafc" />
     
+    <!-- Performance Resource Hints -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="preload" href="/pwa-192x192.webp" as="image" type="image/webp" />
+    
+    <!-- LCP Image Preload -->
+    <link rel="preload" href="/screenshots/dashboard mobile.webp" as="image" type="image/webp" media="(max-width: 767px)" />
+    <link rel="preload" href="/screenshots/dashboard desktop.webp" as="image" type="image/webp" media="(min-width: 768px)" />
+    
     <!-- Apple Touch Icons -->
     <link rel="apple-touch-icon" href="/pwa-192x192.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="/pwa-192x192.png" />
@@ -22,7 +31,8 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=optional" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=optional" rel="stylesheet"></noscript>
     <title>Chicken Manager</title>
   </head>
   <body>

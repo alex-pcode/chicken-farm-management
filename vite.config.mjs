@@ -18,8 +18,33 @@ export default defineConfig({
     // PWA plugin for offline support and app installation
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: 'script-defer',
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'gstatic-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
+              }
+            }
+          }
+        ]
       },
       manifest: {
         name: 'Chicken Manager',
@@ -62,16 +87,51 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Optimize chunk splitting for better caching
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          supabase: ['@supabase/supabase-js'],
-          charts: ['recharts'],
-          ui: ['framer-motion', '@headlessui/react'],
+        manualChunks(id) {
+          // Vendor libs
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'vendor';
+          }
+          
+          // Charts - only load when needed
+          if (id.includes('node_modules/recharts') || id.includes('recharts')) {
+            return 'charts';
+          }
+          
+          // Supabase
+          if (id.includes('@supabase')) {
+            return 'supabase';
+          }
+          
+          // Animation libs
+          if (id.includes('framer-motion') || id.includes('@headlessui')) {
+            return 'ui';
+          }
+          
+          // Other large libraries that should be separated
+          if (id.includes('node_modules')) {
+            return 'vendor-misc';
+          }
+        },
+        assetFileNames: (assetInfo) => {
+          const info = assetInfo.name.split('.')
+          const extType = info[info.length - 1]
+          if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(extType)) {
+            return `assets/images/[name]-[hash][extname]`
+          }
+          if (/css/i.test(extType)) {
+            return `assets/css/[name]-[hash][extname]`
+          }
+          return `assets/[name]-[hash][extname]`
         },
       },
     },
     // Enable source maps for production debugging
     sourcemap: process.env.NODE_ENV === 'production',
+    // CSS optimization
+    cssCodeSplit: true,
+    minify: 'esbuild',
+    target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari14'],
   },
   test: {
     globals: true,
