@@ -12,7 +12,7 @@ export const AnimatedCoinPNG: React.FC = () => {
         transition={{ duration: 0.8 }}
       >
         <motion.img
-          src="/chicken-coin.png"
+          src="/chicken-coin.webp"
           alt="Chicken with coin - expense tracking"
           className="w-auto h-full object-contain"
           initial={{ scale: 0.8, y: 20 }}

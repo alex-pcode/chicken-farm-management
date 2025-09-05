@@ -12,7 +12,7 @@ const AnimatedEggCounterPNG: React.FC = () => {
         transition={{ duration: 0.8 }}
       >
         <motion.img
-          src="/hen-on-eggs.png"
+          src="/hen-on-eggs.webp"
           alt="Hen sitting on eggs"
           className="w-auto h-full object-contain"
           initial={{ scale: 0.8, y: 20 }}

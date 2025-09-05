@@ -12,7 +12,7 @@ const AnimatedCRMPNG: React.FC = () => {
         transition={{ duration: 0.8 }}
       >
         <motion.img
-          src="/cute-chicken-business.png"
+          src="/cute-chicken-business.webp"
           alt="Cute chicken in business"
           className="w-auto h-full object-contain"
           initial={{ scale: 0.8, y: 20 }}

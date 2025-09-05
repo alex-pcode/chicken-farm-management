@@ -11,7 +11,7 @@ const AnimatedFarmPNG: React.FC = () => {
         transition={{ duration: 0.8 }}
       >
         <motion.img
-          src="/chickens-on-a-farm.png"
+          src="/chickens-on-a-farm.webp"
           alt="Chickens on a farm"
           className="w-auto h-full object-contain"
           initial={{ scale: 0.8, y: 20 }}

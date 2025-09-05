@@ -12,7 +12,7 @@ const AnimatedSavingsPNG: React.FC = () => {
         transition={{ duration: 0.8 }}
       >
         <motion.img
-          src="/cute-chicken-pecking-a-calculator.png"
+          src="/cute-chicken-pecking-a-calculator.webp"
           alt="Cute chicken pecking a calculator"
           className="w-auto h-full object-contain"
           initial={{ scale: 0.8, y: 20 }}

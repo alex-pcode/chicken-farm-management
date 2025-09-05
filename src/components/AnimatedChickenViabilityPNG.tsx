@@ -12,7 +12,7 @@ const AnimatedChickenViabilityPNG: React.FC = () => {
         transition={{ duration: 0.8 }}
       >
         <motion.img
-          src="/cute-chickens-discussing.png"
+          src="/cute-chickens-discussing.webp"
           alt="Cute chickens discussing viability"
           className="w-auto h-full object-contain"
           initial={{ scale: 0.8, y: 20 }}

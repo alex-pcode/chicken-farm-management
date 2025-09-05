@@ -115,28 +115,28 @@ const getResponsiveImageSrc = (baseName: string, isMobile: boolean, _prefersRedu
   };
   
   const screenshots = availableScreenshots[baseName as keyof typeof availableScreenshots];
-  if (!screenshots) return `/screenshots/dashboard ${isMobile ? 'mobile' : 'desktop'}.png`;
+  if (!screenshots) return `/screenshots/dashboard ${isMobile ? 'mobile' : 'desktop'}.webp`;
   
   // If requesting mobile and mobile exists, use mobile
   if (isMobile && screenshots.mobile) {
     if (screenshots.hasMultiple && typeof imageIndex === 'number' && imageIndex > 0) {
-      return `/screenshots/${baseName} ${imageIndex + 1} mobile.png`;
+      return `/screenshots/${baseName} ${imageIndex + 1} mobile.webp`;
     }
-    return `/screenshots/${baseName} mobile.png`;
+    return `/screenshots/${baseName} mobile.webp`;
   }
   
   // If requesting desktop and desktop exists, use desktop
   if (!isMobile && screenshots.desktop) {
-    return `/screenshots/${baseName} desktop.png`;
+    return `/screenshots/${baseName} desktop.webp`;
   }
   
   // Fallback logic: if requesting desktop but only mobile exists, use mobile
   if (!isMobile && !screenshots.desktop && screenshots.mobile) {
-    return `/screenshots/${baseName} mobile.png`;
+    return `/screenshots/${baseName} mobile.webp`;
   }
   
   // Final fallback to dashboard
-  return `/screenshots/dashboard ${isMobile ? 'mobile' : 'desktop'}.png`;
+  return `/screenshots/dashboard ${isMobile ? 'mobile' : 'desktop'}.webp`;
 };
 
 // Helper function to get all images for a feature

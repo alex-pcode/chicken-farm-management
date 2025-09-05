@@ -12,7 +12,7 @@ const AnimatedFeedPNG: React.FC = () => {
         transition={{ duration: 0.8 }}
       >
         <motion.img
-          src="/cute-chicken-having-dinner.png"
+          src="/cute-chicken-having-dinner.webp"
           alt="Cute chicken having dinner"
           className="w-auto h-full object-contain"
           initial={{ scale: 0.8, y: 20 }}
