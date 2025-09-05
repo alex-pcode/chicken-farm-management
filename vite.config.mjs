@@ -13,7 +13,10 @@ export default defineConfig({
     },
   },
   plugins: [
-    react(),
+    react({
+      // React 19 support with proper scheduler handling
+      jsxRuntime: 'automatic',
+    }),
     tailwindcss(),
     // PWA plugin for offline support and app installation
     VitePWA({

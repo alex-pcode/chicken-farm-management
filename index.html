@@ -18,11 +18,21 @@
     <!-- Performance Resource Hints -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-    <link rel="preload" href="/pwa-192x192.webp" as="image" type="image/webp" />
     
-    <!-- LCP Image Preload -->
-    <link rel="preload" href="/screenshots/dashboard mobile.webp" as="image" type="image/webp" media="(max-width: 767px)" />
-    <link rel="preload" href="/screenshots/dashboard desktop.webp" as="image" type="image/webp" media="(min-width: 768px)" />
+    <!-- LCP Image Preload - Only on landing page with JavaScript detection -->
+    <script>
+      // Only preload hero images if we're likely on the landing page
+      if (window.location.pathname === '/' || window.location.pathname.includes('landing')) {
+        const isMobile = window.matchMedia('(max-width: 767px)').matches;
+        const imageUrl = isMobile ? '/screenshots/dashboard mobile.webp' : '/screenshots/dashboard desktop.webp';
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.href = imageUrl;
+        link.as = 'image';
+        link.type = 'image/webp';
+        document.head.appendChild(link);
+      }
+    </script>
     
     <!-- Apple Touch Icons -->
     <link rel="apple-touch-icon" href="/pwa-192x192.png" />
