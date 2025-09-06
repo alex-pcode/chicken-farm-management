@@ -27,6 +27,22 @@
     <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
     
+    <!-- Critical CSS will be inlined here by Critters during build -->
+    <!-- Non-critical CSS preload hints -->
+    <script>
+      // Preload non-critical CSS after critical path
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(function() {
+          const animationsLink = document.createElement('link');
+          animationsLink.rel = 'preload';
+          animationsLink.href = '/src/styles/animations/landing-animations.css';
+          animationsLink.as = 'style';
+          animationsLink.onload = function() { this.rel = 'stylesheet'; };
+          document.head.appendChild(animationsLink);
+        });
+      }
+    </script>
+    
     <!-- LCP Image Preload - Only on landing page with JavaScript detection -->
     <script>
       // Only preload hero images if we're likely on the landing page
@@ -49,7 +65,9 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=optional" rel="stylesheet" media="print" onload="this.media='all'">
+    
+    <!-- Load fonts asynchronously to avoid render blocking -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=optional" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=optional" rel="stylesheet"></noscript>
     <title>Chicken Manager</title>
   </head>

@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { sentryVitePlugin } from "@sentry/vite-plugin"
 import { VitePWA } from 'vite-plugin-pwa'
+import { criticalCSS } from './vite-plugins/critical-css.mjs'
 import path from 'path'
 
 // https://vitejs.dev/config/
@@ -18,6 +19,15 @@ export default defineConfig({
       jsxRuntime: 'automatic',
     }),
     tailwindcss(),
+    // Critical CSS extraction plugin
+    criticalCSS({
+      width: 1200,
+      height: 800,
+      inline: true,
+      extract: true,
+      inlineFonts: false,
+      preload: 'swap'
+    }),
     // PWA plugin for offline support and app installation
     VitePWA({
       registerType: 'autoUpdate',

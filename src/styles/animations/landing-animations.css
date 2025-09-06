@@ -1,0 +1,69 @@
+/* Non-critical animations for Landing Page - Load asynchronously */
+
+/* Floating animations for decorative elements */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Shine animation for shiny CTA button */
+@keyframes shine {
+  0% { transform: translateX(-100%) rotate(45deg); }
+  50% { transform: translateX(100%) rotate(45deg); }
+  100% { transform: translateX(-100%) rotate(45deg); }
+}
+
+.shiny-cta::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shine 2s infinite;
+  pointer-events: none;
+}
+
+/* Arrow drawing animation for interactive elements */
+@keyframes drawArrow {
+  0% { 
+    stroke-dasharray: 0, 200;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  40% { 
+    stroke-dasharray: 100, 200;
+  }
+  100% { 
+    stroke-dasharray: 100, 200;
+    opacity: 0.8;
+  }
+}
+
+/* Interactive hover states for image navigation */
+.image-navigation-container:hover .navigation-arrow {
+  opacity: 1;
+}
+
+.image-navigation-container:hover .navigation-hint {
+  opacity: 1;
+}
+
+/* Responsive behavior for animations */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .shiny-cta::before {
+    animation: none !important;
+  }
+  
+  .drawArrow {
+    animation: none !important;
+  }
+}

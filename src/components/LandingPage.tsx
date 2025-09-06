@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
+// Import critical CSS modules
+import '../styles/critical/landing-hero.css';
+import '../styles/components/landing-components.css';
+
 // TypeScript Interfaces
 interface TestimonialData {
   id: string;
@@ -401,91 +405,25 @@ export const LandingPage: React.FC = () => {
     navigate('/app');
   };
 
+  // Load non-critical animations asynchronously after component mount
+  useEffect(() => {
+    // Load animations CSS after initial render to avoid render blocking
+    const loadAnimations = async () => {
+      if (!prefersReducedMotion) {
+        await import('../styles/animations/landing-animations.css');
+      }
+    };
+    
+    // Use requestIdleCallback if available, otherwise setTimeout
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(loadAnimations);
+    } else {
+      setTimeout(loadAnimations, 100);
+    }
+  }, [prefersReducedMotion]);
+
   return (
     <div className="w-full bg-gray-50 font-fraunces">
-      <style>{`        
-        .modal-open {
-          overflow: hidden;
-        }
-        
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
-        }
-        
-        @keyframes shine {
-          0% { transform: translateX(-100%) rotate(45deg); }
-          50% { transform: translateX(100%) rotate(45deg); }
-          100% { transform: translateX(-100%) rotate(45deg); }
-        }
-        
-        @keyframes drawArrow {
-          0% { 
-            stroke-dasharray: 0, 200;
-            opacity: 0;
-          }
-          20% {
-            opacity: 1;
-          }
-          40% { 
-            stroke-dasharray: 100, 200;
-          }
-          100% { 
-            stroke-dasharray: 100, 200;
-            opacity: 0.8;
-          }
-        }
-        
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
-        
-        .shiny-cta {
-          background: linear-gradient(135deg, #4F39F6, #7C3AED);
-          position: relative;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .shiny-cta:hover {
-          transform: translateY(-2px) scale(1.02);
-          box-shadow: 0 12px 24px rgba(79, 57, 246, 0.3);
-        }
-        
-        .shiny-cta::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent);
-          animation: shine 2s infinite;
-          pointer-events: none;
-        }
-        
-        .shadow-3xl {
-          box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.25);
-        }
-        
-        @media (max-width: 1023px) {
-          .lg\\:grid-flow-col-dense {
-            grid-auto-flow: row;
-          }
-        }
-        
-        .feature-showcase {
-          scroll-margin-top: 100px;
-        }
-        
-        /* Ensure hover states are properly triggered for image navigation */
-        .image-navigation-container:hover .navigation-arrow {
-          opacity: 1;
-        }
-        
-        .image-navigation-container:hover .navigation-hint {
-          opacity: 1;
-        }
-      `}</style>
       
       {/* Hero Section */}
       <motion.section 
@@ -498,31 +436,9 @@ export const LandingPage: React.FC = () => {
         {/* Enhanced animated background elements */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           {/* Corner gradient 1 */}
-          <div 
-            className="absolute pointer-events-none"
-            style={{
-              top: '-25%',
-              right: '0%',
-              width: '35%',
-              height: '30%',
-              background: 'radial-gradient(circle, #4F39F6 0%, #191656 70%)',
-              filter: 'blur(60px)',
-              opacity: 0.3
-            }}
-          />
+          <div className="hero-gradient-1" />
           {/* Corner gradient 2 */}
-          <div 
-            className="absolute pointer-events-none"
-            style={{
-              bottom: '-20%',
-              left: '-10%',
-              width: '30%',
-              height: '25%',
-              background: 'radial-gradient(circle, #8833D7 0%, #2A2580 70%)',
-              filter: 'blur(50px)',
-              opacity: 0.2
-            }}
-          />
+          <div className="hero-gradient-2" />
           {!prefersReducedMotion && (
             <>
               <div className="absolute top-1/4 right-1/4 w-32 h-32 text-6xl opacity-10 animate-float">

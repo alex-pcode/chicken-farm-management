@@ -1,0 +1,61 @@
+/* Critical CSS for Landing Page Hero Section - Above the fold content only */
+
+/* Modal state for body when image modal is open */
+.modal-open {
+  overflow: hidden;
+}
+
+/* Critical gradient backgrounds for hero section */
+.hero-gradient-1 {
+  position: absolute;
+  pointer-events: none;
+  top: -25%;
+  right: 0%;
+  width: 35%;
+  height: 30%;
+  background: radial-gradient(circle, #4F39F6 0%, #191656 70%);
+  filter: blur(60px);
+  opacity: 0.3;
+}
+
+.hero-gradient-2 {
+  position: absolute;
+  pointer-events: none;
+  bottom: -20%;
+  left: -10%;
+  width: 30%;
+  height: 25%;
+  background: radial-gradient(circle, #8833D7 0%, #2A2580 70%);
+  filter: blur(50px);
+  opacity: 0.2;
+}
+
+/* Critical shiny CTA button styles */
+.shiny-cta {
+  background: linear-gradient(135deg, #4F39F6, #7C3AED);
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.shiny-cta:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 12px 24px rgba(79, 57, 246, 0.3);
+}
+
+/* Essential shadows for above-the-fold content */
+.shadow-3xl {
+  box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Critical responsive layout adjustments */
+@media (max-width: 1023px) {
+  .lg\:grid-flow-col-dense {
+    grid-auto-flow: row;
+  }
+}
+
+/* Feature showcase scroll margin for navigation anchors */
+.feature-showcase {
+  scroll-margin-top: 100px;
+}
