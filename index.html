@@ -103,16 +103,13 @@
       // Load non-critical CSS after initial paint
       if ('requestIdleCallback' in window) {
         requestIdleCallback(function() {
-          // Load animation CSS for non-critical animations
-          loadCSSAsync('/src/styles/animations/landing-animations.css');
-          
-          // Main stylesheet will be loaded by Vite build process
-          // but this ensures async loading for better performance
+          // Animation CSS will be loaded through dynamic import in the app
+          // This ensures proper asset resolution in both dev and production
         }, { timeout: 1000 });
       } else {
-        // Fallback for browsers without requestIdleCallback
+        // Fallback for browsers without requestIdleCallback  
         setTimeout(function() {
-          loadCSSAsync('/src/styles/animations/landing-animations.css');
+          // Animation CSS will be loaded through dynamic import in the app
         }, 200);
       }
     </script>
