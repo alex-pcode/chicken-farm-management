@@ -67,7 +67,16 @@ export function criticalCSS(options = {}) {
           const htmlContent = fs.readFileSync(indexHtmlPath, 'utf-8');
           
           // Process with Critters
-          const optimizedHtml = await critters.process(htmlContent);
+          let optimizedHtml = await critters.process(htmlContent);
+          
+          // Convert blocking CSS to async loading for better LCP
+          optimizedHtml = optimizedHtml.replace(
+            /<link rel="stylesheet" crossorigin href="([^"]*\.css)">/g, 
+            (match, href) => {
+              return `<link rel="preload" href="${href}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="${href}"></noscript>`;
+            }
+          );
           
           // Write back to file
           fs.writeFileSync(indexHtmlPath, optimizedHtml);
