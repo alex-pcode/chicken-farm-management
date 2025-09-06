@@ -13,7 +13,8 @@ const CRM = lazy(() => import('./components/CRM').then(module => ({ default: mod
 const ChickenViability = lazy(() => import('./components/ChickenViability').then(module => ({ default: module.ChickenViability })));
 const FlockBatchManager = lazy(() => import('./components/FlockBatchManager').then(module => ({ default: module.FlockBatchManager })));
 const CardShowcase = lazy(() => import('./components/examples/CardShowcase').then(module => ({ default: module.default })));
-const LandingPage = lazy(() => import('./components/LandingPage').then(module => ({ default: module.LandingPage })));
+// Import LandingPage directly - no lazy loading for main entry point
+import { LandingPage } from './components/LandingPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { OptimizedDataProvider, useUserTier } from './contexts/OptimizedDataProvider'
 import { OnboardingProvider } from './contexts/OnboardingProvider'
@@ -394,13 +395,9 @@ const MainApp = () => {
   );
 };
 
-// Public Landing Page Component (no authentication required)
+// Public Landing Page Component (no authentication required, no suspense needed)
 const PublicLandingPage = () => {
-  return (
-    <Suspense fallback={<ComponentLoader />}>
-      <LandingPage />
-    </Suspense>
-  );
+  return <LandingPage />;
 };
 
 export default App;

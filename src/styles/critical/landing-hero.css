@@ -59,3 +59,45 @@
 .feature-showcase {
   scroll-margin-top: 100px;
 }
+
+/* CSS-first responsive hero image to reduce JavaScript dependency */
+.hero-image-responsive {
+  /* Default to mobile image */
+  background-image: url('/screenshots/dashboard mobile.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+@media (min-width: 768px) {
+  .hero-image-responsive {
+    /* Switch to desktop image on larger screens */
+    background-image: url('/screenshots/dashboard desktop.webp');
+  }
+}
+
+/* Optimize hero image container for LCP */
+.hero-image-container {
+  /* Reserve space to prevent layout shift */
+  aspect-ratio: 16/10;
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (min-width: 768px) {
+  .hero-image-container {
+    aspect-ratio: 16/9;
+  }
+}
+
+/* Critical styles for immediate render */
+.hero-section {
+  /* Ensure hero section renders with proper spacing immediately */
+  min-height: 50vh;
+}
+
+@media (min-width: 768px) {
+  .hero-section {
+    min-height: 60vh;
+  }
+}

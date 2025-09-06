@@ -49,34 +49,54 @@ interface ProblemData {
 
 
 
-// Custom hook for device type detection
+// Optimized device detection with lazy initialization
 const useDeviceType = () => {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    // Only check on client-side to avoid hydration mismatch
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
   
   useEffect(() => {
-    const checkDevice = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
+    // Defer resize listener setup to avoid blocking initial render
+    const timeoutId = setTimeout(() => {
+      const checkDevice = () => {
+        setIsMobile(window.innerWidth < 768);
+      };
+      
+      window.addEventListener('resize', checkDevice, { passive: true });
+      return () => window.removeEventListener('resize', checkDevice);
+    }, 100);
     
-    checkDevice();
-    window.addEventListener('resize', checkDevice);
-    return () => window.removeEventListener('resize', checkDevice);
+    return () => clearTimeout(timeoutId);
   }, []);
   
   return isMobile;
 };
 
-// Check for reduced motion preference
+// Optimized reduced motion detection with lazy initialization
 const useReducedMotion = () => {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
+    // Initialize immediately to avoid animation flicker
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+    return false;
+  });
   
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
+    // Defer media query listener to not block initial render
+    const timeoutId = setTimeout(() => {
+      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const handler = () => setPrefersReducedMotion(mediaQuery.matches);
+      
+      mediaQuery.addEventListener('change', handler, { passive: true });
+      return () => mediaQuery.removeEventListener('change', handler);
+    }, 50);
     
-    const handler = () => setPrefersReducedMotion(mediaQuery.matches);
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
+    return () => clearTimeout(timeoutId);
   }, []);
   
   return prefersReducedMotion;
@@ -105,7 +125,7 @@ const problems: ProblemData[] = [
 ];
 
 
-// Helper function to get responsive image source
+// Helper function to get responsive image source (moved outside component to avoid recreating)
 const getResponsiveImageSrc = (baseName: string, isMobile: boolean, _prefersReducedMotion: boolean, imageIndex?: number) => {
   // Available screenshots mapping with multiple versions
   const availableScreenshots = {
@@ -143,7 +163,7 @@ const getResponsiveImageSrc = (baseName: string, isMobile: boolean, _prefersRedu
   return `/screenshots/dashboard ${isMobile ? 'mobile' : 'desktop'}.webp`;
 };
 
-// Helper function to get all images for a feature
+// Helper function to get all images for a feature (moved outside component to avoid recreating)
 const getFeatureImages = (baseName: string, isMobile: boolean, prefersReducedMotion: boolean) => {
   const availableScreenshots: Record<string, { desktop: boolean; mobile: boolean; hasMultiple: boolean; mobileCount?: number }> = {
     'dashboard': { desktop: true, mobile: true, hasMultiple: false },
@@ -307,31 +327,35 @@ export const LandingPage: React.FC = () => {
   const prefersReducedMotion = useReducedMotion();
   const isMobile = useDeviceType();
 
-  // Modal state for fullscreen images
+  // Lazy-initialized modal state for fullscreen images
   const [fullscreenImage, setFullscreenImage] = useState<{
     src: string;
     alt: string;
     title: string;
   } | null>(null);
 
-  // Swiper state for features with multiple images
+  // Lazy-initialized swiper state for features with multiple images
   const [currentImageIndex, setCurrentImageIndex] = useState<{[key: string]: number}>({});
   const [hoveredFeature, setHoveredFeature] = useState<string | null>(null);
 
-  // Handle keyboard events for modal
+  // Handle keyboard events for modal (deferred to avoid blocking initial render)
   useEffect(() => {
+    if (!fullscreenImage) return;
+    
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && fullscreenImage) {
+      if (event.key === 'Escape') {
         setFullscreenImage(null);
       }
     };
 
-    if (fullscreenImage) {
-      document.addEventListener('keydown', handleKeyDown);
+    // Defer event listener attachment to not block initial render
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('keydown', handleKeyDown, { passive: false });
       document.body.classList.add('modal-open');
-    }
+    }, 0);
 
     return () => {
+      clearTimeout(timeoutId);
       document.removeEventListener('keydown', handleKeyDown);
       document.body.classList.remove('modal-open');
     };
@@ -405,20 +429,22 @@ export const LandingPage: React.FC = () => {
     navigate('/app');
   };
 
-  // Load non-critical animations asynchronously after component mount
+  // Load non-critical animations asynchronously after initial paint
   useEffect(() => {
-    // Load animations CSS after initial render to avoid render blocking
+    // Skip animation loading if user prefers reduced motion
+    if (prefersReducedMotion) return;
+    
+    // Load animations CSS after LCP to avoid render blocking
     const loadAnimations = async () => {
-      if (!prefersReducedMotion) {
-        await import('../styles/animations/landing-animations.css');
-      }
+      await import('../styles/animations/landing-animations.css');
     };
     
-    // Use requestIdleCallback if available, otherwise setTimeout
+    // Defer until after initial paint and layout
     if ('requestIdleCallback' in window) {
-      requestIdleCallback(loadAnimations);
+      requestIdleCallback(loadAnimations, { timeout: 2000 });
     } else {
-      setTimeout(loadAnimations, 100);
+      // Delay longer to ensure LCP has occurred
+      setTimeout(loadAnimations, 300);
     }
   }, [prefersReducedMotion]);
 
