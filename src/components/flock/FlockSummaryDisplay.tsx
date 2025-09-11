@@ -117,12 +117,12 @@ export const FlockSummaryDisplay = memo(({
             </div>
 
             <div className="flex gap-3">
-              <a 
-                href="/flock-batches" 
+              <Link 
+                to="/app/flock-batches" 
                 className="neu-button-secondary text-sm"
               >
                 View Batch Manager
-              </a>
+              </Link>
               <button 
                 onClick={onRefreshSummary}
                 className="neu-button text-sm"
@@ -151,7 +151,7 @@ export const FlockSummaryDisplay = memo(({
           <div className="flex items-center justify-between mb-6">
             <h2 className="neu-title">🐔 Flock Overview</h2>
             <Link 
-              to="/flock-batches" 
+              to="/app/flock-batches" 
               className="neu-button-secondary text-sm"
             >
               Manage Batches
@@ -233,7 +233,7 @@ export const FlockSummaryDisplay = memo(({
               <div className="text-6xl mb-4">📦</div>
               <p className="text-gray-500">No batches yet. Add your first batch to get started!</p>
               <Link
-                to="/flock-batches"
+                to="/app/flock-batches"
                 className="neu-button mt-4"
               >
                 Add First Batch
@@ -309,7 +309,7 @@ export const FlockSummaryDisplay = memo(({
                 Batch management lets you track groups of chickens, log losses automatically, and get better production insights.
               </p>
               <Link 
-                to="/flock-batches"
+                to="/app/flock-batches"
                 className="neu-button-secondary text-sm bg-yellow-100 hover:bg-yellow-200"
               >
                 Start Using Batches

@@ -246,7 +246,7 @@ export const Dashboard = () => {
       style={{ marginTop: '45px', paddingLeft: '15px', paddingRight: '15px' }}
     >
       <div className="header mb-0 mt-4" style={{ marginBottom: 'unset' }}>
-        <h1 className="text-2xl lg:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
+        <h1 className="text-2xl lg:text-4xl font-bold gradient-text">
           Welcome {user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'User'}
         </h1>
       </div>

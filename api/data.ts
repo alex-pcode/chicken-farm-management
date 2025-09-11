@@ -127,7 +127,7 @@ async function getAllData(user: AuthUser, res: VercelResponse) {
     .eq('user_id', user.id)
     .single();
   
-  const isFreeTier = !userProfile || userProfile.subscription_status !== 'premium';
+  const isFreeTier = !userProfile || userProfile.subscription_status !== 'active';
   const eggEntriesLimit = isFreeTier ? 90 : 730; // 90 days for free, 2 years for premium
 
   // Fetch user's egg entries with tier-based limits

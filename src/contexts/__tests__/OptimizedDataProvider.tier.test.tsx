@@ -62,7 +62,7 @@ describe('OptimizedDataProvider Tier Functionality', () => {
 
       // Wait for initial data fetch
       await vi.waitFor(() => {
-        expect(result.current).toBe('free');
+        expect(result.current.userTier).toBe('free');
       });
     });
 
@@ -107,7 +107,7 @@ describe('OptimizedDataProvider Tier Functionality', () => {
       });
 
       await vi.waitFor(() => {
-        expect(result.current).toBe('free');
+        expect(result.current.userTier).toBe('free');
       });
     });
 
@@ -152,11 +152,11 @@ describe('OptimizedDataProvider Tier Functionality', () => {
       });
 
       await vi.waitFor(() => {
-        expect(result.current).toBe('free');
+        expect(result.current.userTier).toBe('free');
       });
     });
 
-    it('should return "premium" when subscription_status is "premium"', async () => {
+    it('should return "premium" when subscription_status is "active"', async () => {
       const mockUserProfile: UserProfile = {
         id: '1',
         user_id: 'user-1',
@@ -171,7 +171,7 @@ describe('OptimizedDataProvider Tier Functionality', () => {
           hasSale: false,
           hasMultipleBatches: false,
         },
-        subscription_status: 'premium',
+        subscription_status: 'active',
         created_at: '2024-01-01T00:00:00Z',
         updated_at: '2024-01-01T00:00:00Z'
       };
@@ -197,7 +197,7 @@ describe('OptimizedDataProvider Tier Functionality', () => {
       });
 
       await vi.waitFor(() => {
-        expect(result.current).toBe('premium');
+        expect(result.current.userTier).toBe('premium');
       });
     });
   });
@@ -218,7 +218,7 @@ describe('OptimizedDataProvider Tier Functionality', () => {
           hasSale: true,
           hasMultipleBatches: true,
         },
-        subscription_status: 'premium',
+        subscription_status: 'active',
         created_at: '2024-01-01T00:00:00Z',
         updated_at: '2024-01-01T00:00:00Z'
       };

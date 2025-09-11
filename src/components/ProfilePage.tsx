@@ -27,7 +27,7 @@ interface ProfileFormData {
 
 export const ProfilePage: React.FC = () => {
   const { user } = useAuth();
-  const userTier = useUserTier();
+  const { userTier } = useUserTier();
   const { refreshData } = useOptimizedAppData();
   const [activeTab, setActiveTab] = useState<string>('profile');
   const [formData, setFormData] = useState<ProfileFormData>({
@@ -150,8 +150,10 @@ export const ProfilePage: React.FC = () => {
     setSuccessMessage('');
 
     try {
+      // Convert tier to subscription status (premium -> active for database)
+      const subscriptionStatus = newTier === 'premium' ? 'active' : 'free';
       const response = await userService.updateUserProfile({
-        subscription_status: newTier
+        subscription_status: subscriptionStatus
       });
 
       if (response.success) {

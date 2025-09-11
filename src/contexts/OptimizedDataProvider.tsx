@@ -27,6 +27,7 @@ interface OptimizedDataContextType {
   silentRefresh: () => Promise<void>;
   lastFetched: Date | null;
   userTier: 'free' | 'premium';
+  isSubscriptionLoading: boolean;
 }
 
 const OptimizedDataContext = createContext<OptimizedDataContextType | undefined>(undefined);
@@ -59,6 +60,7 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true);
 
   const refreshData = useCallback(async () => {
     if (!user?.id) {
@@ -103,7 +105,13 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
       // Cache the data in browser storage with user-specific key
       browserCache.set(CACHE_KEYS.APP_DATA, newData, 10, user.id);
       
+      // Cache subscription status separately for faster tier detection
+      if (newData.userProfile?.subscription_status) {
+        browserCache.set(CACHE_KEYS.SUBSCRIPTION_STATUS, newData.userProfile.subscription_status, 60, user.id);
+      }
+      
       setLastFetched(new Date());
+      setIsSubscriptionLoading(false);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch data';
       setError(errorMessage);
@@ -147,7 +155,14 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
       
       setData(newData);
       browserCache.set(CACHE_KEYS.APP_DATA, newData, 10, user.id);
+      
+      // Cache subscription status separately for faster tier detection
+      if (newData.userProfile?.subscription_status) {
+        browserCache.set(CACHE_KEYS.SUBSCRIPTION_STATUS, newData.userProfile.subscription_status, 60, user.id);
+      }
+      
       setLastFetched(new Date());
+      setIsSubscriptionLoading(false);
     } catch (err) {
       console.error('Silent refresh failed:', err);
       // Don't set error state for silent refresh failures
@@ -165,12 +180,31 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
     if (authLoading) return; // Wait for auth to complete
 
     if (user?.id) {
-      // Try to load cached data first for faster initial render
+      // Try to load cached subscription status first for instant tier detection
+      const cachedSubscriptionStatus = browserCache.get<string>(CACHE_KEYS.SUBSCRIPTION_STATUS, user.id);
+      if (cachedSubscriptionStatus) {
+        setData(prevData => ({
+          ...prevData,
+          userProfile: prevData.userProfile ? {
+            ...prevData.userProfile,
+            subscription_status: cachedSubscriptionStatus as any
+          } : null
+        }));
+        setIsSubscriptionLoading(false);
+      }
+
+      // Try to load cached data for faster initial render
       const cachedData = browserCache.get<AppData>(CACHE_KEYS.APP_DATA, user.id);
       if (cachedData) {
-        console.log('Loading cached data for user:', user.id);
+        if (import.meta.env.DEV) {
+          console.log('Loading cached data for user:', user.id);
+        }
         setData(cachedData);
         setLastFetched(new Date()); // Set a recent timestamp to avoid immediate refresh
+        // If we have userProfile from cached data, subscription is no longer loading
+        if (cachedData.userProfile) {
+          setIsSubscriptionLoading(false);
+        }
       }
       
       // Always refresh to get latest data
@@ -191,8 +225,10 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
         userProfile: null
       });
       setIsLoading(false);
+      setIsSubscriptionLoading(false);
     }
-  }, [user?.id, authLoading, refreshData]);
+  }, [user?.id, authLoading]); // Removed refreshData from dependencies to prevent double execution
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 
   // Background refresh when cache becomes stale
   useEffect(() => {
@@ -214,7 +250,8 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
     refreshData,
     silentRefresh,
     lastFetched,
-    userTier: (data.userProfile?.subscription_status === 'premium') ? 'premium' : 'free'
+    userTier: (data.userProfile?.subscription_status === 'active') ? 'premium' : 'free',
+    isSubscriptionLoading
   };
 
   return (
@@ -384,8 +421,8 @@ export const useFlockBatchData = () => {
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useUserTier = () => {
-  const { userTier } = useOptimizedAppData();
-  return userTier;
+  const { userTier, isSubscriptionLoading } = useOptimizedAppData();
+  return { userTier, isSubscriptionLoading };
 };
 
 // eslint-disable-next-line react-refresh/only-export-components

@@ -13,6 +13,7 @@ const CRM = lazy(() => import('./components/CRM').then(module => ({ default: mod
 const ChickenViability = lazy(() => import('./components/ChickenViability').then(module => ({ default: module.ChickenViability })));
 const FlockBatchManager = lazy(() => import('./components/FlockBatchManager').then(module => ({ default: module.FlockBatchManager })));
 const CardShowcase = lazy(() => import('./components/examples/CardShowcase').then(module => ({ default: module.default })));
+const Costs = lazy(() => import('./components/Costs').then(module => ({ default: module.Costs })));
 // Import LandingPage directly - no lazy loading for main entry point
 import { LandingPage } from './components/LandingPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext'
@@ -115,6 +116,11 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<PublicLandingPage />} />
+        <Route path="/costs" element={
+          <Suspense fallback={<ComponentLoader />}>
+            <Costs />
+          </Suspense>
+        } />
         
         {/* Protected Routes */}
         <Route path="/app/*" element={
@@ -133,7 +139,7 @@ function App() {
 
 const MainApp = () => {
   const { user, signOut } = useAuth();
-  const userTier = useUserTier();
+  const { userTier } = useUserTier();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const location = useLocation();

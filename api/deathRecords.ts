@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
+
 if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error('Missing Supabase environment variables');
 }
@@ -121,6 +122,14 @@ async function handlePost(req: VercelRequest, res: VercelResponse, userId: strin
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    // Validate cause against allowed values
+    const validCauses = ['predator', 'disease', 'age', 'injury', 'unknown', 'culled', 'other'];
+    if (!validCauses.includes(cause)) {
+      return res.status(400).json({ 
+        error: `Invalid cause value "${cause}". Must be one of: ${validCauses.join(', ')}` 
+      });
+    }
+
     if (count <= 0) {
       return res.status(400).json({ error: 'Count must be greater than 0' });
     }
@@ -157,19 +166,22 @@ async function handlePost(req: VercelRequest, res: VercelResponse, userId: strin
         description,
         notes
       })
-      .select(`
-        *,
-        flock_batches!inner(
-          id,
-          batch_name,
-          breed,
-          type
-        )
-      `)
+      .select('*')
       .single();
 
     if (error) {
       throw error;
+    }
+
+    // Get the batch info for the response
+    const { data: batchInfo, error: batchInfoError } = await supabase
+      .from('flock_batches')
+      .select('id, batch_name, breed, type')
+      .eq('id', batchId)
+      .single();
+
+    if (batchInfoError) {
+      throw batchInfoError;
     }
 
     // Create automatic "Gone but not forgotten" timeline event
@@ -199,9 +211,9 @@ async function handlePost(req: VercelRequest, res: VercelResponse, userId: strin
     const transformedRecord = {
       id: record.id,
       batchId: record.batch_id,
-      batchName: record.flock_batches?.batch_name,
-      breed: record.flock_batches?.breed,
-      type: record.flock_batches?.type,
+      batchName: batchInfo?.batch_name,
+      breed: batchInfo?.breed,
+      type: batchInfo?.type,
       date: record.date,
       count: record.count,
       cause: record.cause,

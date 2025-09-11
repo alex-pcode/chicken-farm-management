@@ -132,5 +132,6 @@ export const CACHE_KEYS = {
   APP_DATA: 'app_data',
   USER_PREFERENCES: 'user_preferences',
   FLOCK_SUMMARY: 'flock_summary',
-  SALES_SUMMARY: 'sales_summary'
+  SALES_SUMMARY: 'sales_summary',
+  SUBSCRIPTION_STATUS: 'subscription_status'
 } as const;

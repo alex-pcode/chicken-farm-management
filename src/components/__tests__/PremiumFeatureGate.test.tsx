@@ -30,7 +30,7 @@ describe('PremiumFeatureGate', () => {
 
   describe('when user has premium tier', () => {
     beforeEach(() => {
-      mockUseUserTier.mockReturnValue('premium');
+      mockUseUserTier.mockReturnValue({ userTier: 'premium', isSubscriptionLoading: false });
     });
 
     it('should render children for premium users', () => {
@@ -57,7 +57,7 @@ describe('PremiumFeatureGate', () => {
 
   describe('when user has free tier', () => {
     beforeEach(() => {
-      mockUseUserTier.mockReturnValue('free');
+      mockUseUserTier.mockReturnValue({ userTier: 'free', isSubscriptionLoading: false });
     });
 
     it('should render upgrade prompt instead of children', () => {
@@ -140,7 +140,7 @@ describe('PremiumFeatureGate', () => {
 
   describe('accessibility', () => {
     beforeEach(() => {
-      mockUseUserTier.mockReturnValue('free');
+      mockUseUserTier.mockReturnValue({ userTier: 'free', isSubscriptionLoading: false });
     });
 
     it('should have proper ARIA labels and structure', () => {

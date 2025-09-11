@@ -57,7 +57,7 @@ export const FlockOverview: React.FC<FlockOverviewProps> = ({
               type="button"
               variant="primary"
               size="sm"
-              onClick={() => navigate('/flock-batches')}
+              onClick={() => navigate('/app/flock-batches')}
               text="Manage Batches"
             />
           </div>

@@ -13,7 +13,16 @@ export const PremiumFeatureGate: React.FC<PremiumFeatureGateProps> = ({
   fallback,
   featureName = 'this feature'
 }) => {
-  const userTier = useUserTier();
+  const { userTier, isSubscriptionLoading } = useUserTier();
+
+  // Show loading state while subscription status is being determined
+  if (isSubscriptionLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   if (userTier === 'premium') {
     return <>{children}</>;

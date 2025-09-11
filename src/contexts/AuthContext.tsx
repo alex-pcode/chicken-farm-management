@@ -53,9 +53,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       setLoading(false);
 
-      // Clear cache when user signs out or switches users
-      if (event === 'SIGNED_OUT' || (previousUserId && session?.user?.id !== previousUserId)) {
-        console.log('User signed out or changed, clearing cache for user:', previousUserId);
+      // Clear cache only when switching users (different user ID)
+      if (previousUserId && session?.user?.id !== previousUserId) {
+        console.log('User changed, clearing cache for previous user:', previousUserId);
         browserCache.clearAll(previousUserId);
       }
     });
@@ -64,11 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = async () => {
-    // Clear cache before signing out
-    if (user?.id) {
-      console.log('Clearing cache for user before sign out:', user.id);
-      browserCache.clearAll(user.id);
-    }
+    // Cache is preserved on logout for faster re-login experience
     await supabase.auth.signOut();
   };
 

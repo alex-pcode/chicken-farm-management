@@ -455,7 +455,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
       {/* Header */}
       <header className="header">
         <h1 
-          className="text-2xl lg:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent"
+          className="text-2xl lg:text-4xl font-bold gradient-text"
           role="heading"
           aria-level={1}
         >
@@ -473,54 +473,46 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
           aria-label="Flock batch statistics"
           role="region"
         >
-          <div className="glass-card p-6">
-            <MetricDisplay
-              value={batches.length}
-              label="Total Batches"
-              format="number"
-              precision={0}
-              variant="default"
-              color="default"
-              loading={isLoading}
-              testId="total-batches-metric"
-            />
-          </div>
-          <div className="glass-card p-6">
-            <MetricDisplay
-              value={totalBirds}
-              label="Total Birds"
-              format="number"
-              precision={0}
-              variant="default"
-              color="success"
-              loading={isLoading}
-              testId="total-birds-metric"
-            />
-          </div>
-          <div className="glass-card p-6">
-            <MetricDisplay
-              value={layingBatches}
-              label="Laying Batches"
-              format="number"
-              precision={0}
-              variant="default"
-              color="info"
-              loading={isLoading}
-              testId="laying-batches-metric"
-            />
-          </div>
-          <div className="glass-card p-6">
-            <MetricDisplay
-              value={deathRecords.reduce((sum, record) => sum + (record.count || 0), 0)}
-              label="Total Losses"
-              format="number"
-              precision={0}
-              variant="default"
-              color="danger"
-              loading={isLoading}
-              testId="total-losses-metric"
-            />
-          </div>
+          <MetricDisplay
+            value={batches.length}
+            label="Total Batches"
+            format="number"
+            precision={0}
+            variant="default"
+            color="default"
+            loading={isLoading}
+            testId="total-batches-metric"
+          />
+          <MetricDisplay
+            value={totalBirds}
+            label="Total Birds"
+            format="number"
+            precision={0}
+            variant="default"
+            color="success"
+            loading={isLoading}
+            testId="total-birds-metric"
+          />
+          <MetricDisplay
+            value={layingBatches}
+            label="Laying Batches"
+            format="number"
+            precision={0}
+            variant="default"
+            color="info"
+            loading={isLoading}
+            testId="laying-batches-metric"
+          />
+          <MetricDisplay
+            value={deathRecords.reduce((sum, record) => sum + (record.count || 0), 0)}
+            label="Total Losses"
+            format="number"
+            precision={0}
+            variant="default"
+            color="danger"
+            loading={isLoading}
+            testId="total-losses-metric"
+          />
         </section>
       )}
 

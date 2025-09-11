@@ -58,11 +58,11 @@ const variantClasses = {
 };
 
 const colorClasses = {
-  default: 'bg-gradient-to-r from-indigo-700 to-violet-600 bg-clip-text text-transparent',
-  success: 'bg-gradient-to-r from-emerald-700 to-green-600 bg-clip-text text-transparent',
-  warning: 'bg-gradient-to-r from-amber-700 to-orange-600 bg-clip-text text-transparent',
-  danger: 'bg-gradient-to-r from-red-700 to-rose-600 bg-clip-text text-transparent',
-  info: 'bg-gradient-to-r from-blue-700 to-cyan-600 bg-clip-text text-transparent',
+  default: 'text-indigo-700',
+  success: 'text-emerald-700',
+  warning: 'text-amber-700',
+  danger: 'text-red-700',
+  info: 'text-blue-700',
 };
 
 export const MetricDisplay: React.FC<MetricDisplayProps> = ({

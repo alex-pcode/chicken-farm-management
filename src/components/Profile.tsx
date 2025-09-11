@@ -384,12 +384,12 @@ export const Profile = () => {
                 </div>
 
                 <div className="flex gap-3">
-                  <a 
-                    href="/flock-batches" 
+                  <Link 
+                    to="/app/flock-batches" 
                     className="neu-button-secondary text-sm"
                   >
                     View Batch Manager
-                  </a>
+                  </Link>
                   <button 
                     onClick={fetchFlockSummary}
                     className="neu-button text-sm"
@@ -434,7 +434,7 @@ export const Profile = () => {
                     Batch management lets you track groups of chickens, log losses automatically, and get better production insights.
                   </p>
                   <Link 
-                    to="/flock-batches"
+                    to="/app/flock-batches"
                     className="neu-button-secondary text-sm bg-yellow-100 hover:bg-yellow-200"
                   >
                     Start Using Batches

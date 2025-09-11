@@ -156,13 +156,21 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
       })
       .reduce((sum, entry) => sum + (entry?.count || 0), 0);
     
-    // Calculate previous month's total
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    const twoMonthsAgo = new Date();
-    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+    // Calculate previous month's total for the same time period
+    // Compare same number of days: if today is the 15th, compare first 15 days of each month
+    const currentDayOfMonth = now.getDate();
+    
+    const previousMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+    const previousYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+    
     const previousMonthTotal = validEntries
-      .filter(entry => entry?.date && new Date(entry.date) >= twoMonthsAgo && new Date(entry.date) < oneMonthAgo)
+      .filter(entry => {
+        if (!entry?.date) return false;
+        const entryDate = new Date(entry.date);
+        return entryDate.getMonth() === previousMonth && 
+               entryDate.getFullYear() === previousYear &&
+               entryDate.getDate() <= currentDayOfMonth;
+      })
       .reduce((sum, entry) => sum + (entry?.count || 0), 0);
     
     return {

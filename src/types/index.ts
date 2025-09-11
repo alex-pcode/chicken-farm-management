@@ -256,7 +256,7 @@ export interface UserProfile {
   onboarding_completed: boolean;
   onboarding_step: 'welcome' | 'setup' | 'complete';
   setup_progress: FarmSetupProgress;
-  subscription_status: 'free' | 'premium';
+  subscription_status: 'free' | 'active' | 'cancelled' | 'past_due' | 'paused';
   created_at: string;
   updated_at: string;
 }
