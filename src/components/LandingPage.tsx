@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { LandingNavbar } from './LandingNavbar';
 
 // Import critical CSS modules
 import '../styles/critical/landing-hero.css';
@@ -415,18 +416,15 @@ export const LandingPage: React.FC = () => {
   };
 
   const handleStartTrial = () => {
-    // Navigate to the app - authentication will be handled by ProtectedRoute
-    navigate('/app');
+    // Disabled for now
   };
 
   const handleGetStartedFree = () => {
-    // Navigate to the app - authentication will be handled by ProtectedRoute
-    navigate('/app');
+    // Disabled for now
   };
 
   const handleSeeHowItWorks = () => {
-    // Placeholder for demo - could navigate to app or show demo video
-    navigate('/app');
+    // Disabled for now
   };
 
   // Load non-critical animations asynchronously after initial paint
@@ -451,6 +449,9 @@ export const LandingPage: React.FC = () => {
   return (
     <div className="w-full bg-gray-50 font-fraunces">
       
+      {/* Navigation */}
+      <LandingNavbar />
+      
       {/* Hero Section */}
       <motion.section 
         initial="hidden"
@@ -458,6 +459,7 @@ export const LandingPage: React.FC = () => {
         viewport={{ once: true, amount: 0.1 }}
         variants={fadeInUpVariants}
         className="relative py-10 lg:py-16 xl:py-20 bg-gray-50"
+        style={{ paddingTop: '6rem' }}
       >
         {/* Enhanced animated background elements */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
@@ -609,9 +611,10 @@ export const LandingPage: React.FC = () => {
               variants={fadeInUpVariants}
             >
               <button 
-                className="shiny-cta overflow-hidden px-8 py-4 text-white rounded-xl font-semibold text-base transform transition-all duration-300 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-purple-300"
+                className="bg-gray-400 overflow-hidden px-8 py-4 text-white rounded-xl font-semibold text-base cursor-not-allowed transition-all duration-300 focus:outline-none"
                 onClick={handleSeeHowItWorks}
-                aria-label="Watch demo video to see how the app works"
+                disabled
+                aria-label="Demo video - Coming Soon"
               >
                 <span className="flex items-center gap-2">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -831,6 +834,7 @@ export const LandingPage: React.FC = () => {
 
       {/* Enhanced Features Showcase Section */}
       <motion.section 
+        id="features"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.1 }}
@@ -1090,6 +1094,7 @@ export const LandingPage: React.FC = () => {
 
       {/* Pricing Section */}
       <motion.section 
+        id="pricing"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.1 }}
@@ -1159,11 +1164,12 @@ export const LandingPage: React.FC = () => {
                   <button 
                     className={
                       plan.buttonVariant === 'primary' 
-                        ? 'shiny-cta overflow-hidden w-full px-6 py-4 text-white rounded-xl font-semibold transform transition-all duration-300 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-purple-300'
-                        : 'w-full py-4 px-6 border-2 border-purple-600 text-purple-600 rounded-xl font-semibold hover:bg-purple-600 hover:text-white hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-purple-300'
+                        ? 'bg-gray-400 overflow-hidden w-full px-6 py-4 text-white rounded-xl font-semibold cursor-not-allowed transition-all duration-300 focus:outline-none'
+                        : 'w-full py-4 px-6 border-2 border-gray-400 text-gray-400 rounded-xl font-semibold cursor-not-allowed transition-all duration-300 focus:outline-none'
                     }
                     onClick={plan.buttonVariant === 'primary' ? handleStartTrial : handleGetStartedFree}
-                    aria-label={`${plan.buttonText} for ${plan.name} plan`}
+                    disabled
+                    aria-label={`${plan.buttonText} for ${plan.name} plan - Coming Soon`}
                   >
                     {plan.buttonText}
                   </button>
@@ -1216,12 +1222,11 @@ export const LandingPage: React.FC = () => {
           </motion.p>
 
           <motion.button 
-            className="bg-white text-purple-600 px-10 py-5 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all duration-300 hover:scale-105 shadow-2xl hover:shadow-white/20 focus:outline-none focus:ring-4 focus:ring-white/30"
+            className="bg-gray-400 text-white px-10 py-5 rounded-xl font-bold text-lg cursor-not-allowed transition-all duration-300 shadow-2xl focus:outline-none"
             onClick={handleGetStartedFree}
-            aria-label="Start tracking your chickens for free"
+            disabled
+            aria-label="Coming Soon - Chickens are still being onboarded"
             variants={fadeInUpVariants}
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.98 }}
           >
             <span className="flex items-center gap-2">
               Yes, My Chickens Deserve Recognition! 
