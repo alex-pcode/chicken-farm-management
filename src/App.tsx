@@ -34,6 +34,8 @@ type NavigationItem = {
 
 // Free tier navigation items (available to all users)
 const freeNavigation: NavigationItem[] = [
+  { name: 'Egg Counter', emoji: '🥚', href: '/app/egg-counter' },
+  { name: 'Account', emoji: '⚙️', href: '/app/account' },
 ];
 
 // Premium tier navigation items (premium subscription required)
@@ -125,11 +127,11 @@ function App() {
         {/* Protected Routes */}
         <Route path="/app/*" element={
           <OnboardingProvider>
-            <ProtectedRoute>
-              <OptimizedDataProvider>
+            <OptimizedDataProvider>
+              <ProtectedRoute>
                 <MainApp />
-              </OptimizedDataProvider>
-            </ProtectedRoute>
+              </ProtectedRoute>
+            </OptimizedDataProvider>
           </OnboardingProvider>
         } />
       </Routes>
@@ -143,6 +145,11 @@ const MainApp = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const location = useLocation();
+  
+  // Get default route based on user tier
+  const getDefaultRoute = (userTier: 'free' | 'premium') => {
+    return userTier === 'premium' ? '/app/dashboard' : '/app/egg-counter';
+  };
   
   const navigation = getNavigationItems(userTier);
   const mobileNav = getMobileNavigationItems(userTier);
@@ -341,8 +348,8 @@ const MainApp = () => {
       <main className="main-content" style={{ paddingTop: 0, paddingLeft: '17px', paddingRight: '17px' }}>
         <Suspense fallback={<ComponentLoader />}>
           <Routes>
-            {/* Default redirect from /app to /app/dashboard */}
-            <Route index element={<Navigate to="/app/dashboard" replace />} />
+            {/* Default redirect from /app based on user tier */}
+            <Route index element={<Navigate to={getDefaultRoute(userTier)} replace />} />
             
             {/* Premium Features */}
             <Route path="dashboard" element={

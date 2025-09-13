@@ -3,6 +3,7 @@ import { FormModal } from '../ui/modals/FormModal';
 import { useFormState } from '../../hooks/useFormState';
 import { useFormValidation } from '../../hooks/useFormValidation';
 import { useEggData } from '../../hooks/data/useEggData';
+import { useUserTier } from '../../contexts/OptimizedDataProvider';
 import { motion } from 'framer-motion';
 import type { EggEntry } from '../../types';
 
@@ -30,6 +31,7 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
   const [generatedEntries, setGeneratedEntries] = useState<number>(0);
   
   const { addEntry } = useEggData();
+  const { userTier } = useUserTier();
   
   const form = useFormState<HistoricalFormData>({
     initialValues: {
@@ -65,7 +67,10 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
           if (endDate <= startDate) return 'End date must be after start date';
           
           const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
-          if (daysDiff > 365) return 'Date range cannot exceed 365 days';
+          const maxDays = userTier === 'free' ? 90 : 365;
+          const tierLabel = userTier === 'free' ? 'Free users are limited to 90 days' : 'Date range cannot exceed 365 days';
+          
+          if (daysDiff > maxDays) return tierLabel;
           
           return null;
         },
@@ -223,6 +228,21 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
               </li>
             </ul>
           </div>
+
+          {userTier === 'free' && (
+            <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+              <div className="flex items-start gap-3">
+                <span className="text-orange-600 text-xl mt-0.5">ℹ️</span>
+                <div>
+                  <h4 className="font-medium text-orange-900 mb-1">Free User Limit</h4>
+                  <p className="text-sm text-orange-800">
+                    Free accounts can import up to 90 days of historical data. 
+                    <span className="font-medium"> Upgrade to premium for unlimited historical imports.</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           
           <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
             <div className="flex items-start gap-3">
@@ -344,9 +364,17 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
               <h4 className="font-medium text-green-900 mb-2">Preview</h4>
               <div className="text-sm text-green-800 space-y-1">
                 <p><strong>Period:</strong> {days} days ({weeks} weeks)</p>
+                {userTier === 'free' && (
+                  <p><strong>Free user limit:</strong> {days}/90 days</p>
+                )}
                 <p><strong>Estimated Total:</strong> ~{estimatedEggs.toLocaleString()} eggs</p>
                 <p><strong>Daily Variation:</strong> ±20% for realistic data</p>
               </div>
+              {userTier === 'free' && days > 80 && days <= 90 && (
+                <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+                  ⚠️ You're near your 90-day limit for free users
+                </div>
+              )}
             </motion.div>
           )}
           
