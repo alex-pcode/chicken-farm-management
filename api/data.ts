@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import type { FlockEvent, FlockBatch, FeedEntry, Expense, Customer, Sale, DeathRecord } from '../src/types/index';
+import type { FlockEvent, Expense, Customer, Sale, DeathRecord } from '../src/types/index';
 
 // Database record types (snake_case as they come from Supabase)
 interface DBFeedInventory {
@@ -286,7 +286,7 @@ async function getAllData(user: AuthUser, res: VercelResponse) {
   // Don't throw error if profile doesn't exist - new users won't have one
 
   // Fetch death records (premium only)
-  let deathRecords: any[] = [];
+  let deathRecords: DeathRecord[] = [];
   if (!isFreeTier) {
     const { data: deathRecordsData, error: deathsError } = await supabase
       .from('death_records')

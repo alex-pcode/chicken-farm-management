@@ -34,7 +34,7 @@ type NavigationItem = {
 
 // Free tier navigation items (available to all users)
 const freeNavigation: NavigationItem[] = [
-  { name: 'Egg Counter', emoji: '🥚', href: '/app/egg-counter' },
+  { name: 'Eggs', emoji: '🥚', href: '/app/egg-counter' },
   { name: 'Account', emoji: '⚙️', href: '/app/account' },
 ];
 
@@ -48,14 +48,13 @@ const premiumNavigation: NavigationItem[] = [
   { name: 'Feed', emoji: '🌾', href: '/app/feed-tracker' },
   { name: 'Savings', emoji: '📈', href: '/app/savings' },
   { name: 'Viability', emoji: '🧮', href: '/app/viability' },
-  { name: 'Account', emoji: '⚙️', href: '/app/account' },
   { name: 'Cards', emoji: '🎨', href: '/app/cards' },
 ];
 
 // Function to get navigation items based on user tier
 const getNavigationItems = (userTier: 'free' | 'premium'): NavigationItem[] => {
-  return userTier === 'premium' 
-    ? [...premiumNavigation, ...freeNavigation]
+  return userTier === 'premium'
+    ? [...premiumNavigation, { name: 'Account', emoji: '⚙️', href: '/app/account' }]
     : freeNavigation;
 };
 

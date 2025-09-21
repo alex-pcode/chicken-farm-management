@@ -95,7 +95,7 @@ aplikacija/ (D:\Koke\Aplikacija\)
 ## Business Context
 
 ### Application Overview
-**Chicken Manager** is a comprehensive flock management application targeting the $20-60M addressable market of tech-savvy chicken keepers, including:
+**Chicken Care** is a comprehensive flock management application targeting the $20-60M addressable market of tech-savvy chicken keepers, including:
 
 - **Urban Homesteaders**: Millennials/Gen-Z professionals pursuing self-sufficiency (primary segment)
 - **Suburban Families**: Parents using chickens for education and food production

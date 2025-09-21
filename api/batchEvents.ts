@@ -106,6 +106,82 @@ async function createFlockEventFromBatchEvent(batchEvent: {
   }
 }
 
+// Function to update batch laying start date when laying_start event is created
+async function updateBatchLayingStartDate(batchId: string, layingStartDate: string, userId: string) {
+  try {
+    // Get current batch data to check if actualLayingStartDate is already set
+    const { data: currentBatch, error: fetchError } = await supabase
+      .from('flock_batches')
+      .select('actual_laying_start_date')
+      .eq('id', batchId)
+      .eq('user_id', userId)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching current batch data:', fetchError);
+      return;
+    }
+
+    // Only update if actualLayingStartDate is not already set, or if the new date is earlier
+    const currentDate = currentBatch?.actual_laying_start_date ? new Date(currentBatch.actual_laying_start_date) : null;
+    const newDate = new Date(layingStartDate);
+
+    if (!currentDate || newDate < currentDate) {
+      const { error: updateError } = await supabase
+        .from('flock_batches')
+        .update({ actual_laying_start_date: layingStartDate })
+        .eq('id', batchId)
+        .eq('user_id', userId);
+
+      if (updateError) {
+        console.error('Error updating batch laying start date:', updateError);
+      } else {
+        console.log(`Successfully updated batch ${batchId} actualLayingStartDate to ${layingStartDate}`);
+      }
+    } else {
+      console.log(`Batch ${batchId} already has an earlier or same actualLayingStartDate, not updating`);
+    }
+  } catch (error) {
+    console.error('Error in updateBatchLayingStartDate:', error);
+  }
+}
+
+// Function to recalculate batch laying start date from remaining laying_start events
+async function recalculateBatchLayingStartDate(batchId: string, userId: string) {
+  try {
+    // Get all remaining laying_start events for this batch, ordered by date
+    const { data: layingEvents, error: eventsError } = await supabase
+      .from('batch_events')
+      .select('date')
+      .eq('batch_id', batchId)
+      .eq('user_id', userId)
+      .eq('type', 'laying_start')
+      .order('date', { ascending: true });
+
+    if (eventsError) {
+      console.error('Error fetching laying_start events:', eventsError);
+      return;
+    }
+
+    // Update batch with earliest remaining laying_start date, or null if no events remain
+    const earliestLayingDate = layingEvents && layingEvents.length > 0 ? layingEvents[0].date : null;
+
+    const { error: updateError } = await supabase
+      .from('flock_batches')
+      .update({ actual_laying_start_date: earliestLayingDate })
+      .eq('id', batchId)
+      .eq('user_id', userId);
+
+    if (updateError) {
+      console.error('Error recalculating batch laying start date:', updateError);
+    } else {
+      console.log(`Successfully recalculated batch ${batchId} actualLayingStartDate to ${earliestLayingDate || 'null'}`);
+    }
+  } catch (error) {
+    console.error('Error in recalculateBatchLayingStartDate:', error);
+  }
+}
+
 // Function to update batch brooding count based on timeline events
 async function updateBatchBroodingCount(batchId: string, userId: string) {
   try {
@@ -253,6 +329,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         await updateBatchBroodingCount(batchId, userId);
       }
 
+      // Update batch actualLayingStartDate for laying_start events
+      if (type === 'laying_start') {
+        await updateBatchLayingStartDate(batchId, date, userId);
+      }
+
       return res.status(201).json({
         success: true,
         data: { event }
@@ -320,6 +401,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         await updateBatchBroodingCount(event.batch_id, userId);
       }
 
+      // Update batch actualLayingStartDate for laying_start events
+      if (type === 'laying_start') {
+        await updateBatchLayingStartDate(event.batch_id, event.date, userId);
+      }
+
       return res.status(200).json({
         success: true,
         data: { event }
@@ -363,6 +449,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Update batch counts if brooding event was deleted
       if (eventToDelete.type === 'brooding_start' || eventToDelete.type === 'brooding_stop') {
         await updateBatchBroodingCount(eventToDelete.batch_id, userId);
+      }
+
+      // Recalculate batch actualLayingStartDate if laying_start event was deleted
+      if (eventToDelete.type === 'laying_start') {
+        await recalculateBatchLayingStartDate(eventToDelete.batch_id, userId);
       }
 
       return res.status(200).json({

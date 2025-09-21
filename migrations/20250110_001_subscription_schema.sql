@@ -9,8 +9,8 @@
 
 -- Add subscription-related columns to existing users table
 -- NOTE: Using user_profiles table instead of users as per Supabase architecture
-ALTER TABLE public.user_profiles 
-ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) DEFAULT 'free' 
+ALTER TABLE public.user_profiles
+ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(20) DEFAULT 'active'
     CHECK (subscription_status IN ('free', 'active', 'cancelled', 'past_due', 'paused')),
 ADD COLUMN IF NOT EXISTS subscription_id VARCHAR(255),
 ADD COLUMN IF NOT EXISTS customer_id VARCHAR(255), 
@@ -179,9 +179,9 @@ CREATE POLICY "Feature configuration readable by authenticated users" ON public.
 -- DATA MIGRATION AND CLEANUP
 -- ================================
 
--- Migration for existing users: set all to 'free' status if not already set
-UPDATE public.user_profiles SET 
-    subscription_status = 'free',
+-- Migration for existing users: set all to 'active' status if not already set
+UPDATE public.user_profiles SET
+    subscription_status = 'active',
     subscription_updated_at = NOW()
 WHERE subscription_status IS NULL;
 

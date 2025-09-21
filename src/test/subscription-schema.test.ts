@@ -106,7 +106,7 @@ describe('Subscription Database Schema', () => {
       expect(data).toBeDefined();
       expect(Array.isArray(data)).toBe(true);
       
-      const indexNames = data?.map((idx: any) => idx.indexname) || [];
+      const indexNames = data?.map((idx: { indexname: string }) => idx.indexname) || [];
       expect(indexNames).toContain('idx_user_profiles_subscription_status');
       expect(indexNames).toContain('idx_user_profiles_subscription_id');
     });
@@ -175,7 +175,7 @@ describe('Subscription Database Schema', () => {
       if (skipTests) return;
 
       // Try to access webhook_events as regular user (should fail)
-      const { data, error } = await anonClient
+      const { data } = await anonClient
         .from('webhook_events')
         .select('*');
 
@@ -383,7 +383,7 @@ describe('Subscription Database Schema', () => {
       const tables = ['flock_profiles', 'egg_entries', 'expenses', 'customers', 'sales'];
       
       for (const table of tables) {
-        const { data, error } = await anonClient
+        const { error } = await anonClient
           .from(table)
           .select('*')
           .limit(1);

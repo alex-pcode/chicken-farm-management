@@ -187,7 +187,7 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
           ...prevData,
           userProfile: prevData.userProfile ? {
             ...prevData.userProfile,
-            subscription_status: cachedSubscriptionStatus as any
+            subscription_status: cachedSubscriptionStatus as 'free' | 'active' | 'cancelled' | 'past_due' | 'paused'
           } : null
         }));
         setIsSubscriptionLoading(false);
@@ -227,8 +227,7 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
       setIsLoading(false);
       setIsSubscriptionLoading(false);
     }
-  }, [user?.id, authLoading]); // Removed refreshData from dependencies to prevent double execution
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Background refresh when cache becomes stale
   useEffect(() => {

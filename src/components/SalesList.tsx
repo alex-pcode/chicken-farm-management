@@ -80,18 +80,6 @@ export const SalesList = ({ sales, customers, onDataChange }: SalesListProps) =>
     }
   };
 
-  const handleEdit = (sale: SaleWithCustomer) => {
-    setEditingSale(sale);
-    const totalEggs = (sale.dozen_count * 12) + sale.individual_count;
-    setFormData({
-      customer_id: sale.customer_id,
-      sale_date: sale.sale_date,
-      eggs_count: totalEggs,
-      total_amount: sale.total_amount,
-      notes: sale.notes || ''
-    });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);

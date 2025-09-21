@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import { LandingNavbar } from './LandingNavbar';
 
 // Import critical CSS modules
@@ -324,7 +323,6 @@ const pricingPlans: PricingPlanData[] = [
 
 // Main Component
 export const LandingPage: React.FC = () => {
-  const navigate = useNavigate();
   const prefersReducedMotion = useReducedMotion();
   const isMobile = useDeviceType();
 

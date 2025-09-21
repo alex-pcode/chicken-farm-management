@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { FlockService } from '../FlockService';
 import type { FlockProfile, FlockEvent, FlockBatch, DeathRecord } from '../../../types';

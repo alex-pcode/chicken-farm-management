@@ -38,18 +38,25 @@ export const Dashboard = () => {
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
     
-    // Use date arithmetic with proper time boundaries for inclusive filtering
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    sevenDaysAgo.setHours(0, 0, 0, 0); // Set to start of day to be inclusive
-    
+    // Calculate this week's total (last 7 days inclusive - days 0 to 6 going back)
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // End of today
+
+    const sixDaysAgo = new Date();
+    sixDaysAgo.setDate(sixDaysAgo.getDate() - 6); // 6 days back + today = 7 days
+    sixDaysAgo.setHours(0, 0, 0, 0); // Start of day
+
     const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
     const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-    
-    // Calculate 7-day periods with proper time boundaries
-    const fourteenDaysAgo = new Date();
-    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-    fourteenDaysAgo.setHours(0, 0, 0, 0);
+
+    // Calculate previous week's total (days 7 to 13 going back)
+    const thirteenDaysAgo = new Date();
+    thirteenDaysAgo.setDate(thirteenDaysAgo.getDate() - 13); // 13 days back
+    thirteenDaysAgo.setHours(0, 0, 0, 0);
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7); // 7 days back
+    sevenDaysAgo.setHours(23, 59, 59, 999); // End of 7th day back
     
     // Single pass through egg entries with category tracking
     let totalEggs = 0;
@@ -58,6 +65,9 @@ export const Dashboard = () => {
     let thisMonthProduction = 0;
     let lastMonthProduction = 0;
     const thisMonthEntries = [];
+
+    // Calculate current day of month for fair monthly comparison
+    const currentDayOfMonth = now.getDate();
     
     for (const entry of eggEntries) {
       const entryDate = new Date(entry.date);
@@ -69,12 +79,12 @@ export const Dashboard = () => {
       
       // Last 7 days check - collect entries (ensure date comparison is at start of day)
       const entryAtMidnight = new Date(entry.date + 'T00:00:00');
-      if (entryAtMidnight >= sevenDaysAgo) {
+      if (entryAtMidnight >= sixDaysAgo && entryAtMidnight <= today) {
         last7DaysEntries.push(entry);
       }
-      
+
       // Previous 7 days check - collect entries (ensure date comparison is at start of day)
-      if (entryAtMidnight >= fourteenDaysAgo && entryAtMidnight < sevenDaysAgo) {
+      if (entryAtMidnight >= thirteenDaysAgo && entryAtMidnight <= sevenDaysAgo) {
         previous7DaysEntries.push(entry);
       }
       
@@ -84,8 +94,8 @@ export const Dashboard = () => {
         thisMonthEntries.push(entry);
       }
       
-      // Last month check
-      if (entryMonth === lastMonth && entryYear === lastMonthYear) {
+      // Last month check - only count entries up to same day of month for fair comparison
+      if (entryMonth === lastMonth && entryYear === lastMonthYear && entryDate.getDate() <= currentDayOfMonth) {
         lastMonthProduction += entry.count;
       }
     }

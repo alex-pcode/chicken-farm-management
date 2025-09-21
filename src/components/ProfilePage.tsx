@@ -10,7 +10,6 @@ import { NumberInput, SelectInput } from './forms';
 import { StatCard } from './ui/cards/StatCard';
 import { PageContainer } from './ui/layout/PageContainer';
 import { TabNavigation, Tab } from './ui/TabNavigation';
-import { Avatar } from './ui/Avatar';
 import { Breadcrumbs } from './ui/Breadcrumbs';
 import { ConfirmDialog } from './ui/modals/ConfirmDialog';
 import { HistoricalEggTrackingModal } from './modals/HistoricalEggTrackingModal';
@@ -299,20 +298,6 @@ export const ProfilePage: React.FC = () => {
         icon="👤"
       >
         <div className="space-y-6">
-          {/* Avatar Section */}
-          <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-            <Avatar 
-              name={formData.displayName || 'User'} 
-              size="lg"
-            />
-            <div>
-              <h3 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>Profile Picture</h3>
-              <p className="text-gray-600 text-sm">Upload a profile picture to personalize your account</p>
-              <button className="text-purple-600 hover:text-purple-700 text-sm font-medium mt-1 transition-colors">
-                Upload Photo (Coming Soon)
-              </button>
-            </div>
-          </div>
 
           {/* Account Verification Status */}
           <div className="space-y-3">
@@ -329,31 +314,6 @@ export const ProfilePage: React.FC = () => {
                 <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">Verified</span>
               </div>
               
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-400 text-lg">📱</span>
-                  <div>
-                    <span className="text-sm font-medium text-gray-900">Phone Number</span>
-                    <p className="text-xs text-gray-600">Add your phone for enhanced security</p>
-                  </div>
-                </div>
-                <button className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium hover:bg-blue-200 transition-colors">
-                  Add Phone (Coming Soon)
-                </button>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-400 text-lg">🔐</span>
-                  <div>
-                    <span className="text-sm font-medium text-gray-900">Two-Factor Authentication</span>
-                    <p className="text-xs text-gray-600">Extra security for your account</p>
-                  </div>
-                </div>
-                <button className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium hover:bg-blue-200 transition-colors">
-                  Enable (Coming Soon)
-                </button>
-              </div>
             </div>
           </div>
 
@@ -417,12 +377,12 @@ export const ProfilePage: React.FC = () => {
           <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
             <span className="text-green-500 text-lg">🛡️</span>
             <div className="flex-1">
-              <h3 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>Security Score: Good</h3>
-              <p className="text-gray-600 text-sm mt-1">Your account has basic security measures in place</p>
+              <h3 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>Security Status: Secure</h3>
+              <p className="text-gray-600 text-sm mt-1">Your account is protected with email verification and secure authentication</p>
               <div className="mt-2 bg-gray-200 rounded-full h-2">
-                <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-full h-2 transition-all duration-300" style={{ width: '70%' }} />
+                <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-full h-2 transition-all duration-300" style={{ width: '100%' }} />
               </div>
-              <p className="text-xs text-gray-500 mt-1">Enable 2FA to improve your score</p>
+              <p className="text-xs text-gray-500 mt-1">Your account security is fully configured</p>
             </div>
           </div>
 
