@@ -33,9 +33,9 @@
       :root{--font-fraunces:'Fraunces','Fraunces-fallback','Times New Roman','Georgia',serif;--primary:oklch(0.205 0 0);}
       @font-face{font-family:'Fraunces-fallback';src:local('Times New Roman'),local('Georgia');size-adjust:108%;ascent-override:90%;descent-override:22%;line-gap-override:0%;}
       
-      /* Essential body and typography */
-      body{font-family:var(--font-fraunces);font-optical-sizing:auto;font-variation-settings:'opsz' 14;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;font-display:optional;margin:0;padding:0;background:#f9fafb;}
-      h1,h2,h3{font-family:var(--font-fraunces);font-variation-settings:'opsz' 48;font-weight:600;line-height:1.2;letter-spacing:-0.02em;margin:0 0 1rem 0;}
+      /* Essential body and typography - using self-hosted fonts with fallbacks */
+      body{font-family:var(--font-fraunces);font-optical-sizing:auto;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;margin:0;padding:0;background:#f9fafb;}
+      h1,h2,h3{font-family:var(--font-fraunces);font-weight:600;line-height:1.2;letter-spacing:-0.02em;margin:0 0 1rem 0;}
       
       /* Critical hero section layout */
       .hero-section{position:relative;padding:2.5rem 1.5rem;background:#f9fafb;min-height:50vh;overflow:hidden;}
@@ -134,16 +134,47 @@
     <link rel="apple-touch-icon" sizes="192x192" href="/pwa-192x192.png" />
     <link rel="apple-touch-icon" sizes="512x512" href="/pwa-512x512.png" />
     
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
-    <!-- Preload critical font for immediate display -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap"></noscript>
+    <!-- Self-hosted fonts - no external requests needed -->
+    <style>
+      /* Self-hosted Fraunces font faces */
+      @font-face {
+        font-family: 'Fraunces';
+        src: url('/fonts/fraunces-400.woff2') format('woff2');
+        font-weight: 400;
+        font-style: normal;
+        font-display: optional;
+      }
+      @font-face {
+        font-family: 'Fraunces';
+        src: url('/fonts/fraunces-500.woff2') format('woff2');
+        font-weight: 500;
+        font-style: normal;
+        font-display: optional;
+      }
+      @font-face {
+        font-family: 'Fraunces';
+        src: url('/fonts/fraunces-600.woff2') format('woff2');
+        font-weight: 600;
+        font-style: normal;
+        font-display: optional;
+      }
+      @font-face {
+        font-family: 'Fraunces';
+        src: url('/fonts/fraunces-700.woff2') format('woff2');
+        font-weight: 700;
+        font-style: normal;
+        font-display: optional;
+      }
+    </style>
+
+    <!-- Optional: Preload critical font weights -->
+    <link rel="preload" href="/fonts/fraunces-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/fraunces-600.woff2" as="font" type="font/woff2" crossorigin>
     <title>Chicken Manager</title>
+    <!--ssr-head-->
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><!--ssr-outlet--></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

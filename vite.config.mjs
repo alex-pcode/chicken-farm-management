@@ -98,26 +98,36 @@ export default defineConfig({
   ].filter(Boolean),
   build: {
     rollupOptions: {
-      output: {
-        // Optimize chunk splitting for better caching
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          supabase: ['@supabase/supabase-js'],
-          charts: ['recharts'],
-          ui: ['framer-motion', '@headlessui/react'],
-        },
-        assetFileNames: (assetInfo) => {
-          const info = assetInfo.name.split('.')
-          const extType = info[info.length - 1]
-          if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(extType)) {
-            return `assets/images/[name]-[hash][extname]`
+      input: process.env.SSR
+        ? 'src/entry-server.tsx'
+        : 'index.html',
+      output: process.env.SSR
+        ? {
+            format: 'es',
+            entryFileNames: '[name].js',
+            dir: 'dist-ssr'
           }
-          if (/css/i.test(extType)) {
-            return `assets/css/[name]-[hash][extname]`
-          }
-          return `assets/[name]-[hash][extname]`
-        },
-      },
+        : {
+            // Optimize chunk splitting for better caching
+            manualChunks: {
+              vendor: ['react', 'react-dom'],
+              supabase: ['@supabase/supabase-js'],
+              charts: ['recharts'],
+              ui: ['framer-motion', '@headlessui/react'],
+            },
+            assetFileNames: (assetInfo) => {
+              const info = assetInfo.name.split('.')
+              const extType = info[info.length - 1]
+              if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(extType)) {
+                return `assets/images/[name]-[hash][extname]`
+              }
+              if (/css/i.test(extType)) {
+                return `assets/css/[name]-[hash][extname]`
+              }
+              return `assets/[name]-[hash][extname]`
+            },
+          },
+      external: process.env.SSR ? ['react', 'react-dom/server'] : undefined,
     },
     // Enable source maps for production debugging
     sourcemap: process.env.NODE_ENV === 'production',
@@ -125,6 +135,7 @@ export default defineConfig({
     cssCodeSplit: true,
     minify: 'esbuild',
     target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari14'],
+    ssr: process.env.SSR ? 'src/entry-server.tsx' : false,
   },
   test: {
     globals: true,

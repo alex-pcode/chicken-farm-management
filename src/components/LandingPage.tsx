@@ -183,9 +183,9 @@ const getResponsiveImageProps = (baseName: string, imageIndex?: number) => {
   let sizes = '';
 
   if (baseName === 'dashboard') {
-    // For dashboard images, use responsive srcset
-    srcset = `/screenshots/dashboard mobile.webp 768w, /screenshots/dashboard desktop.webp 1920w`;
-    src = `/screenshots/dashboard desktop.webp`; // Default for SEO/fallback
+    // For dashboard images, use responsive srcset with URL-encoded spaces
+    srcset = `/screenshots/dashboard%20mobile.webp 768w, /screenshots/dashboard%20desktop.webp 1920w`;
+    src = `/screenshots/dashboard%20desktop.webp`; // Default for SEO/fallback
     sizes = '(max-width: 767px) 100vw, (max-width: 1200px) 90vw, 80vw'; // Matches actual display sizes
   } else if (screenshots) {
     // For other images, build srcset based on available versions
@@ -193,23 +193,23 @@ const getResponsiveImageProps = (baseName: string, imageIndex?: number) => {
 
     if (screenshots.mobile) {
       if (screenshots.hasMultiple && typeof imageIndex === 'number' && imageIndex > 0) {
-        srcsetParts.push(`/screenshots/${baseName} ${imageIndex + 1} mobile.webp 768w`);
+        srcsetParts.push(`/screenshots/${encodeURIComponent(baseName + ' ' + (imageIndex + 1) + ' mobile')}.webp 768w`);
       } else {
-        srcsetParts.push(`/screenshots/${baseName} mobile.webp 768w`);
+        srcsetParts.push(`/screenshots/${encodeURIComponent(baseName + ' mobile')}.webp 768w`);
       }
     }
 
     if (screenshots.desktop) {
-      srcsetParts.push(`/screenshots/${baseName} desktop.webp 1920w`);
+      srcsetParts.push(`/screenshots/${encodeURIComponent(baseName + ' desktop')}.webp 1920w`);
     }
 
     srcset = srcsetParts.join(', ');
-    src = screenshots.desktop ? `/screenshots/${baseName} desktop.webp` : `/screenshots/${baseName} mobile.webp`;
+    src = screenshots.desktop ? `/screenshots/${encodeURIComponent(baseName + ' desktop')}.webp` : `/screenshots/${encodeURIComponent(baseName + ' mobile')}.webp`;
     sizes = '(max-width: 767px) 100vw, (max-width: 1200px) 90vw, 80vw';
   } else {
     // Fallback to dashboard
-    srcset = `/screenshots/dashboard mobile.webp 768w, /screenshots/dashboard desktop.webp 1920w`;
-    src = `/screenshots/dashboard desktop.webp`;
+    srcset = `/screenshots/dashboard%20mobile.webp 768w, /screenshots/dashboard%20desktop.webp 1920w`;
+    src = `/screenshots/dashboard%20desktop.webp`;
     sizes = '(max-width: 767px) 100vw, (max-width: 1200px) 90vw, 80vw';
   }
 
@@ -573,7 +573,7 @@ export const LandingPage: React.FC = () => {
                     sizes={imageProps.sizes}
                     alt="Chicken Manager dashboard showing egg production insights and cost analysis - Click to watch demo video"
                     className="rounded-2xl shadow-2xl w-full mx-auto transition-all duration-300 group-hover:shadow-3xl"
-                    fetchpriority="high"
+                    fetchPriority="high"
                     decoding="async"
                   />
                 );
