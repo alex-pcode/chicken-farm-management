@@ -1,18 +1,13 @@
-import { createRequire } from 'module'
-import { fileURLToPath } from 'url'
-import { dirname, resolve } from 'path'
+const fs = require('fs')
+const path = require('path')
 
-const require = createRequire(import.meta.url)
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-
-export default async function handler(request, response) {
+module.exports = async function handler(request, response) {
   try {
     const url = request.url || '/'
 
     // Only SSR the landing page and key SEO pages
     const ssrPaths = ['/', '/landing', '/about']
-    const shouldSSR = ssrPaths.some(path => url.startsWith(path))
+    const shouldSSR = ssrPaths.some(pathname => url.startsWith(pathname))
 
     if (!shouldSSR) {
       // For other pages, redirect to SPA
@@ -21,13 +16,21 @@ export default async function handler(request, response) {
       return
     }
 
-    // Load the SSR build
-    const { render } = await import('../dist-ssr/entry-server.js')
+    // Load the SSR build (fallback to SPA if SSR build not available)
+    let render
+    try {
+      const serverModule = require('../dist-ssr/entry-server.js')
+      render = serverModule.render
+    } catch (ssrError) {
+      console.log('SSR build not available, falling back to SPA:', ssrError.message)
+      response.setHeader('Location', url)
+      response.status(302).end()
+      return
+    }
 
     // Read the client-side built HTML template
-    const template = await import('fs').then(fs =>
-      fs.promises.readFile(resolve(__dirname, '../dist/index.html'), 'utf-8')
-    )
+    const templatePath = path.resolve(__dirname, '../dist/index.html')
+    const template = await fs.promises.readFile(templatePath, 'utf-8')
 
     // Render the app HTML
     const appHtml = render(url)
