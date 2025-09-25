@@ -4,7 +4,7 @@ import * as Sentry from "@sentry/react"
 import './index.css'
 import App from './App.tsx'
 import { BrowserRouter as Router } from 'react-router-dom';
-import { initializeWebVitalsMonitoring } from './utils/monitoring';
+// import { initializeWebVitalsMonitoring } from './utils/monitoring';
 
 // Initialize Sentry for production error monitoring
 if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
@@ -36,8 +36,8 @@ if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
   });
 }
 
-// Initialize Web Vitals monitoring
-initializeWebVitalsMonitoring()
+// Initialize Web Vitals monitoring - temporarily disabled
+// initializeWebVitalsMonitoring()
 
 // PWA Service Worker Registration
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
