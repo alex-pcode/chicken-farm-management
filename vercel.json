@@ -5,16 +5,8 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/",
-      "destination": "/api/ssr"
-    },
-    {
-      "source": "/landing",
-      "destination": "/api/ssr"
-    },
-    {
-      "source": "/about",
-      "destination": "/api/ssr"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
     }
   ],
   "headers": [

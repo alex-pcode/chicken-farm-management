@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:client && npm run build:server",
+    "build": "vite build",
     "build:client": "vite build",
-    "build:server": "cross-env SSR=1 vite build",
+    "build:server": "echo 'SSR build disabled'",
     "type-check": "tsc -b",
     "lint": "eslint .",
     "preview": "vite preview",
