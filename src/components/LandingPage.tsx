@@ -137,10 +137,10 @@ const getResponsiveImageSrc = (baseName: string, isMobile: boolean, _prefersRedu
     'savings': { desktop: true, mobile: true, hasMultiple: false },
     'expenses': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 }
   };
-  
+
   const screenshots = availableScreenshots[baseName as keyof typeof availableScreenshots];
   if (!screenshots) return `/screenshots/dashboard ${isMobile ? 'mobile' : 'desktop'}.webp`;
-  
+
   // If requesting mobile and mobile exists, use mobile
   if (isMobile && screenshots.mobile) {
     if (screenshots.hasMultiple && typeof imageIndex === 'number' && imageIndex > 0) {
@@ -148,19 +148,72 @@ const getResponsiveImageSrc = (baseName: string, isMobile: boolean, _prefersRedu
     }
     return `/screenshots/${baseName} mobile.webp`;
   }
-  
+
   // If requesting desktop and desktop exists, use desktop
   if (!isMobile && screenshots.desktop) {
     return `/screenshots/${baseName} desktop.webp`;
   }
-  
+
   // Fallback logic: if requesting desktop but only mobile exists, use mobile
   if (!isMobile && !screenshots.desktop && screenshots.mobile) {
     return `/screenshots/${baseName} mobile.webp`;
   }
-  
+
   // Final fallback to dashboard
   return `/screenshots/dashboard ${isMobile ? 'mobile' : 'desktop'}.webp`;
+};
+
+// Helper function to get responsive image props with proper srcset and sizes
+const getResponsiveImageProps = (baseName: string, imageIndex?: number) => {
+  const availableScreenshots = {
+    'dashboard': { desktop: true, mobile: true, hasMultiple: false },
+    'egg tracking': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 },
+    'flock': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 },
+    'crm': { desktop: true, mobile: true, hasMultiple: false },
+    'feed': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 },
+    'savings': { desktop: true, mobile: true, hasMultiple: false },
+    'expenses': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 }
+  };
+
+  const screenshots = availableScreenshots[baseName as keyof typeof availableScreenshots];
+
+  // Generate srcset and default src
+  let srcset = '';
+  let src = '';
+  let sizes = '';
+
+  if (baseName === 'dashboard') {
+    // For dashboard images, use responsive srcset
+    srcset = `/screenshots/dashboard mobile.webp 768w, /screenshots/dashboard desktop.webp 1920w`;
+    src = `/screenshots/dashboard desktop.webp`; // Default for SEO/fallback
+    sizes = '(max-width: 767px) 100vw, (max-width: 1200px) 90vw, 80vw'; // Matches actual display sizes
+  } else if (screenshots) {
+    // For other images, build srcset based on available versions
+    const srcsetParts: string[] = [];
+
+    if (screenshots.mobile) {
+      if (screenshots.hasMultiple && typeof imageIndex === 'number' && imageIndex > 0) {
+        srcsetParts.push(`/screenshots/${baseName} ${imageIndex + 1} mobile.webp 768w`);
+      } else {
+        srcsetParts.push(`/screenshots/${baseName} mobile.webp 768w`);
+      }
+    }
+
+    if (screenshots.desktop) {
+      srcsetParts.push(`/screenshots/${baseName} desktop.webp 1920w`);
+    }
+
+    srcset = srcsetParts.join(', ');
+    src = screenshots.desktop ? `/screenshots/${baseName} desktop.webp` : `/screenshots/${baseName} mobile.webp`;
+    sizes = '(max-width: 767px) 100vw, (max-width: 1200px) 90vw, 80vw';
+  } else {
+    // Fallback to dashboard
+    srcset = `/screenshots/dashboard mobile.webp 768w, /screenshots/dashboard desktop.webp 1920w`;
+    src = `/screenshots/dashboard desktop.webp`;
+    sizes = '(max-width: 767px) 100vw, (max-width: 1200px) 90vw, 80vw';
+  }
+
+  return { srcset, src, sizes };
 };
 
 // Helper function to get all images for a feature (moved outside component to avoid recreating)
@@ -511,13 +564,20 @@ export const LandingPage: React.FC = () => {
               whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
-              <img 
-                src={getResponsiveImageSrc('dashboard', isMobile, prefersReducedMotion)}
-                alt="Chicken Manager dashboard showing egg production insights and cost analysis - Click to watch demo video"
-                className="rounded-2xl shadow-2xl w-full mx-auto transition-all duration-300 group-hover:shadow-3xl"
-                fetchPriority="high"
-                decoding="async"
-              />
+              {(() => {
+                const imageProps = getResponsiveImageProps('dashboard');
+                return (
+                  <img
+                    srcSet={imageProps.srcset}
+                    src={imageProps.src}
+                    sizes={imageProps.sizes}
+                    alt="Chicken Manager dashboard showing egg production insights and cost analysis - Click to watch demo video"
+                    className="rounded-2xl shadow-2xl w-full mx-auto transition-all duration-300 group-hover:shadow-3xl"
+                    fetchpriority="high"
+                    decoding="async"
+                  />
+                );
+              })()}
               
               {/* Video Play Button Overlay */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
