@@ -12,6 +12,7 @@
  */
 :root {
   --font-fraunces: 'Fraunces', 'Times New Roman', 'Georgia', serif;
+  --font-family-base: 'Fraunces', 'Times New Roman', 'Georgia', serif;
   --primary: oklch(0.205 0 0);
   --neu-1: #ecf0f3;
   --neu-2: #d1d9e6;

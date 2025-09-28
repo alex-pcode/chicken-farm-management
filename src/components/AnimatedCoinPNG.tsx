@@ -53,7 +53,7 @@ export const AnimatedCoinPNG: React.FC = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5, duration: 0.5 }}
         >
-          <div className="text-lg font-medium text-gray-800">Track every expense!</div>
+          <div className="text-lg font-medium text-gray-900">Track every expense!</div>
         </motion.div>
       </div>
     </div>
