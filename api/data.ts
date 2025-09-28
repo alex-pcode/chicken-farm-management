@@ -42,6 +42,18 @@ interface DBFlockBatch {
   brooding_count?: number;
 }
 
+interface DBDeathRecord {
+  id: string;
+  user_id: string;
+  batch_id: string;
+  date: string;
+  count: number;
+  cause: 'predator' | 'disease' | 'age' | 'injury' | 'unknown' | 'culled' | 'other';
+  description: string;
+  notes?: string;
+  created_at?: string;
+}
+
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -286,7 +298,7 @@ async function getAllData(user: AuthUser, res: VercelResponse) {
   // Don't throw error if profile doesn't exist - new users won't have one
 
   // Fetch death records (premium only)
-  let deathRecords: DeathRecord[] = [];
+  let deathRecords: DBDeathRecord[] = [];
   if (!isFreeTier) {
     const { data: deathRecordsData, error: deathsError } = await supabase
       .from('death_records')
