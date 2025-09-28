@@ -63,8 +63,8 @@ export const LandingNavbar = ({ className = '' }: LandingNavbarProps) => {
   };
 
   return (
-    <motion.nav 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${className}`}
+    <motion.nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 font-sans ${className}`}
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
@@ -127,8 +127,8 @@ export const LandingNavbar = ({ className = '' }: LandingNavbarProps) => {
                   isScrolled ? 'text-xs' : 'text-sm'
                 }`}>🐔</span>
               </motion.div>
-              <motion.span 
-                className="font-bold text-gray-900 transition-all duration-300"
+              <motion.span
+                className="font-sans font-bold text-gray-900 transition-all duration-300"
                 animate={{
                   fontSize: isScrolled ? '1.125rem' : '1.25rem'
                 }}
@@ -155,7 +155,7 @@ export const LandingNavbar = ({ className = '' }: LandingNavbarProps) => {
                     e.preventDefault();
                     handleNavClick(item.link);
                   }}
-                  className={`text-gray-600 hover:text-purple-600 rounded-md font-medium transition-all duration-200 relative group ${
+                  className={`text-gray-600 hover:text-purple-600 rounded-md font-semibold transition-all duration-200 relative group ${
                     isScrolled ? 'px-2 py-1 text-sm' : 'px-3 py-2 text-sm'
                   }`}
                   whileHover={{ 
@@ -191,7 +191,7 @@ export const LandingNavbar = ({ className = '' }: LandingNavbarProps) => {
           >
             <motion.button
               onClick={() => window.location.href = '/app'}
-              className={`text-gray-600 hover:text-purple-600 font-medium transition-all duration-200 ${
+              className={`text-gray-600 hover:text-purple-600 font-semibold transition-all duration-200 ${
                 isScrolled ? 'px-3 py-1.5 text-sm' : 'px-4 py-2 text-sm'
               }`}
               whileHover={{ 
@@ -208,7 +208,7 @@ export const LandingNavbar = ({ className = '' }: LandingNavbarProps) => {
             <motion.button
               onClick={() => {/* Disabled for now */}}
               disabled
-              className={`bg-gray-400 text-white rounded-lg font-medium cursor-not-allowed transition-all duration-200 shadow-md ${
+              className={`bg-gray-400 text-white rounded-lg font-semibold cursor-not-allowed transition-all duration-200 shadow-md ${
                 isScrolled ? 'px-4 py-1.5 text-sm' : 'px-6 py-2 text-sm'
               }`}
               initial={{ opacity: 0, x: 20 }}
@@ -290,7 +290,7 @@ export const LandingNavbar = ({ className = '' }: LandingNavbarProps) => {
                     e.preventDefault();
                     handleNavClick(item.link);
                   }}
-                  className="text-gray-600 hover:text-purple-600 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
+                  className="text-gray-600 hover:text-purple-600 block px-3 py-2 rounded-md text-base font-semibold transition-colors duration-200"
                 >
                   {item.name}
                 </a>
@@ -303,14 +303,14 @@ export const LandingNavbar = ({ className = '' }: LandingNavbarProps) => {
                     setIsMobileMenuOpen(false);
                     window.location.href = '/app';
                   }}
-                  className="w-full text-left text-gray-600 hover:text-purple-600 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
+                  className="w-full text-left text-gray-600 hover:text-purple-600 block px-3 py-2 rounded-md text-base font-semibold transition-colors duration-200"
                 >
                   Login
                 </button>
                 <button
                   onClick={() => {/* Disabled for now */}}
                   disabled
-                  className="w-full bg-gray-400 text-white px-3 py-2 rounded-lg text-base font-medium cursor-not-allowed transition-all duration-200 shadow-md"
+                  className="w-full bg-gray-400 text-white px-3 py-2 rounded-lg text-base font-semibold cursor-not-allowed transition-all duration-200 shadow-md"
                 >
                   Get Started
                 </button>

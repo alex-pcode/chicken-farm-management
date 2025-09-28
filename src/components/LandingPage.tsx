@@ -498,7 +498,7 @@ export const LandingPage: React.FC = () => {
   }, [prefersReducedMotion]);
 
   return (
-    <div className="w-full bg-gray-50 font-fraunces">
+    <div className="w-full bg-gray-50 font-sans">
       
       {/* Navigation */}
       <LandingNavbar />

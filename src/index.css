@@ -1,6 +1,16 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@theme {
+  --font-family-sans: 'Fraunces', 'Times New Roman', 'Georgia', serif;
+  --font-family-serif: 'Fraunces', 'Times New Roman', 'Georgia', serif;
+}
+
+/* Force font family override for any missed elements */
+.font-sans {
+  font-family: 'Fraunces', 'Times New Roman', 'Georgia', serif !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /* Base styles with OKLCH color system for consistent usage across components
