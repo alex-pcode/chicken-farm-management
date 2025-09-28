@@ -4,6 +4,9 @@ import * as Sentry from "@sentry/react"
 import './index.css'
 import App from './App.tsx'
 import { BrowserRouter as Router } from 'react-router-dom';
+import { initializeFontDebugger } from './utils/fontDebugger';
+import { initializeFontOptimizer } from './utils/fontOptimizer';
+import { fontTestUtils } from './utils/fontTester';
 // import { initializeWebVitalsMonitoring } from './utils/monitoring';
 
 // Initialize Sentry for production error monitoring
@@ -38,6 +41,37 @@ if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
 
 // Initialize Web Vitals monitoring - temporarily disabled
 // initializeWebVitalsMonitoring()
+
+// Initialize font loading optimization and debugging
+const fontDebugger = initializeFontDebugger();
+const fontOptimizer = initializeFontOptimizer();
+
+// Add font loading tests after DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  // Apply font optimizations
+  fontOptimizer.injectFontOptimizationCSS();
+  
+  // Test explicit font loading
+  fontDebugger.testFontLoading();
+  
+  // Wait for fonts and generate comprehensive report
+  fontOptimizer.waitForFonts(5000).then(async (allLoaded) => {
+    console.log(`🎨 Font loading complete: ${allLoaded}`);
+    
+    // Generate debug report
+    fontDebugger.generateReport();
+    
+    // Run comprehensive font test
+    const testReport = await fontTestUtils.runTest();
+    
+    // Store test results for comparison between environments
+    if (testReport.failed === 0) {
+      console.log('✅ All font tests passed!');
+    } else {
+      console.warn(`⚠️ ${testReport.failed} font tests failed. Check console for details.`);
+    }
+  });
+});
 
 // PWA Service Worker Registration
 if ('serviceWorker' in navigator && import.meta.env.PROD) {

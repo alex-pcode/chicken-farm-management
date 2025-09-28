@@ -18,7 +18,6 @@ body {
   font-variation-settings: 'opsz' 14;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-display: optional;
   margin: 0;
   padding: 0;
   background-color: #f9fafb;
