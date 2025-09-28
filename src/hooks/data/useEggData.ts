@@ -32,7 +32,7 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
   } = options;
 
   // Use OptimizedDataProvider for cached data
-  const { data, isLoading: contextLoading, refreshData } = useOptimizedAppData();
+  const { data, isLoading: contextLoading, silentRefresh } = useOptimizedAppData();
   const contextEntries = data.eggEntries;
 
   // Memoize the fetcher function to prevent infinite loops  
@@ -63,38 +63,35 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
   const isLoading = contextLoading || fetchLoading;
   const error = fetchError;
 
-  // Add new egg entry
+  // Add new egg entry with optimistic updates
   const addEntry = useCallback(async (entry: Omit<EggEntry, 'id'>) => {
-    // Add temporary ID for API compatibility (database will generate final UUID)
-    const entryWithId: EggEntry = { ...entry, id: `temp-${Date.now()}` };
-    await apiService.production.saveEggEntries([entryWithId]);
-    
-    // After successful save, refresh data from server to get updated state
-    await refreshData();
-  }, [refreshData]);
+    // Create optimistic entry with temporary ID
+    const tempId = `temp-${Date.now()}`;
+    const optimisticEntry: EggEntry = { ...entry, id: tempId };
 
-  // Update existing egg entry
+    // Save to API first, then refresh data
+    await apiService.production.saveEggEntries([optimisticEntry]);
+    await silentRefresh();
+  }, [silentRefresh]);
+
+  // Update existing egg entry with optimistic updates
   const updateEntry = useCallback(async (id: string, updatedData: Partial<EggEntry>) => {
     const entryIndex = entries.findIndex(entry => entry.id === id);
     if (entryIndex === -1) return;
 
     const entryToUpdate = { ...entries[entryIndex], ...updatedData };
-    
-    // Save to API
-    await apiService.production.saveEggEntries([entryToUpdate]);
-    
-    // After successful save, refresh data from server to get updated state
-    await refreshData();
-  }, [entries, refreshData]);
 
-  // Delete egg entry
+    // Save to API, then refresh data
+    await apiService.production.saveEggEntries([entryToUpdate]);
+    await silentRefresh();
+  }, [entries, silentRefresh]);
+
+  // Delete egg entry with optimistic updates
   const deleteEntry = useCallback(async (id: string) => {
-    // Use the proper delete API endpoint
+    // Delete from API, then refresh data
     await apiService.production.deleteEggEntry(id);
-    
-    // After successful delete, refresh data from server to get updated state
-    await refreshData();
-  }, [refreshData]);
+    await silentRefresh();
+  }, [silentRefresh]);
 
   // Statistics calculations
   const statistics = useMemo(() => {
