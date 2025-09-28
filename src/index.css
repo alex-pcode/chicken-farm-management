@@ -88,7 +88,6 @@ body {
   font-variation-settings: 'opsz' 14;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-display: optional;
 }
 
 /* Typography Scale Standardization based on CardShowcase patterns
