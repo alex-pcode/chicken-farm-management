@@ -2,13 +2,13 @@
 @import "tw-animate-css";
 
 @theme {
-  --font-family-sans: 'Fraunces', 'Times New Roman', 'Georgia', serif;
-  --font-family-serif: 'Fraunces', 'Times New Roman', 'Georgia', serif;
+  --font-family-sans: 'Fraunces';
+  --font-family-serif: 'Fraunces';
 }
 
 /* Force font family override for any missed elements */
 .font-sans {
-  font-family: 'Fraunces', 'Times New Roman', 'Georgia', serif !important;
+  font-family: 'Fraunces' !important;
 }
 
 @custom-variant dark (&:is(.dark *));
@@ -21,8 +21,8 @@
  * Info: Blue for informational content, neutral states, help text
  */
 :root {
-  --font-fraunces: 'Fraunces', 'Times New Roman', 'Georgia', serif;
-  --font-family-base: 'Fraunces', 'Times New Roman', 'Georgia', serif;
+  --font-fraunces: 'Fraunces';
+  --font-family-base: 'Fraunces';
   --primary: oklch(0.205 0 0);
   --neu-1: #ecf0f3;
   --neu-2: #d1d9e6;

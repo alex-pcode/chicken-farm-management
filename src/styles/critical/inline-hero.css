@@ -2,7 +2,7 @@
 
 /* Essential CSS custom properties */
 :root {
-  --font-fraunces: 'Fraunces', 'Times New Roman', 'Georgia', serif;
+  --font-fraunces: 'Fraunces';
   --primary: oklch(0.205 0 0);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
