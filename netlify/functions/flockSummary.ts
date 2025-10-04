@@ -1,4 +1,4 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -11,7 +11,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Helper function to get user from JWT token
-async function getUserFromToken(req: VercelRequest) {
+async function getUserFromToken(event: HandlerEvent) {
   const authHeader = event.headers.authorization || event.headers.Authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     throw new Error('Missing or invalid authorization header');
@@ -28,10 +28,6 @@ async function getUserFromToken(req: VercelRequest) {
 }
 
 export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  
-
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -57,8 +53,8 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
   try {
     // Authenticate user
-    const user = await getUserFromToken(req);
-    return await handleGet(req, res, user.id);
+    const user = await getUserFromToken(event);
+    return await handleGet(user.id);
   } catch (error) {
     console.error('API Error:', error);
     return {
@@ -73,7 +69,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 }
 
 // GET - Get comprehensive flock summary
-async function handleGet(req: VercelRequest, res: VercelResponse, userId: string) {
+async function handleGet(userId: string) {
   try {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

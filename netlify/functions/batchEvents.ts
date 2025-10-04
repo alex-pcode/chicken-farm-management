@@ -1,4 +1,4 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -581,7 +581,6 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
     };
 
     } else {
-      res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
       return {
       statusCode: 405,
       headers: {

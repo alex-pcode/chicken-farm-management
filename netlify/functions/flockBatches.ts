@@ -1,4 +1,4 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -11,7 +11,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Helper function to get user from JWT token
-async function getUserFromToken(req: VercelRequest) {
+async function getUserFromToken(event: HandlerEvent) {
   const authHeader = event.headers.authorization || event.headers.Authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     throw new Error('Missing or invalid authorization header');
@@ -28,10 +28,6 @@ async function getUserFromToken(req: VercelRequest) {
 }
 
 export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  
-
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -46,17 +42,17 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
   try {
     // Authenticate user
-    const user = await getUserFromToken(req);
+    const user = await getUserFromToken(event);
 
     switch (event.httpMethod) {
       case 'GET':
-        return await handleGet(req, res, user.id);
+        return await handleGet(event, user.id);
       case 'POST':
-        return await handlePost(req, res, user.id);
+        return await handlePost(event, user.id);
       case 'PUT':
-        return await handlePut(req, res, user.id);
+        return await handlePut(event, user.id);
       case 'DELETE':
-        return await handleDelete(req, res, user.id);
+        return await handleDelete(event, user.id);
       default:
         return {
       statusCode: 405,
@@ -81,9 +77,9 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 }
 
 // GET - Retrieve all flock batches for user or a specific batch
-async function handleGet(req: VercelRequest, res: VercelResponse, userId: string) {
+async function handleGet(event: HandlerEvent, userId: string) {
   try {
-    const { batchId } = event.queryStringParameters;
+    const { batchId } = event.queryStringParameters || {};
 
     if (batchId) {
       // Get specific batch
@@ -202,7 +198,7 @@ async function handleGet(req: VercelRequest, res: VercelResponse, userId: string
 }
 
 // POST - Create new flock batch
-async function handlePost(req: VercelRequest, res: VercelResponse, userId: string) {
+async function handlePost(event: HandlerEvent, userId: string) {
   try {
     console.log('POST /api/flockBatches - Request body:', JSON.stringify(JSON.parse(event.body || '{}'), null, 2));
     
@@ -495,7 +491,7 @@ async function handlePost(req: VercelRequest, res: VercelResponse, userId: strin
 }
 
 // PUT - Update existing flock batch
-async function handlePut(req: VercelRequest, res: VercelResponse, userId: string) {
+async function handlePut(event: HandlerEvent, userId: string) {
   try {
     const { batchId, ...updateData } = JSON.parse(event.body || '{}');
 
@@ -619,7 +615,7 @@ async function handlePut(req: VercelRequest, res: VercelResponse, userId: string
 }
 
 // DELETE - Deactivate flock batch (soft delete)
-async function handleDelete(req: VercelRequest, res: VercelResponse, userId: string) {
+async function handleDelete(event: HandlerEvent, userId: string) {
   try {
     const { batchId } = JSON.parse(event.body || '{}');
 

@@ -1,4 +1,4 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -11,10 +11,6 @@ if (!supabaseUrl || !supabaseServiceKey) {
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  
-
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,

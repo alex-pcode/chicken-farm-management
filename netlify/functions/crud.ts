@@ -1,4 +1,4 @@
-import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
+import type { Handler, HandlerEvent } from '@netlify/functions';
 import { createClient, type User } from '@supabase/supabase-js';
 import type { 
   EggEntry, 
@@ -26,7 +26,7 @@ async function getAuthenticatedUser(authHeader: string | undefined) {
   return error ? null : user;
 }
 
-export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
+export const handler: Handler = async (event: HandlerEvent) => {
   // Enable CORS
   
 
@@ -77,37 +77,54 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       });
     }
 
-    const { operation, table } = event.queryStringParameters;
+    const operation = event.queryStringParameters?.operation;
+    const table = event.queryStringParameters?.table;
 
     if (event.httpMethod === 'POST') {
-      return await handleSave(user, operation as string, table as string, JSON.parse(event.body || '{}'), res);
+      return await handleSave(user, operation as string, table as string, JSON.parse(event.body || '{}'));
     } else if (event.httpMethod === 'DELETE') {
-      return await handleDelete(user, operation as string, table as string, JSON.parse(event.body || '{}'), res);
+      return await handleDelete(user, operation as string, table as string, JSON.parse(event.body || '{}'));
     }
+
+    return {
+      statusCode: 400,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({ message: 'Invalid request method' })
+    };
   } catch (error) {
     console.error('Error in CRUD endpoint:', error);
-    res.status(500).json({
-      message: 'Error processing request',
-      error: error instanceof Error ? error.message : String(error)
-    });
+    return {
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({
+        message: 'Error processing request',
+        error: error instanceof Error ? error.message : String(error)
+      })
+    };
   }
 }
 
 // Handle save operations (create/update)
-async function handleSave(user: User, operation: string, _table: string, body: unknown, res: VercelResponse) {
+async function handleSave(user: User, operation: string, _table: string, body: unknown) {
   switch (operation) {
     case 'eggs':
     case 'eggEntries':
-      return await saveEggEntries(user, body as EggEntry | EggEntry[], res);
+      return await saveEggEntries(user, body as EggEntry | EggEntry[]);
     case 'expenses':
-      return await saveExpenses(user, body as Expense | Expense[], res);
+      return await saveExpenses(user, body as Expense | Expense[]);
     case 'feed':
     case 'feedInventory':
-      return await saveFeedInventory(user, body as FeedEntry | FeedEntry[], res);
+      return await saveFeedInventory(user, body as FeedEntry | FeedEntry[]);
     case 'flockEvents':
-      return await saveFlockEvents(user, body as FlockEvent | FlockEvent[], res);
+      return await saveFlockEvents(user, body as FlockEvent | FlockEvent[]);
     case 'flockProfile':
-      return await saveFlockProfile(user, body as FlockProfile, res);
+      return await saveFlockProfile(user, body as FlockProfile);
     case 'userProfile':
       return await saveUserProfile(user, body as {
         profile: {
@@ -116,7 +133,7 @@ async function handleSave(user: User, operation: string, _table: string, body: u
           setup_progress?: Record<string, unknown>;
           subscription_status?: string;
         }
-      }, res);
+      });
     case 'completeOnboarding':
       return await completeOnboarding(user, body as {
         formData: {
@@ -131,7 +148,7 @@ async function handleSave(user: User, operation: string, _table: string, body: u
           cost?: number;
           [key: string]: unknown;
         }
-      }, res);
+      });
     default:
       return {
       statusCode: 400,
@@ -145,7 +162,7 @@ async function handleSave(user: User, operation: string, _table: string, body: u
 }
 
 // Handle delete operations
-async function handleDelete(user: User, operation: string, _table: string, body: { id: string }, res: VercelResponse) {
+async function handleDelete(user: User, operation: string, _table: string, body: { id: string }) {
   const { id } = body;
   if (!id) {
     return {
@@ -161,14 +178,14 @@ async function handleDelete(user: User, operation: string, _table: string, body:
   switch (operation) {
     case 'eggs':
     case 'eggEntries':
-      return await deleteEggEntry(user, id, res);
+      return await deleteEggEntry(user, id);
     case 'expenses':
-      return await deleteExpense(user, id, res);
+      return await deleteExpense(user, id);
     case 'feed':
     case 'feedInventory':
-      return await deleteFeedInventory(user, id, res);
+      return await deleteFeedInventory(user, id);
     case 'flockEvents':
-      return await deleteFlockEvent(user, id, res);
+      return await deleteFlockEvent(user, id);
     default:
       return {
       statusCode: 400,
@@ -188,7 +205,7 @@ function isValidUUID(id: string): boolean {
 }
 
 // Save egg entries
-async function saveEggEntries(user: User, eggData: EggEntry | EggEntry[], res: VercelResponse) {
+async function saveEggEntries(user: User, eggData: EggEntry | EggEntry[]) {
   const eggWithUser = Array.isArray(eggData) 
     ? eggData.map(egg => ({ 
         user_id: user.id,
@@ -218,15 +235,22 @@ async function saveEggEntries(user: User, eggData: EggEntry | EggEntry[], res: V
     throw new Error(`Database upsert error: ${error.message}`);
   }
 
-  res.status(200).json({ 
-    message: 'Egg entries saved successfully', 
-    data: { eggEntries: data },
-    timestamp: new Date().toISOString()
-  });
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      message: 'Egg entries saved successfully',
+      data: { eggEntries: data },
+      timestamp: new Date().toISOString()
+    })
+  };
 }
 
 // Save expenses
-async function saveExpenses(user: User, expenseData: Expense | Expense[], res: VercelResponse) {
+async function saveExpenses(user: User, expenseData: Expense | Expense[]) {
   const expenseWithUser = Array.isArray(expenseData) 
     ? expenseData.map(expense => {
         const mapped: Partial<Expense & { user_id: string }> = { 
@@ -259,15 +283,22 @@ async function saveExpenses(user: User, expenseData: Expense | Expense[], res: V
     throw new Error(`Database upsert error: ${error.message}`);
   }
 
-  res.status(200).json({ 
-    message: 'Expenses saved successfully', 
-    data: { expenses: data },
-    timestamp: new Date().toISOString()
-  });
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      message: 'Expenses saved successfully',
+      data: { expenses: data },
+      timestamp: new Date().toISOString()
+    })
+  };
 }
 
 // Save feed inventory
-async function saveFeedInventory(user: User, feedData: FeedEntry | FeedEntry[], res: VercelResponse) {
+async function saveFeedInventory(user: User, feedData: FeedEntry | FeedEntry[]) {
   const feedWithUser = Array.isArray(feedData) 
     ? feedData.map(feed => {
         const mapped: {
@@ -324,15 +355,22 @@ async function saveFeedInventory(user: User, feedData: FeedEntry | FeedEntry[], 
     throw new Error(`Database upsert error: ${error.message}`);
   }
 
-  res.status(200).json({ 
-    message: 'Feed inventory saved successfully', 
-    data: { feedInventory: data },
-    timestamp: new Date().toISOString()
-  });
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      message: 'Feed inventory saved successfully',
+      data: { feedInventory: data },
+      timestamp: new Date().toISOString()
+    })
+  };
 }
 
 // Save flock events
-async function saveFlockEvents(user: User, eventData: FlockEvent | FlockEvent[], res: VercelResponse) {
+async function saveFlockEvents(user: User, eventData: FlockEvent | FlockEvent[]) {
   const eventWithUser = Array.isArray(eventData) 
     ? eventData.map(event => ({
         user_id: user.id,
@@ -364,15 +402,22 @@ async function saveFlockEvents(user: User, eventData: FlockEvent | FlockEvent[],
     throw new Error(`Database upsert error: ${error.message}`);
   }
 
-  res.status(200).json({ 
-    message: 'Flock events saved successfully', 
-    data: { flockEvents: data },
-    timestamp: new Date().toISOString()
-  });
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      message: 'Flock events saved successfully',
+      data: { flockEvents: data },
+      timestamp: new Date().toISOString()
+    })
+  };
 }
 
 // Save flock profile
-async function saveFlockProfile(user: User, profileData: FlockProfile, res: VercelResponse) {
+async function saveFlockProfile(user: User, profileData: FlockProfile) {
   const profileWithUser = {
     user_id: user.id,
     farm_name: 'Default Farm',
@@ -399,15 +444,22 @@ async function saveFlockProfile(user: User, profileData: FlockProfile, res: Verc
     throw new Error(`Database upsert error: ${error.message}`);
   }
 
-  res.status(200).json({ 
-    message: 'Flock profile saved successfully', 
-    data: { flockProfile: data?.[0] },
-    timestamp: new Date().toISOString()
-  });
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      message: 'Flock profile saved successfully',
+      data: { flockProfile: data?.[0] },
+      timestamp: new Date().toISOString()
+    })
+  };
 }
 
 // Delete expense
-async function deleteExpense(user: User, id: string, res: VercelResponse) {
+async function deleteExpense(user: User, id: string) {
   const { error } = await supabase
     .from('expenses')
     .delete()
@@ -418,14 +470,21 @@ async function deleteExpense(user: User, id: string, res: VercelResponse) {
     throw new Error(`Database delete error: ${error.message}`);
   }
 
-  res.status(200).json({
-    message: 'Expense deleted successfully',
-    timestamp: new Date().toISOString()
-  });
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      message: 'Expense deleted successfully',
+      timestamp: new Date().toISOString()
+    })
+  };
 }
 
 // Delete feed inventory
-async function deleteFeedInventory(user: User, id: string, res: VercelResponse) {
+async function deleteFeedInventory(user: User, id: string) {
   const { error } = await supabase
     .from('feed_inventory')
     .delete()
@@ -436,14 +495,21 @@ async function deleteFeedInventory(user: User, id: string, res: VercelResponse) 
     throw new Error(`Database delete error: ${error.message}`);
   }
 
-  res.status(200).json({
-    message: 'Feed inventory item deleted successfully',
-    timestamp: new Date().toISOString()
-  });
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      message: 'Feed inventory item deleted successfully',
+      timestamp: new Date().toISOString()
+    })
+  };
 }
 
 // Delete flock event
-async function deleteFlockEvent(user: User, id: string, res: VercelResponse) {
+async function deleteFlockEvent(user: User, id: string) {
   const { error } = await supabase
     .from('flock_events')
     .delete()
@@ -454,14 +520,21 @@ async function deleteFlockEvent(user: User, id: string, res: VercelResponse) {
     throw new Error(`Database delete error: ${error.message}`);
   }
 
-  res.status(200).json({
-    message: 'Flock event deleted successfully',
-    timestamp: new Date().toISOString()
-  });
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      message: 'Flock event deleted successfully',
+      timestamp: new Date().toISOString()
+    })
+  };
 }
 
 // Delete egg entry
-async function deleteEggEntry(user: User, id: string, res: VercelResponse) {
+async function deleteEggEntry(user: User, id: string) {
   const { error } = await supabase
     .from('egg_entries')
     .delete()
@@ -472,10 +545,17 @@ async function deleteEggEntry(user: User, id: string, res: VercelResponse) {
     throw new Error(`Database delete error: ${error.message}`);
   }
 
-  res.status(200).json({
-    message: 'Egg entry deleted successfully',
-    timestamp: new Date().toISOString()
-  });
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      message: 'Egg entry deleted successfully',
+      timestamp: new Date().toISOString()
+    })
+  };
 }
 
 // Save user profile (create or update)
@@ -486,7 +566,7 @@ async function saveUserProfile(user: User, profileData: {
     setup_progress?: Record<string, unknown>;
     subscription_status?: string;
   }
-}, res: VercelResponse) {
+}) {
   const { profile } = profileData;
   
   if (!profile) {
@@ -577,17 +657,31 @@ async function saveUserProfile(user: User, profileData: {
       throw error;
     }
 
-    res.status(200).json({
-      message: 'User profile saved successfully',
-      data: { profile: data },
-      timestamp: new Date().toISOString()
-    });
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({
+        message: 'User profile saved successfully',
+        data: { profile: data },
+        timestamp: new Date().toISOString()
+      })
+    };
   } catch (error) {
     console.error('Save user profile error:', error);
-    res.status(500).json({
-      message: 'Failed to save user profile',
-      error: error instanceof Error ? error.message : String(error)
-    });
+    return {
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({
+        message: 'Failed to save user profile',
+        error: error instanceof Error ? error.message : String(error)
+      })
+    };
   }
 }
 
@@ -605,7 +699,7 @@ async function completeOnboarding(user: User, requestData: {
     cost?: number;
     [key: string]: unknown;
   }
-}, res: VercelResponse) {
+}) {
   const { formData } = requestData;
   
   if (!formData) {
@@ -801,17 +895,24 @@ async function completeOnboarding(user: User, requestData: {
       throw profileResult.error;
     }
 
-    res.status(200).json({
-      message: 'Onboarding completed successfully',
-      data: {
-        profile: profileResult.data,
-        flockCreated
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
       },
-      timestamp: new Date().toISOString()
-    });
+      body: JSON.stringify({
+        message: 'Onboarding completed successfully',
+        data: {
+          profile: profileResult.data,
+          flockCreated
+        },
+        timestamp: new Date().toISOString()
+      })
+    };
   } catch (error) {
     console.error('Complete onboarding error:', error);
-    
+
     // Handle Supabase errors properly
     let errorMessage = 'Unknown error occurred';
     if (error && typeof error === 'object' && 'message' in error) {
@@ -821,11 +922,19 @@ async function completeOnboarding(user: User, requestData: {
     } else {
       errorMessage = String(error);
     }
-    
-    res.status(500).json({
-      message: 'Failed to complete onboarding',
-      error: errorMessage,
-      timestamp: new Date().toISOString()
-    });
+
+    return {
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({
+        message: 'Failed to complete onboarding',
+        error: errorMessage,
+        timestamp: new Date().toISOString()
+      })
+    };
   }
 }
+
