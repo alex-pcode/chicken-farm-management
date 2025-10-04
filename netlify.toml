@@ -5,6 +5,8 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  # Allow VITE_ prefixed env vars in build output (they're meant to be public)
+  SECRETS_SCAN_OMIT_KEYS = "VITE_API_URL,VITE_SUPABASE_URL,VITE_SUPABASE_ANON_KEY,SUPABASE_URL"
 
 # Cache static assets (migrated from vercel.json)
 [[headers]]
