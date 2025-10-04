@@ -33,6 +33,9 @@ dist-ssr
 .vercel
 .env.vercel
 
+# Netlify
+.netlify
+
 # Claude Code and BMad configuration
 .bmad-core
 .claude

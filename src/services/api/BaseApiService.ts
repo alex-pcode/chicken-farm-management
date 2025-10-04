@@ -13,7 +13,7 @@ import {
  * Handles authentication, token refresh, and standardized error handling
  */
 export abstract class BaseApiService {
-  private static readonly API_BASE_URL = '/api';
+  private static readonly API_BASE_URL = '/.netlify/functions';
 
   /**
    * Get authenticated headers with automatic token refresh
