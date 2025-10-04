@@ -19,9 +19,8 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Helper function to get user from authorization header
 async function getAuthenticatedUser(authHeader: string | undefined) {
-  const authHeader = event.headers.authorization || event.headers.Authorization;
   if (!authHeader) return null;
-  
+
   const token = authHeader.replace('Bearer ', '');
   const { data: { user }, error } = await supabase.auth.getUser(token);
   return error ? null : user;
