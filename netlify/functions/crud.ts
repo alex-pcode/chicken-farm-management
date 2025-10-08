@@ -1,12 +1,28 @@
-import type { Handler, HandlerEvent } from '@netlify/functions';
+import type { Handler, HandlerEvent, HandlerResponse } from '@netlify/functions';
 import { createClient, type User } from '@supabase/supabase-js';
-import type { 
-  EggEntry, 
-  Expense, 
-  FeedEntry, 
-  FlockEvent, 
-  FlockProfile 
+import type {
+  EggEntry,
+  Expense,
+  FeedEntry,
+  FlockEvent,
+  FlockProfile
 } from '../../src/types/index';
+
+// Helper type for consistent response structure
+type ApiResponse = HandlerResponse;
+
+// Helper to create consistent CORS headers
+const corsHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+} as const;
+
+const basicCorsHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*'
+} as const;
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -26,18 +42,12 @@ async function getAuthenticatedUser(authHeader: string | undefined) {
   return error ? null : user;
 }
 
-export const handler: Handler = async (event: HandlerEvent) => {
+export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResponse> => {
   // Enable CORS
-  
-
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-      },
+      headers: corsHeaders,
       body: ''
     };
   }
@@ -45,10 +55,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
   if (!['POST', 'DELETE'].includes(event.httpMethod || '')) {
     return {
       statusCode: 405,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: basicCorsHeaders,
       body: JSON.stringify({ message: 'Method not allowed' })
     };
   }
@@ -58,13 +65,10 @@ export const handler: Handler = async (event: HandlerEvent) => {
     const user = await getAuthenticatedUser(event.headers.authorization || event.headers.Authorization);
     if (!user) {
       return {
-      statusCode: 401,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
-      body: JSON.stringify({ message: 'Unauthorized - Please log in' })
-    };
+        statusCode: 401,
+        headers: basicCorsHeaders,
+        body: JSON.stringify({ message: 'Unauthorized - Please log in' })
+      };
     }
 
     // Set the user session on the Supabase client for RLS policies
@@ -77,8 +81,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
       });
     }
 
-    const operation = event.queryStringParameters?.operation;
-    const table = event.queryStringParameters?.table;
+    const { operation, table } = event.queryStringParameters || {};
 
     if (event.httpMethod === 'POST') {
       return await handleSave(user, operation as string, table as string, JSON.parse(event.body || '{}'));
@@ -88,20 +91,14 @@ export const handler: Handler = async (event: HandlerEvent) => {
 
     return {
       statusCode: 400,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: basicCorsHeaders,
       body: JSON.stringify({ message: 'Invalid request method' })
     };
   } catch (error) {
     console.error('Error in CRUD endpoint:', error);
     return {
       statusCode: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: basicCorsHeaders,
       body: JSON.stringify({
         message: 'Error processing request',
         error: error instanceof Error ? error.message : String(error)
@@ -111,7 +108,7 @@ export const handler: Handler = async (event: HandlerEvent) => {
 }
 
 // Handle save operations (create/update)
-async function handleSave(user: User, operation: string, _table: string, body: unknown) {
+async function handleSave(user: User, operation: string, _table: string, body: unknown): Promise<HandlerResponse> {
   switch (operation) {
     case 'eggs':
     case 'eggEntries':
@@ -151,26 +148,20 @@ async function handleSave(user: User, operation: string, _table: string, body: u
       });
     default:
       return {
-      statusCode: 400,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
-      body: JSON.stringify({ message: 'Invalid operation' })
-    };
+        statusCode: 400,
+        headers: basicCorsHeaders,
+        body: JSON.stringify({ message: 'Invalid operation' })
+      };
   }
 }
 
 // Handle delete operations
-async function handleDelete(user: User, operation: string, _table: string, body: { id: string }) {
+async function handleDelete(user: User, operation: string, _table: string, body: { id: string }): Promise<HandlerResponse> {
   const { id } = body;
   if (!id) {
     return {
       statusCode: 400,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: basicCorsHeaders,
       body: JSON.stringify({ message: 'ID is required for delete operations' })
     };
   }
@@ -188,13 +179,10 @@ async function handleDelete(user: User, operation: string, _table: string, body:
       return await deleteFlockEvent(user, id);
     default:
       return {
-      statusCode: 400,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
-      body: JSON.stringify({ message: 'Invalid delete operation' })
-    };
+        statusCode: 400,
+        headers: basicCorsHeaders,
+        body: JSON.stringify({ message: 'Invalid delete operation' })
+      };
   }
 }
 
@@ -205,7 +193,7 @@ function isValidUUID(id: string): boolean {
 }
 
 // Save egg entries
-async function saveEggEntries(user: User, eggData: EggEntry | EggEntry[]) {
+async function saveEggEntries(user: User, eggData: EggEntry | EggEntry[]): Promise<HandlerResponse> {
   const eggWithUser = Array.isArray(eggData) 
     ? eggData.map(egg => ({ 
         user_id: user.id,
@@ -237,10 +225,7 @@ async function saveEggEntries(user: User, eggData: EggEntry | EggEntry[]) {
 
   return {
     statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
-    },
+    headers: basicCorsHeaders,
     body: JSON.stringify({
       message: 'Egg entries saved successfully',
       data: { eggEntries: data },
@@ -250,7 +235,7 @@ async function saveEggEntries(user: User, eggData: EggEntry | EggEntry[]) {
 }
 
 // Save expenses
-async function saveExpenses(user: User, expenseData: Expense | Expense[]) {
+async function saveExpenses(user: User, expenseData: Expense | Expense[]): Promise<HandlerResponse> {
   const expenseWithUser = Array.isArray(expenseData) 
     ? expenseData.map(expense => {
         const mapped: Partial<Expense & { user_id: string }> = { 
@@ -285,10 +270,7 @@ async function saveExpenses(user: User, expenseData: Expense | Expense[]) {
 
   return {
     statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
-    },
+    headers: basicCorsHeaders,
     body: JSON.stringify({
       message: 'Expenses saved successfully',
       data: { expenses: data },
@@ -298,7 +280,7 @@ async function saveExpenses(user: User, expenseData: Expense | Expense[]) {
 }
 
 // Save feed inventory
-async function saveFeedInventory(user: User, feedData: FeedEntry | FeedEntry[]) {
+async function saveFeedInventory(user: User, feedData: FeedEntry | FeedEntry[]): Promise<HandlerResponse> {
   const feedWithUser = Array.isArray(feedData) 
     ? feedData.map(feed => {
         const mapped: {
@@ -357,10 +339,7 @@ async function saveFeedInventory(user: User, feedData: FeedEntry | FeedEntry[]) 
 
   return {
     statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
-    },
+    headers: basicCorsHeaders,
     body: JSON.stringify({
       message: 'Feed inventory saved successfully',
       data: { feedInventory: data },
@@ -370,7 +349,7 @@ async function saveFeedInventory(user: User, feedData: FeedEntry | FeedEntry[]) 
 }
 
 // Save flock events
-async function saveFlockEvents(user: User, eventData: FlockEvent | FlockEvent[]) {
+async function saveFlockEvents(user: User, eventData: FlockEvent | FlockEvent[]): Promise<HandlerResponse> {
   const eventWithUser = Array.isArray(eventData) 
     ? eventData.map(event => ({
         user_id: user.id,
@@ -404,10 +383,7 @@ async function saveFlockEvents(user: User, eventData: FlockEvent | FlockEvent[])
 
   return {
     statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
-    },
+    headers: basicCorsHeaders,
     body: JSON.stringify({
       message: 'Flock events saved successfully',
       data: { flockEvents: data },
@@ -417,7 +393,7 @@ async function saveFlockEvents(user: User, eventData: FlockEvent | FlockEvent[])
 }
 
 // Save flock profile
-async function saveFlockProfile(user: User, profileData: FlockProfile) {
+async function saveFlockProfile(user: User, profileData: FlockProfile): Promise<HandlerResponse> {
   const profileWithUser = {
     user_id: user.id,
     farm_name: 'Default Farm',
@@ -446,10 +422,7 @@ async function saveFlockProfile(user: User, profileData: FlockProfile) {
 
   return {
     statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
-    },
+    headers: basicCorsHeaders,
     body: JSON.stringify({
       message: 'Flock profile saved successfully',
       data: { flockProfile: data?.[0] },
@@ -459,7 +432,7 @@ async function saveFlockProfile(user: User, profileData: FlockProfile) {
 }
 
 // Delete expense
-async function deleteExpense(user: User, id: string) {
+async function deleteExpense(user: User, id: string): Promise<HandlerResponse> {
   const { error } = await supabase
     .from('expenses')
     .delete()
@@ -472,10 +445,7 @@ async function deleteExpense(user: User, id: string) {
 
   return {
     statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
-    },
+    headers: basicCorsHeaders,
     body: JSON.stringify({
       message: 'Expense deleted successfully',
       timestamp: new Date().toISOString()
@@ -484,7 +454,7 @@ async function deleteExpense(user: User, id: string) {
 }
 
 // Delete feed inventory
-async function deleteFeedInventory(user: User, id: string) {
+async function deleteFeedInventory(user: User, id: string): Promise<HandlerResponse> {
   const { error } = await supabase
     .from('feed_inventory')
     .delete()
@@ -497,10 +467,7 @@ async function deleteFeedInventory(user: User, id: string) {
 
   return {
     statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
-    },
+    headers: basicCorsHeaders,
     body: JSON.stringify({
       message: 'Feed inventory item deleted successfully',
       timestamp: new Date().toISOString()
@@ -509,7 +476,7 @@ async function deleteFeedInventory(user: User, id: string) {
 }
 
 // Delete flock event
-async function deleteFlockEvent(user: User, id: string) {
+async function deleteFlockEvent(user: User, id: string): Promise<HandlerResponse> {
   const { error } = await supabase
     .from('flock_events')
     .delete()
@@ -522,10 +489,7 @@ async function deleteFlockEvent(user: User, id: string) {
 
   return {
     statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
-    },
+    headers: basicCorsHeaders,
     body: JSON.stringify({
       message: 'Flock event deleted successfully',
       timestamp: new Date().toISOString()
@@ -534,7 +498,7 @@ async function deleteFlockEvent(user: User, id: string) {
 }
 
 // Delete egg entry
-async function deleteEggEntry(user: User, id: string) {
+async function deleteEggEntry(user: User, id: string): Promise<HandlerResponse> {
   const { error } = await supabase
     .from('egg_entries')
     .delete()
@@ -547,10 +511,7 @@ async function deleteEggEntry(user: User, id: string) {
 
   return {
     statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
-    },
+    headers: basicCorsHeaders,
     body: JSON.stringify({
       message: 'Egg entry deleted successfully',
       timestamp: new Date().toISOString()
@@ -566,16 +527,13 @@ async function saveUserProfile(user: User, profileData: {
     setup_progress?: Record<string, unknown>;
     subscription_status?: string;
   }
-}) {
+}): Promise<HandlerResponse> {
   const { profile } = profileData;
   
   if (!profile) {
     return {
       statusCode: 400,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: basicCorsHeaders,
       body: JSON.stringify({ message: 'Profile data is required' })
     };
   }
@@ -659,10 +617,7 @@ async function saveUserProfile(user: User, profileData: {
 
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: basicCorsHeaders,
       body: JSON.stringify({
         message: 'User profile saved successfully',
         data: { profile: data },
@@ -673,10 +628,7 @@ async function saveUserProfile(user: User, profileData: {
     console.error('Save user profile error:', error);
     return {
       statusCode: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: basicCorsHeaders,
       body: JSON.stringify({
         message: 'Failed to save user profile',
         error: error instanceof Error ? error.message : String(error)
@@ -699,16 +651,13 @@ async function completeOnboarding(user: User, requestData: {
     cost?: number;
     [key: string]: unknown;
   }
-}) {
+}): Promise<HandlerResponse> {
   const { formData } = requestData;
   
   if (!formData) {
     return {
       statusCode: 400,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: basicCorsHeaders,
       body: JSON.stringify({ message: 'Form data is required' })
     };
   }
@@ -897,10 +846,7 @@ async function completeOnboarding(user: User, requestData: {
 
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: basicCorsHeaders,
       body: JSON.stringify({
         message: 'Onboarding completed successfully',
         data: {
@@ -925,10 +871,7 @@ async function completeOnboarding(user: User, requestData: {
 
     return {
       statusCode: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: basicCorsHeaders,
       body: JSON.stringify({
         message: 'Failed to complete onboarding',
         error: errorMessage,
@@ -937,4 +880,3 @@ async function completeOnboarding(user: User, requestData: {
     };
   }
 }
-

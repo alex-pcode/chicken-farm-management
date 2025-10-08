@@ -262,7 +262,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
     if (event.httpMethod === 'GET') {
       // Get batch events for a specific batch
-      const { batchId } = event.queryStringParameters;
+      const batchId = event.queryStringParameters?.batchId;
 
       if (!batchId) {
         return {
@@ -344,7 +344,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       }
 
       // Insert new event
-      const { data: event, error } = await supabase
+      const { data: newEvent, error } = await supabase
         .from('batch_events')
         .insert([{
           user_id: userId,
@@ -378,7 +378,9 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         .single();
 
       // Create corresponding flock event
-      await createFlockEventFromBatchEvent(event, batchData?.batch_name || 'Unknown Batch', userId);
+      if (newEvent) {
+        await createFlockEventFromBatchEvent(newEvent, batchData?.batch_name || 'Unknown Batch', userId);
+      }
 
       // Update batch counts for brooding events
       if (type === 'brooding_start' || type === 'brooding_stop') {
@@ -398,7 +400,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       },
       body: JSON.stringify({
         success: true,
-        data: { event }
+        data: { event: newEvent }
       })
     };
 
@@ -450,7 +452,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       if (affectedCount !== undefined) updateData.affected_count = affectedCount;
       if (notes !== undefined) updateData.notes = notes;
 
-      const { data: event, error } = await supabase
+      const { data: updatedEvent, error } = await supabase
         .from('batch_events')
         .update(updateData)
         .eq('id', eventId)
@@ -471,23 +473,25 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       }
 
       // Get batch name for flock event creation
-      const { data: batchData } = await supabase
-        .from('flock_batches')
-        .select('batch_name')
-        .eq('id', event.batch_id)
-        .single();
+      if (updatedEvent) {
+        const { data: batchData } = await supabase
+          .from('flock_batches')
+          .select('batch_name')
+          .eq('id', updatedEvent.batch_id)
+          .single();
 
-      // Create new flock event for the updated batch event
-      await createFlockEventFromBatchEvent(event, batchData?.batch_name || 'Unknown Batch', userId);
+        // Create new flock event for the updated batch event
+        await createFlockEventFromBatchEvent(updatedEvent, batchData?.batch_name || 'Unknown Batch', userId);
 
-      // Update batch counts if brooding event was modified
-      if (type === 'brooding_start' || type === 'brooding_stop') {
-        await updateBatchBroodingCount(event.batch_id, userId);
-      }
+        // Update batch counts if brooding event was modified
+        if (type === 'brooding_start' || type === 'brooding_stop') {
+          await updateBatchBroodingCount(updatedEvent.batch_id, userId);
+        }
 
-      // Update batch actualLayingStartDate for laying_start events
-      if (type === 'laying_start') {
-        await updateBatchLayingStartDate(event.batch_id, event.date, userId);
+        // Update batch actualLayingStartDate for laying_start events
+        if (type === 'laying_start') {
+          await updateBatchLayingStartDate(updatedEvent.batch_id, updatedEvent.date, userId);
+        }
       }
 
       return {
@@ -498,7 +502,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       },
       body: JSON.stringify({
         success: true,
-        data: { event }
+        data: { event: updatedEvent }
       })
     };
 

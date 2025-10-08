@@ -1,4 +1,4 @@
-import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
+import type { Handler, HandlerEvent, HandlerContext, HandlerResponse } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -9,6 +9,18 @@ if (!supabaseUrl || !supabaseServiceKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// Helper to create consistent CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+} as const;
+
+const jsonHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*'
+} as const;
 
 // Helper function to get user from authorization header
 async function getAuthenticatedUser(authHeader: string | undefined, supabaseClient: typeof supabase) {
@@ -26,16 +38,12 @@ async function getAuthenticatedUser(authHeader: string | undefined, supabaseClie
   }
 }
 
-export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
+export const handler: Handler = async (event: HandlerEvent, context: HandlerContext): Promise<HandlerResponse> => {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-      },
+      headers: corsHeaders,
       body: ''
     };
   }
@@ -46,7 +54,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
   if (!user) {
     return {
       statusCode: 401,
-      headers: { 'Content-Type': 'application/json' },
+      headers: jsonHeaders,
       body: JSON.stringify({ error: 'Unauthorized' })
     };
   }
@@ -67,7 +75,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: jsonHeaders,
         body: JSON.stringify(customers)
       };
     }
@@ -80,7 +88,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       if (!name || name.trim() === '') {
         return {
           statusCode: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({ error: 'Customer name is required' })
         };
       }
@@ -100,7 +108,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
       return {
         statusCode: 201,
-        headers: { 'Content-Type': 'application/json' },
+        headers: jsonHeaders,
         body: JSON.stringify(data)
       };
     }
@@ -113,7 +121,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       if (!id) {
         return {
           statusCode: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({ error: 'Customer ID is required' })
         };
       }
@@ -121,7 +129,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       if (!name || name.trim() === '') {
         return {
           statusCode: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({ error: 'Customer name is required' })
         };
       }
@@ -144,28 +152,28 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       if (!data) {
         return {
           statusCode: 404,
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({ error: 'Customer not found' })
         };
       }
 
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: jsonHeaders,
         body: JSON.stringify(data)
       };
     }
 
     return {
       statusCode: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: jsonHeaders,
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   } catch (error) {
     console.error('Customer API error:', error);
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: jsonHeaders,
       body: JSON.stringify({ error: 'Internal server error' })
     };
   }

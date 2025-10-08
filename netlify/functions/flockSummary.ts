@@ -1,4 +1,4 @@
-import { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
+import { Handler, HandlerEvent, HandlerContext, HandlerResponse } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -9,6 +9,18 @@ if (!supabaseUrl || !supabaseServiceKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// Helper to create consistent CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+} as const;
+
+const jsonHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*'
+} as const;
 
 // Helper function to get user from JWT token
 async function getUserFromToken(event: HandlerEvent) {
@@ -27,15 +39,11 @@ async function getUserFromToken(event: HandlerEvent) {
   return user;
 }
 
-export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
+export const handler: Handler = async (event: HandlerEvent, context: HandlerContext): Promise<HandlerResponse> => {
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-      },
+      headers: corsHeaders,
       body: ''
     };
   }
@@ -43,10 +51,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
   if (event.httpMethod !== 'GET') {
     return {
       statusCode: 405,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: jsonHeaders,
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
@@ -59,17 +64,14 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
     console.error('API Error:', error);
     return {
       statusCode: 401,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: jsonHeaders,
       body: JSON.stringify({ error: error instanceof Error ? error.message : 'Unauthorized' })
     };
   }
 }
 
 // GET - Get comprehensive flock summary
-async function handleGet(userId: string) {
+async function handleGet(userId: string): Promise<HandlerResponse> {
   try {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -288,20 +290,14 @@ async function handleGet(userId: string) {
 
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: jsonHeaders,
       body: JSON.stringify({ success: true, data: { summary: flockSummary } })
     };
   } catch (error) {
     console.error('Error fetching flock summary:', error);
     return {
       statusCode: 500,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
+      headers: jsonHeaders,
       body: JSON.stringify({ error: 'Failed to fetch flock summary' })
     };
   }

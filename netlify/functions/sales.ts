@@ -1,4 +1,4 @@
-import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
+import type { Handler, HandlerEvent, HandlerContext, HandlerResponse } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -9,6 +9,18 @@ if (!supabaseUrl || !supabaseServiceKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// Helper to create consistent CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+} as const;
+
+const jsonHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*'
+} as const;
 
 // Helper function to get user from authorization header
 async function getAuthenticatedUser(authHeader: string | undefined, supabaseClient: typeof supabase) {
@@ -26,16 +38,12 @@ async function getAuthenticatedUser(authHeader: string | undefined, supabaseClie
   }
 }
 
-export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
+export const handler: Handler = async (event: HandlerEvent, context: HandlerContext): Promise<HandlerResponse> => {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-      },
+      headers: corsHeaders,
       body: ''
     };
   }
@@ -46,7 +54,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
   if (!user) {
     return {
       statusCode: 401,
-      headers: { 'Content-Type': 'application/json' },
+      headers: jsonHeaders,
       body: JSON.stringify({
         success: false,
         error: { message: 'Unauthorized' }
@@ -78,7 +86,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: jsonHeaders,
         body: JSON.stringify({
           success: true,
           data: salesWithCustomers
@@ -95,7 +103,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       if (!customer_id || !sale_date || total_amount === undefined) {
         return {
           statusCode: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({
             success: false,
             error: { message: 'Customer ID, sale date, and total amount are required' }
@@ -106,7 +114,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       if (total_amount < 0) {
         return {
           statusCode: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({
             success: false,
             error: { message: 'Total amount cannot be negative' }
@@ -117,7 +125,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       if ((dozen_count || 0) < 0 || (individual_count || 0) < 0) {
         return {
           statusCode: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({
             success: false,
             error: { message: 'Egg counts cannot be negative' }
@@ -136,7 +144,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       if (customerError || !customer) {
         return {
           statusCode: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({
             success: false,
             error: { message: 'Invalid customer ID' }
@@ -171,7 +179,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
       return {
         statusCode: 201,
-        headers: { 'Content-Type': 'application/json' },
+        headers: jsonHeaders,
         body: JSON.stringify({
           success: true,
           data: saleWithCustomer
@@ -187,7 +195,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       if (!id) {
         return {
           statusCode: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({
             success: false,
             error: { message: 'Sale ID is required' }
@@ -199,7 +207,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       if (total_amount !== undefined && total_amount < 0) {
         return {
           statusCode: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({
             success: false,
             error: { message: 'Total amount cannot be negative' }
@@ -210,7 +218,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       if ((dozen_count !== undefined && dozen_count < 0) || (individual_count !== undefined && individual_count < 0)) {
         return {
           statusCode: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({
             success: false,
             error: { message: 'Egg counts cannot be negative' }
@@ -230,7 +238,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         if (customerError || !customer) {
           return {
             statusCode: 400,
-            headers: { 'Content-Type': 'application/json' },
+            headers: jsonHeaders,
             body: JSON.stringify({
             success: false,
             error: { message: 'Invalid customer ID' }
@@ -263,7 +271,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       if (!data) {
         return {
           statusCode: 404,
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({
             success: false,
             error: { message: 'Sale not found' }
@@ -279,7 +287,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: jsonHeaders,
         body: JSON.stringify({
           success: true,
           data: saleWithCustomer
@@ -295,7 +303,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       if (!id) {
         return {
           statusCode: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({
             success: false,
             error: { message: 'Sale ID is required' }
@@ -316,7 +324,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       if (!data) {
         return {
           statusCode: 404,
-          headers: { 'Content-Type': 'application/json' },
+          headers: jsonHeaders,
           body: JSON.stringify({
             success: false,
             error: { message: 'Sale not found' }
@@ -326,7 +334,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: jsonHeaders,
         body: JSON.stringify({
           success: true,
           data: { success: true }
@@ -336,7 +344,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
     return {
       statusCode: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: jsonHeaders,
       body: JSON.stringify({
         success: false,
         error: { message: 'Method not allowed' }
@@ -346,7 +354,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
     console.error('Sales API error:', error);
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: jsonHeaders,
       body: JSON.stringify({
         success: false,
         error: { message: 'Internal server error' }

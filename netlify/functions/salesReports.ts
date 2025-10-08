@@ -1,4 +1,4 @@
-import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
+import type { Handler, HandlerEvent, HandlerContext, HandlerResponse } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 
 interface MonthlyTotal {
@@ -17,6 +17,18 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+// Helper to create consistent CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+} as const;
+
+const jsonHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*'
+} as const;
+
 // Helper function to get user from authorization header
 async function getAuthenticatedUser(authHeader: string | undefined, supabaseClient: typeof supabase) {
   if (!authHeader) {
@@ -33,16 +45,12 @@ async function getAuthenticatedUser(authHeader: string | undefined, supabaseClie
   }
 }
 
-export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
+export const handler: Handler = async (event: HandlerEvent, context: HandlerContext): Promise<HandlerResponse> => {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-      },
+      headers: corsHeaders,
       body: ''
     };
   }
@@ -50,7 +58,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
   if (event.httpMethod !== 'GET') {
     return {
       statusCode: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: jsonHeaders,
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
@@ -61,7 +69,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
   if (!user) {
     return {
       statusCode: 401,
-      headers: { 'Content-Type': 'application/json' },
+      headers: jsonHeaders,
       body: JSON.stringify({ error: 'Unauthorized' })
     };
   }
@@ -113,7 +121,11 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       if (topCustomerData && topCustomerData.length > 0) {
         const customerTotals: Record<string, { name: string; total: number }> = topCustomerData.reduce((acc, sale) => {
           const customerId = sale.customer_id;
-          const customerName = (sale.customers as { name: string } | null)?.name || 'Unknown';
+          // Handle both array and single object formats from Supabase join
+          const customerData = sale.customers;
+          const customerName = Array.isArray(customerData)
+            ? (customerData[0]?.name || 'Unknown')
+            : (customerData as { name: string } | null)?.name || 'Unknown';
           if (!acc[customerId]) {
             acc[customerId] = { name: customerName, total: 0 };
           }
@@ -138,7 +150,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: jsonHeaders,
         body: JSON.stringify(summary)
       };
     }
@@ -181,7 +193,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: jsonHeaders,
         body: JSON.stringify(monthlyArray)
       };
     }
@@ -210,21 +222,21 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: jsonHeaders,
         body: JSON.stringify(stats)
       };
     }
 
     return {
       statusCode: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: jsonHeaders,
       body: JSON.stringify({ error: 'Invalid query parameters' })
     };
   } catch (error) {
     console.error('Sales reports API error:', error);
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: jsonHeaders,
       body: JSON.stringify({ error: 'Internal server error' })
     };
   }

@@ -1,4 +1,4 @@
-import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions';
+import type { Handler, HandlerEvent, HandlerContext, HandlerResponse } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import type { FlockEvent, Expense, Customer, Sale, DeathRecord } from '../../src/types/index';
 
@@ -68,6 +68,24 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Helper to create consistent CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+} as const;
+
+const jsonHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*'
+} as const;
+
+const cacheHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Cache-Control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=60'
+} as const;
+
 // Helper function to get user from authorization header
 async function getAuthenticatedUser(authHeader: string | undefined) {
   if (!authHeader) return null;
@@ -77,16 +95,12 @@ async function getAuthenticatedUser(authHeader: string | undefined) {
   return error ? null : user;
 }
 
-export const handler: Handler = async (event: HandlerEvent, context: HandlerContext) => {
+export const handler: Handler = async (event: HandlerEvent, context: HandlerContext): Promise<HandlerResponse> => {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-      },
+      headers: corsHeaders,
       body: ''
     };
   }
@@ -94,7 +108,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
   if (event.httpMethod !== 'GET') {
     return {
       statusCode: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: jsonHeaders,
       body: JSON.stringify({ message: 'Method not allowed' })
     };
   }
@@ -107,7 +121,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
     if (!user) {
       return {
         statusCode: 401,
-        headers: { 'Content-Type': 'application/json' },
+        headers: jsonHeaders,
         body: JSON.stringify({ message: 'Unauthorized - Please log in' })
       };
     }
@@ -147,17 +161,14 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
     return {
       statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=60'
-      },
+      headers: cacheHeaders,
       body: JSON.stringify(responseData)
     };
   } catch (error) {
     console.error('Error in data endpoint:', error);
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: jsonHeaders,
       body: JSON.stringify({
         message: 'Error fetching data from database',
         error: error instanceof Error ? error.message : String(error)
