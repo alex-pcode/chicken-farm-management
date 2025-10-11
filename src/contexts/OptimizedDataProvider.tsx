@@ -124,17 +124,11 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
   // Silent refresh that doesn't show loading state - for after mutations
   const silentRefresh = useCallback(async () => {
     if (!user?.id) {
-      console.log('⚠️ silentRefresh: No user ID, aborting');
       return;
     }
 
-    console.log('🔄 silentRefresh: Starting data fetch...');
     try {
       const response = await apiService.data.fetchAllData();
-      console.log('📥 silentRefresh: API response received:', {
-        eggEntriesCount: response.data?.eggEntries?.length || 0,
-        timestamp: new Date().toISOString()
-      });
 
       const dbData = response.data || {
         eggEntries: [],
@@ -162,7 +156,6 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
         userProfile: dbData?.userProfile || null
       };
 
-      console.log('💾 silentRefresh: Setting new data state (eggEntries count:', newData.eggEntries.length, ')');
       // Force new object reference to trigger React re-renders
       setData({ ...newData });
       browserCache.set(CACHE_KEYS.APP_DATA, newData, 10, user.id);
@@ -174,7 +167,6 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
 
       setLastFetched(new Date());
       setIsSubscriptionLoading(false);
-      console.log('✅ silentRefresh: Complete');
     } catch (err) {
       console.error('❌ silentRefresh failed:', err);
       // Don't set error state for silent refresh failures
@@ -245,13 +237,13 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
   useEffect(() => {
     const interval = setInterval(() => {
       if (isCacheStale() && !isLoading && document.hasFocus()) {
-        console.log('Optimized cache is stale, refreshing data...');
-        refreshData();
+        console.log('Cache is stale, refreshing data silently...');
+        silentRefresh();
       }
     }, 10 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [isCacheStale, isLoading, refreshData]);
+  }, [isCacheStale, isLoading, silentRefresh]);
 
 
   const contextValue: OptimizedDataContextType = {

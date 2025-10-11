@@ -33,7 +33,7 @@ export const useFeedData = (options: UseFeedDataOptions = {}): UseFeedDataReturn
   } = options;
 
   // Use OptimizedDataProvider for cached data
-  const { data, isLoading: contextLoading, refreshData } = useOptimizedAppData();
+  const { data, isLoading: contextLoading, silentRefresh } = useOptimizedAppData();
   const contextFeedInventory = data.feedInventory;
 
   // Memoize the fetcher function to prevent infinite loops
@@ -77,38 +77,38 @@ export const useFeedData = (options: UseFeedDataOptions = {}): UseFeedDataReturn
     // Add temporary ID for API compatibility (database will generate final UUID)
     const entryWithId: FeedEntry = { ...entry, id: `temp-${Date.now()}` };
     await apiService.production.saveFeedInventory([entryWithId]);
-    
-    // After successful save, refresh data from server to get updated state
-    await refreshData();
-  }, [refreshData]);
 
-  // Update existing feed entry  
+    // After successful save, refresh data from server
+    await silentRefresh();
+  }, [silentRefresh]);
+
+  // Update existing feed entry
   const updateFeedEntry = useCallback(async (id: string, updatedData: Partial<FeedEntry>) => {
     // Use the most current data available
     const currentEntries = contextFeedInventory && contextFeedInventory.length > 0 ? contextFeedInventory : allFeedEntries;
-    
+
     const entryIndex = currentEntries.findIndex(entry => entry.id === id);
     if (entryIndex === -1) {
       return;
     }
 
     const entryToUpdate = { ...currentEntries[entryIndex], ...updatedData };
-    
+
     // Save only the updated entry to API (UPSERT will handle it properly)
     await apiService.production.saveFeedInventory([entryToUpdate]);
-    
-    // After successful API call, refresh data from server to get updated state
-    await refreshData();
-  }, [allFeedEntries, contextFeedInventory, refreshData]);
+
+    // After successful API call, refresh data from server
+    await silentRefresh();
+  }, [allFeedEntries, contextFeedInventory, silentRefresh]);
 
   // Delete feed entry
   const deleteFeedEntry = useCallback(async (id: string) => {
     // Use proper delete API instead of saving filtered array
     await apiService.production.deleteFeedInventory(id);
-    
-    // After successful delete, refresh data from server to get updated state
-    await refreshData();
-  }, [refreshData]);
+
+    // After successful delete, refresh data from server
+    await silentRefresh();
+  }, [silentRefresh]);
 
   // Statistics and analysis
   const statistics = useMemo(() => {

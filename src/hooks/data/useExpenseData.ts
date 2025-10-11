@@ -33,7 +33,7 @@ export const useExpenseData = (options: UseExpenseDataOptions = {}): UseExpenseD
   } = options;
 
   // Use OptimizedDataProvider for cached data
-  const { data, isLoading: contextLoading, refreshData } = useOptimizedAppData();
+  const { data, isLoading: contextLoading, silentRefresh } = useOptimizedAppData();
   const contextExpenses = data.expenses;
 
   // Memoize the fetcher function to prevent infinite loops
@@ -76,14 +76,14 @@ export const useExpenseData = (options: UseExpenseDataOptions = {}): UseExpenseD
   const isLoading = contextLoading || fetchLoading;
   const error = fetchError;
 
-  // Add new expense  
+  // Add new expense
   const addExpense = useCallback(async (expense: Omit<Expense, 'id'>) => {
     // Save to API without ID (let database generate UUID)
     await apiService.production.saveExpenses([expense]);
-    
-    // After successful save, refresh data from server to get updated state
-    await refreshData();
-  }, [refreshData]);
+
+    // After successful save, refresh data from server
+    await silentRefresh();
+  }, [silentRefresh]);
 
   // Update existing expense
   const updateExpense = useCallback(async (id: string, updatedData: Partial<Expense>) => {
@@ -91,22 +91,22 @@ export const useExpenseData = (options: UseExpenseDataOptions = {}): UseExpenseD
     if (expenseIndex === -1) return;
 
     const expenseToUpdate = { ...safeAllExpenses[expenseIndex], ...updatedData };
-    
+
     // Save to API
     await apiService.production.saveExpenses([expenseToUpdate]);
-    
-    // After successful save, refresh data from server to get updated state
-    await refreshData();
-  }, [safeAllExpenses, refreshData]);
+
+    // After successful save, refresh data from server
+    await silentRefresh();
+  }, [safeAllExpenses, silentRefresh]);
 
   // Delete expense
   const deleteExpense = useCallback(async (id: string) => {
     // Use proper DELETE API endpoint
     await apiService.production.deleteExpense(id);
-    
-    // After successful delete, refresh data from server to get updated state
-    await refreshData();
-  }, [refreshData]);
+
+    // After successful delete, refresh data from server
+    await silentRefresh();
+  }, [silentRefresh]);
 
   // Statistics calculations
   const statistics = useMemo(() => {

@@ -80,10 +80,12 @@ const jsonHeaders = {
   'Access-Control-Allow-Origin': '*'
 } as const;
 
-const cacheHeaders = {
+const noCacheHeaders = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
-  'Cache-Control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=60'
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0'
 } as const;
 
 // Helper function to get user from authorization header
@@ -95,7 +97,7 @@ async function getAuthenticatedUser(authHeader: string | undefined) {
   return error ? null : user;
 }
 
-export const handler: Handler = async (event: HandlerEvent, context: HandlerContext): Promise<HandlerResponse> => {
+export const handler: Handler = async (event: HandlerEvent, _context: HandlerContext): Promise<HandlerResponse> => {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -161,7 +163,7 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
 
     return {
       statusCode: 200,
-      headers: cacheHeaders,
+      headers: noCacheHeaders,
       body: JSON.stringify(responseData)
     };
   } catch (error) {

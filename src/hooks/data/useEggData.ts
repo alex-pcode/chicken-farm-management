@@ -56,7 +56,7 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
 
   // Fixed data precedence: use context if it exists (even if empty array), only fallback if context is null/undefined
   const entries = useMemo(() => {
-    return Array.isArray(contextEntries) 
+    return Array.isArray(contextEntries)
       ? contextEntries  // ✅ Primary: use context data (complete 8 fields)
       : (Array.isArray(fetchedEntries) ? fetchedEntries : []);  // ⚠️ Fallback: minimal 3 fields
   }, [contextEntries, fetchedEntries]);
@@ -70,14 +70,11 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
     const optimisticEntry: EggEntry = { ...entry, id: tempId };
 
     try {
-      // Save to API and immediately refresh to get real data
-      const response = await apiService.production.saveEggEntries([optimisticEntry]);
-      console.log('✅ Entry saved to API:', response);
+      // Save to API and wait for database transaction to commit
+      await apiService.production.saveEggEntries([optimisticEntry]);
 
       // Force immediate data refresh to update UI
-      console.log('🔄 Triggering silent refresh...');
       await silentRefresh();
-      console.log('✅ Silent refresh completed');
     } catch (error) {
       console.error('❌ Error saving entry:', error);
       // If API call fails, refresh anyway to ensure consistency

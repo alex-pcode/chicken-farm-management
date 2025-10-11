@@ -44,8 +44,10 @@ export const useEggPagination = (options: UseEggPaginationOptions): UseEggPagina
     totalItems: sortedEntries.length
   });
 
-  // Get paginated entries
-  const paginatedEntries = pagination.paginatedItems(sortedEntries);
+  // Get paginated entries - memoize to prevent recalculation
+  const paginatedEntries = useMemo(() => {
+    return pagination.paginatedItems(sortedEntries);
+  }, [pagination.currentPage, pagination.pageSize, sortedEntries]);
 
   return useMemo(() => ({
     currentPage: pagination.currentPage,
@@ -58,5 +60,16 @@ export const useEggPagination = (options: UseEggPaginationOptions): UseEggPagina
     isLastPage: pagination.isLastPage,
     paginatedEntries,
     totalEntries: sortedEntries.length,
-  }), [pagination, paginatedEntries, sortedEntries.length]);
+  }), [
+    pagination.currentPage,
+    pagination.totalPages,
+    pagination.pageSize,
+    pagination.goToPage,
+    pagination.nextPage,
+    pagination.previousPage,
+    pagination.isFirstPage,
+    pagination.isLastPage,
+    paginatedEntries,
+    sortedEntries.length
+  ]);
 };

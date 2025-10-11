@@ -151,27 +151,34 @@ export const DataTable = <T = Record<string, unknown>>({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {data.map((row, index) => (
-                <motion.tr
-                  key={`row-${index}`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="hover:bg-gray-50/50 transition-colors"
-                >
-                  {columns.map((column) => (
-                    <td
-                      key={String(column.key)}
-                      className="px-6 py-4 text-sm text-gray-600"
-                    >
-                      {column.render 
-                        ? column.render(row[column.key as keyof T] ?? row, row)
-                        : String(row[column.key as keyof T] || '')
-                      }
-                    </td>
-                  ))}
-                </motion.tr>
-              ))}
+              {data.map((row, index) => {
+                // Use row's id if available, otherwise fallback to index
+                const rowKey = (row as Record<string, unknown>)?.id
+                  ? String((row as Record<string, unknown>).id)
+                  : `row-${index}`;
+
+                return (
+                  <motion.tr
+                    key={rowKey}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="hover:bg-gray-50/50 transition-colors"
+                  >
+                    {columns.map((column) => (
+                      <td
+                        key={String(column.key)}
+                        className="px-6 py-4 text-sm text-gray-600"
+                      >
+                        {column.render
+                          ? column.render(row[column.key as keyof T] ?? row, row)
+                          : String(row[column.key as keyof T] || '')
+                        }
+                      </td>
+                    ))}
+                  </motion.tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

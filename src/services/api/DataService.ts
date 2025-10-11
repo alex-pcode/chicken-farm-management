@@ -62,7 +62,7 @@ export class DataService extends BaseApiService implements IDataService {
       flockEvents?: FlockEvent[];
       flockBatches?: FlockBatch[];
       deathRecords?: DeathRecord[];
-    }>('/data?type=all');
+    }>(`/data?type=all`);
 
 
     // Normalize the response structure - API returns { data: { ... } } 
