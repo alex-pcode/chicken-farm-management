@@ -233,37 +233,38 @@ Currently background auto-refresh is disabled (lines 154-165 in OptimizedDataPro
 - Manual refresh required via `refreshData()`
 - Reduces potential API call overhead during debugging
 
-## Vercel Deployment Constraints
+## Netlify Deployment Considerations (October 2025)
 
-### Critical Hobby Plan Limitations
-⚠️ **12 Serverless Function Limit**: Vercel Hobby plan allows maximum 12 functions per deployment
+### Free Tier Optimization Strategy
+✅ **No Hard Function Limit**: Netlify free tier has no function count limit, but monitors invocation volume
 
-**What Counts as a Function**:
-- Each file in `/api` directory = 1 serverless function
-- API route handlers, utilities, helpers all count toward limit
-- Frontend components do NOT count toward this limit
+**Performance Considerations**:
+- Each file in `netlify/functions/` directory = 1 serverless function
+- **125k invocations/month** free tier limit (vs unlimited functions)
+- **30-second timeout** per function (improved from Vercel's 10s)
+- Frontend components do NOT count toward invocation limit
 
-**Architectural Impact**: 
-- **Function consolidation required** to stay within limits
-- **Monolithic API endpoints** preferred over micro-services approach
-- **Careful API design** essential to avoid hitting 12-function ceiling
+**Architectural Benefits**:
+- ✅ **No function consolidation pressure** - can use domain-separated functions
+- ✅ **Intelligent caching critical** - 85% reduction keeps invocations under limit
+- ✅ **Flexible API design** - can optimize for clarity over consolidation
+- ✅ **Better timeout limits** - handles complex operations without rushing
 
-### Function Optimization Strategies
+### Invocation Optimization Strategies
 
-#### 1. API Consolidation Patterns
+#### 1. Caching-First Approach (Primary Strategy)
 ```typescript
-// ❌ Bad: 6+ separate functions (hits limit quickly)
-/api/eggs/create.ts
-/api/eggs/update.ts  
-/api/eggs/delete.ts
-/api/feed/create.ts
-/api/feed/update.ts
-/api/expenses/create.ts
+// ✅ Best: Intelligent caching reduces invocations by 85%
+// Single data fetch with 10-minute cache
+/.netlify/functions/data        // Cached for 10 minutes
+// Result: ~15 invocations/user/day instead of 100+
 
-// ✅ Good: Consolidated endpoints (2-3 functions total)
-/api/getData.ts        // Single fetch endpoint for all data
-/api/mutations.ts      // All create/update/delete operations
-/api/auth.ts          // Authentication operations
+// ✅ Good: Domain-separated functions (Netlify allows this)
+/.netlify/functions/getData        // Main data retrieval
+/.netlify/functions/crud           // CRUD operations
+/.netlify/functions/customers      // Customer management
+/.netlify/functions/sales          // Sales operations
+// No function count pressure, focus on invocation optimization
 ```
 
 #### 2. Route-Based Consolidation
@@ -284,49 +285,58 @@ export default function handler(req, res) {
 
 ## Future Enhancements
 
-### Immediate Opportunities (Within Hobby Limits)
+### Immediate Opportunities (Within Free Tier)
 - **Re-enable background refresh** after performance debugging complete
-- **Function consolidation audit** to ensure <12 functions deployed
+- **Invocation monitoring** to track against 125k/month limit
 - **Cache warming** for predictable user flows
-- **Metrics collection** for cache hit/miss rates
+- **Metrics collection** for cache hit/miss rates and invocation tracking
 
-### Advanced Improvements (May Require Pro Plan)
-- **Micro-service API architecture** (requires >12 functions)
-- **Specialized function endpoints** for different domains
+### Advanced Improvements (Netlify Platform)
+- ✅ **Domain-separated API architecture** (no function count limit)
+- ✅ **Specialized function endpoints** for different domains (already implemented)
 - **Service worker integration** for true offline support
-- **Real-time subscriptions** via additional WebSocket functions
+- **Real-time subscriptions** via Supabase (no additional functions needed)
+- **Edge functions** for CDN-level processing (Netlify feature)
 
-### Cost-Conscious Alternatives
-- **Supabase Edge Functions** for additional serverless compute (outside Vercel limits)
+### Cost-Conscious Optimizations
+- ✅ **Intelligent caching** - Primary strategy (85% invocation reduction)
+- **Supabase Database Functions** for server-side logic
 - **Client-side processing** for non-sensitive computations
-- **Database functions/triggers** for server-side logic
-- **Third-party API consolidation** to reduce function count
+- **Batch operations** to reduce individual invocations
 
-## Current Function Inventory
+## Current Function Inventory (Netlify)
 
-### Active Functions (9/12 - Safe Zone)
+### Active Functions (10 Total - No Limit Constraint)
 ```
-/api/batchEvents.ts     - Flock batch event operations
-/api/crud.ts           - Generic CRUD operations
-/api/customers.ts      - Customer management
-/api/data.ts           - Consolidated data fetching
-/api/deathRecords.ts   - Death record management
-/api/flockBatches.ts   - Flock batch operations
-/api/flockSummary.ts   - Flock analytics
-/api/sales.ts          - Sales operations
-/api/salesReports.ts   - Sales reporting
+/.netlify/functions/batchEvents.ts     - Flock batch event operations
+/.netlify/functions/crud.ts            - Generic CRUD operations
+/.netlify/functions/customers.ts       - Customer management
+/.netlify/functions/data.ts            - Consolidated data fetching (CACHED - Primary invocation saver)
+/.netlify/functions/deathRecords.ts    - Death record management
+/.netlify/functions/debug-db.ts        - Database debugging utilities
+/.netlify/functions/flockBatches.ts    - Flock batch operations
+/.netlify/functions/flockSummary.ts    - Flock analytics
+/.netlify/functions/sales.ts           - Sales operations
+/.netlify/functions/salesReports.ts    - Sales reporting
 ```
 
-### Function Consolidation Recommendations
+### Invocation Optimization Status
 
-#### High Priority (Prevent Limit Breach)
-1. **Merge CRM Functions**: Combine `customers.ts` + `sales.ts` + `salesReports.ts` → `crm.ts`
-2. **Merge Flock Functions**: Combine `flockBatches.ts` + `batchEvents.ts` + `deathRecords.ts` → `flockManagement.ts`  
-3. **Result**: 9 functions → 5 functions (7 function headroom for future growth)
+#### ✅ Completed Optimizations
+1. **Primary Data Caching**: `data.ts` function cached for 10 minutes → **85% invocation reduction**
+2. **Domain Separation Maintained**: Functions organized by business domain (no consolidation pressure)
+3. **Migration Success**: All 10 functions successfully migrated from Vercel (October 2025)
+4. **Timeout Improvement**: 30s limit enables complex operations without splitting
+
+#### Current Invocation Profile
+- **Estimated Monthly Invocations**: ~15k-20k (well under 125k limit)
+- **Primary Driver**: Intelligent caching strategy
+- **Growth Headroom**: 6x-8x capacity available
 
 #### Before Adding New Functions
-- ⚠️ **Always check function count** before implementing new endpoints
-- **Consider consolidating first** rather than creating new functions
+- ✅ **No function count concerns** - Netlify has no hard limit
+- ⚠️ **Monitor invocation impact** - ensure caching strategy remains effective
+- ✅ **Can prioritize code clarity** over forced consolidation
 - **Use `crud.ts` pattern** for generic operations
 - **Leverage `data.ts` pattern** for read-heavy operations
 

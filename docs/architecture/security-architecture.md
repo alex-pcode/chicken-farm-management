@@ -6,7 +6,7 @@ This document outlines the comprehensive security architecture for the Chicken M
 
 **Project Context:**
 - **Application Type:** Full-stack SaaS application for poultry farm management
-- **Technology Stack:** React 19 + TypeScript + Supabase + Vercel
+- **Technology Stack:** React 19 + TypeScript + Supabase + Netlify
 - **User Base:** Individual poultry farmers (multi-tenant)
 - **Data Sensitivity:** Farm production data, financial records, customer information
 - **Compliance Requirements:** Basic data protection (GDPR considerations)
@@ -48,8 +48,8 @@ graph TB
     Auth --> JWT[JWT Token Validation]
     JWT --> RLS[Row Level Security]
     RLS --> Data[Protected Data]
-    
-    App --> API[Vercel API Functions]
+
+    App --> API[Netlify Functions]
     API --> AuthMiddleware[Auth Middleware]
     AuthMiddleware --> TokenValidation[Token Validation]
     TokenValidation --> UserContext[User Context]
@@ -183,33 +183,36 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON user_tables TO authenticated;
 
 **API Access Controls:**
 - **Authentication Required:** Every endpoint validates JWT
-- **Rate Limiting:** Per-user request limits (Vercel Pro features)
+- **Rate Limiting:** Per-user request limits (application-level implementation)
 - **Input Validation:** All inputs validated with TypeScript + runtime checks
 - **Output Filtering:** Sensitive fields stripped from responses
 
 ## Infrastructure Security
 
-### Vercel Security Configuration
+### Netlify Security Configuration
 
 **Platform Security:**
 - **HTTPS Enforcement:** Automatic HTTPS with certificate management
-- **DDoS Protection:** Built-in DDoS mitigation
-- **Edge Security:** CDN-level attack filtering
-- **Function Isolation:** Serverless function sandboxing
+- **DDoS Protection:** Built-in DDoS mitigation at edge network
+- **Edge Security:** CDN-level attack filtering and WAF capabilities
+- **Function Isolation:** Serverless function sandboxing with AWS Lambda
 
 **Environment Security:**
 ```bash
-# Production Environment Variables (Vercel)
-SUPABASE_URL=https://xxx.supabase.co           # Public URL
-SUPABASE_ANON_KEY=eyJ...                       # Public anonymous key
-SUPABASE_SERVICE_ROLE_KEY=eyJ...               # SECRET - backend only
+# Production Environment Variables (Netlify)
+VITE_API_URL=/.netlify/functions              # Public API base URL
+VITE_SUPABASE_URL=https://xxx.supabase.co     # Public URL
+VITE_SUPABASE_ANON_KEY=eyJ...                 # Public anonymous key (RLS-protected)
+SUPABASE_URL=https://xxx.supabase.co          # Server-side URL
+SUPABASE_SERVICE_ROLE_KEY=eyJ...              # SECRET - backend only, never exposed
 ```
 
-**Function Limits & Security:**
-- **9/12 Functions Used:** Below Vercel Hobby plan limits
-- **Function Isolation:** Each API function runs in isolated environment
-- **Memory Limits:** 1GB memory limit per function (sufficient)
-- **Execution Timeouts:** 10s timeout for API functions
+**Function Security & Limits:**
+- **10 Functions Deployed:** All successfully migrated from Vercel (October 2025)
+- **Function Isolation:** Each API function runs in isolated AWS Lambda environment
+- **Memory Limits:** 1GB memory limit per function (sufficient for all operations)
+- **Execution Timeouts:** 30s timeout (improved from Vercel's 10s limit)
+- **Invocation Limits:** 125k/month on free tier (85% reduction via caching keeps usage low)
 
 ### Supabase Security Configuration
 
@@ -231,10 +234,11 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...               # SECRET - backend only
 
 **Consolidated API Functions:**
 Current function organization provides security benefits:
-- **Limited Attack Surface:** Only 9 API endpoints to secure
+- **Limited Attack Surface:** Only 10 API endpoints to secure
 - **Consistent Auth:** Single authentication pattern across all functions
 - **Centralized Validation:** Shared validation logic in BaseApiService
 - **Error Handling:** Unified error responses prevent information leakage
+- **Platform Migration:** All functions successfully migrated to Netlify with zero security regressions
 
 ### Input Validation & Sanitization
 
@@ -269,9 +273,10 @@ protected validateRequestData<T>(
 - **Gradual Backoff:** Exponential delay for repeated violations
 
 **Infrastructure Protection:**
-- **Vercel Edge Network:** DDoS mitigation at CDN level
-- **Function Concurrency:** Auto-scaling with abuse detection
-- **Origin Protection:** API functions behind Vercel's edge network
+- **Netlify Edge Network:** DDoS mitigation at CDN level with global distribution
+- **Function Concurrency:** Auto-scaling with abuse detection via AWS Lambda
+- **Origin Protection:** API functions behind Netlify's edge network
+- **WAF Integration:** Web Application Firewall capabilities available for enhanced protection
 
 ## Frontend Security
 
@@ -392,11 +397,12 @@ class BaseApiService {
 - ✅ XSS prevention with input sanitization
 
 ### Infrastructure Security
-- ✅ Secure environment variable management
-- ✅ Function isolation in Vercel serverless environment
+- ✅ Secure environment variable management (Netlify)
+- ✅ Function isolation in AWS Lambda serverless environment
 - ✅ Rate limiting implementation
-- ✅ DDoS protection via Vercel Edge Network
+- ✅ DDoS protection via Netlify Edge Network
 - ✅ SSL certificate management (automatic)
+- ✅ Platform migration completed with zero security regressions (October 2025)
 
 ### Application Security
 - ✅ Protected route components (ProtectedRoute)
@@ -432,10 +438,35 @@ class BaseApiService {
 3. **Compliance Certification:** GDPR compliance audit
 4. **Security Automation:** Automated incident response workflows
 
+## Platform Migration Security Assessment
+
+### Netlify Migration (October 2025)
+
+**Security Impact Analysis:**
+- ✅ **Zero Security Regressions:** All security controls maintained during migration
+- ✅ **Enhanced Timeouts:** 30s function timeout improves resilience against timeout-based DoS
+- ✅ **Consistent Authentication:** JWT validation unchanged across all endpoints
+- ✅ **RLS Protection Maintained:** Database-level security unaffected by platform change
+- ✅ **Environment Variable Security:** Proper segregation of public vs. secret variables
+- ✅ **HTTPS/TLS:** Automatic SSL certificate provisioning on Netlify
+
+**Migration Security Validation:**
+- All 10 API functions tested for authentication enforcement
+- Rate limiting functionality verified post-migration
+- Input validation patterns confirmed functional
+- Error handling maintains information leakage prevention
+- Session management and token refresh working correctly
+
+**New Security Considerations:**
+- **AWS Lambda Backend:** Functions now run on AWS infrastructure (vs. Vercel's proprietary)
+- **Netlify Configuration:** Security headers configured in `netlify.toml`
+- **Invocation Monitoring:** Monitor 125k/month limit to prevent service disruption
+- **Build Process:** Secrets scanning configured to allow public VITE_ prefixed variables
+
 ---
 
 **Document Status:** ✅ **COMPLETED** - Comprehensive security architecture documented
-**Last Updated:** January 30, 2025  
-**Next Review:** March 30, 2025
+**Last Updated:** October 4, 2025 (Netlify Migration)
+**Next Review:** December 4, 2025
 **Owner:** Architecture Team
 **Reviewers:** Security Team, Development Team

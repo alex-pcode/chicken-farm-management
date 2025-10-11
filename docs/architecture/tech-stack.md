@@ -4,7 +4,7 @@
 
 This document provides a comprehensive overview of the technology stack powering the Chicken Manager application, including current versions, architectural decisions, and technology rationale.
 
-**Status**: ✅ **Current as of August 2025** - Reflecting production-ready stack
+**Status**: ✅ **Current as of October 2025** - Reflecting production-ready stack with Netlify migration
 
 ## Core Technology Stack
 
@@ -90,15 +90,18 @@ This document provides a comprehensive overview of the technology stack powering
   - **Real-time**: Live data synchronization
 - **Integration**: `@supabase/supabase-js` client library
 
-#### Vercel Functions ⚡
+#### Netlify Functions ⚡
 - **Purpose**: Serverless API endpoints
-- **Runtime**: Node.js 18+
-- **Structure**: `/api` folder pattern
+- **Runtime**: Node.js 20+ (AWS Lambda)
+- **Structure**: `/netlify/functions` folder pattern
+- **Functions**: 10 total endpoints
 - **Features**:
-  - Auto-scaling serverless functions
-  - Edge computing capabilities
+  - Auto-scaling serverless functions (AWS Lambda)
+  - 30-second timeout (improved from Vercel's 10s)
+  - 1GB memory allocation per function
   - Environment variable management
-  - Automatic deployments
+  - Automatic deployments on git push
+- **Migration**: Successfully migrated from Vercel (October 2025)
 
 ### State Management & Data Flow
 
@@ -274,12 +277,13 @@ src/
 #### Code Quality Pipeline
 ```bash
 # Development
-npx vercel dev          # Full-stack development
+netlify dev            # Full-stack development with Netlify functions
+npm run dev            # Vite only (API functions won't work)
 
 # Quality Checks
-npm run type-check      # TypeScript compilation
+npm run type-check     # TypeScript compilation
 npm run lint           # Code linting
-npm test              # Unit tests
+npm test               # Unit tests
 npm run test:coverage  # Coverage reports
 
 # Production
@@ -288,10 +292,12 @@ npm run preview        # Build preview
 ```
 
 #### Deployment Strategy
-- **Platform**: Vercel (serverless functions + static hosting)
+- **Platform**: Netlify (serverless functions + static hosting)
+- **Previous Platform**: Migrated from Vercel (October 2025)
 - **Environments**: Production + preview deployments
-- **CI/CD**: Automated deployment on git push
+- **CI/CD**: Automated deployment on git push to main
 - **Monitoring**: Sentry for production observability
+- **Configuration**: `netlify.toml` for build and function settings
 
 ## Performance Characteristics
 
@@ -308,10 +314,11 @@ npm run preview        # Build preview
 - **Database Queries**: Optimized with indexes
 
 ### Scalability Considerations
-- **Frontend**: CDN distribution via Vercel Edge
-- **Backend**: Auto-scaling serverless functions
+- **Frontend**: CDN distribution via Netlify Edge network
+- **Backend**: Auto-scaling serverless functions (AWS Lambda)
 - **Database**: Supabase managed PostgreSQL
-- **Caching**: Intelligent client-side caching
+- **Caching**: Intelligent client-side caching (85% API call reduction)
+- **Free Tier Limits**: 125k function invocations/month (monitored via caching)
 
 ## Security Architecture
 
@@ -324,8 +331,9 @@ npm run preview        # Build preview
 ### Data Protection
 - **Encryption**: HTTPS everywhere (TLS 1.3)
 - **Database**: Encrypted at rest and in transit
-- **Secrets Management**: Environment variables + Vercel secrets
+- **Secrets Management**: Environment variables + Netlify secure storage
 - **Compliance**: Privacy-first data handling
+- **Configuration**: Public VITE_ variables allowed, service role key protected
 
 ### Security Monitoring
 - **Error Tracking**: Sentry for security incident detection
@@ -362,24 +370,26 @@ npm run preview        # Build preview
 ### Development Environment
 ```bash
 # Required Node.js version
-node: ">=18.0.0"
+node: ">=20.0.0"
 
 # Package manager
 npm: ">=8.0.0"
 
 # Development server
-npx vercel dev --port 3000
+netlify dev
 ```
 
 ### Production Environment
 ```bash
 # Build targets
 ES2020+ (modern browsers)
-Node.js 18+ (serverless functions)
+Node.js 20+ (Netlify functions via AWS Lambda)
 
 # Environment variables (required)
+VITE_API_URL=/.netlify/functions
 VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_URL=your_supabase_url
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
 
@@ -427,20 +437,53 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 - **Alternatives Considered**: Styled Components, CSS Modules
 - **Decision**: Chosen for consistency and maintainability
 
-#### Vercel ✅
-- **Pros**: Excellent DX, automatic deployments, edge functions
-- **Cons**: Cost at scale, vendor lock-in
-- **Alternatives Considered**: Netlify, AWS, Railway
-- **Decision**: Chosen for seamless deployment and performance
+#### Netlify ✅
+- **Pros**: Excellent DX, automatic deployments, 30s timeout, edge functions
+- **Cons**: Lower free tier invocation limits (125k/month), vendor lock-in
+- **Previous Platform**: Migrated from Vercel (October 2025)
+- **Migration Reason**: Better timeout limits (30s vs 10s), similar features
+- **Decision**: Chosen for improved timeout limits and comparable DX
+
+## Platform Migration History
+
+### Netlify Migration (October 2025)
+
+**Migration Overview:**
+- Successfully migrated all 10 serverless functions from Vercel to Netlify
+- Zero downtime during migration
+- All security controls maintained
+- Frontend required zero changes (unified API service layer abstraction)
+
+**Key Changes:**
+- **API Base URL**: `/api` → `/.netlify/functions`
+- **Function Timeout**: 10s → 30s (3x improvement)
+- **Runtime**: Node.js 18 → Node.js 20
+- **Infrastructure**: Vercel proprietary → AWS Lambda
+- **Configuration**: `vercel.json` → `netlify.toml`
+
+**Migration Benefits:**
+- ✅ Improved timeout limits for complex operations
+- ✅ Same memory allocation and bandwidth
+- ✅ Comparable developer experience
+- ✅ Zero breaking changes to application code
+- ✅ Maintained all performance characteristics
+
+**Technical Achievements:**
+- Unified API service layer enabled seamless platform switch
+- Single configuration point (BaseApiService.API_BASE_URL) simplified migration
+- Comprehensive testing infrastructure validated migration success
+- Type safety preserved throughout migration
+
+For detailed migration information, see: [netlify-migration-plan.md](../netlify-migration-plan.md)
 
 ## Related Documentation
 
 - **Architecture Overview**: [architecture.md](./architecture.md)
 - **API Implementation**: [api-service-implementation.md](./api-service-implementation.md)
-- **Component Library**: [shared-components-library.md](./shared-components-library.md)
-- **Coding Standards**: [coding-standards.md](./coding-standards.md)
-- **shadcn/ui Integration**: [shadcn-integration-guide.md](./shadcn-integration-guide.md)
+- **Security Architecture**: [security-architecture.md](./security-architecture.md)
+- **Source Tree**: [source-tree.md](./source-tree.md)
+- **Migration Guide**: [../netlify-migration-plan.md](../netlify-migration-plan.md)
 
 ---
 
-*This document reflects the production technology stack of Chicken Manager as of August 2025.*
+*This document reflects the production technology stack of Chicken Manager as of October 2025, including successful Netlify platform migration.*

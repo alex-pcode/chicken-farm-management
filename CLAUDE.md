@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Development Server
 ```bash
-# Recommended for full API support (Vercel functions)
-npx vercel dev
+# Recommended for full API support (Netlify functions)
+netlify dev
 
 # Alternative using Vite only (no API support)
 npm run dev
@@ -45,7 +45,7 @@ npm run preview         # Preview production build
 - **Charts**: Recharts
 - **Database**: Supabase (PostgreSQL with Row Level Security)
 - **Authentication**: Supabase Auth
-- **Deployment**: Vercel (serverless functions)
+- **Deployment**: Netlify (serverless functions)
 
 ### Core Architecture Patterns
 
@@ -64,8 +64,8 @@ The app uses a sophisticated caching system via `DataContext.tsx`:
 Located in `src/services/api/`, this provides:
 - **Domain separation**: `apiService.data`, `apiService.production`, `apiService.flock`, `apiService.auth`
 - **Consistent error handling** and authentication headers
-- **Type-safe interfaces** using consolidated types from `src/types/` (Story 3.1 complete)
-- **Legacy compatibility** layer for migration
+- **Type-safe interfaces** using consolidated types from `src/types/`
+- **API Base URL**: `/.netlify/functions` (Netlify serverless functions)
 
 #### 4. Component Organization
 - **Main navigation**: Dashboard, Profile, Production (EggCounter), CRM, Expenses, Feed Management, Savings, Calculators
@@ -101,7 +101,8 @@ src/
 ├── design-system/      # Design tokens and shared styles
 └── test/              # Test utilities and setup
 
-api/                    # Vercel serverless functions
+netlify/
+└── functions/          # Netlify serverless functions (10 endpoints)
 docs/                   # Comprehensive documentation
 migrations/             # Database schema migrations
 ```
@@ -110,8 +111,10 @@ migrations/             # Database schema migrations
 
 Required environment variables:
 ```env
+VITE_API_URL=/.netlify/functions
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_URL=your_supabase_project_url
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 ```
 

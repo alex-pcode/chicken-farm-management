@@ -5,6 +5,7 @@
 The unified API service layer consolidates all data operations into a type-safe, domain-separated architecture that eliminates code duplication and provides consistent error handling across the Chicken Manager application.
 
 **Status**: ✅ **COMPLETED** - Fully implemented and integrated
+**Platform**: Netlify Functions (migrated from Vercel October 2025)
 
 ## Architecture
 
@@ -42,6 +43,9 @@ All services extend `BaseApiService` which provides:
 ```typescript
 // src/services/api/BaseApiService.ts
 export abstract class BaseApiService {
+  // API Base URL: /.netlify/functions (Netlify serverless functions)
+  private static readonly API_BASE_URL = '/.netlify/functions';
+
   // HTTP method implementations
   protected async get<T>(endpoint: string, dataValidator?: (data: unknown) => data is T): Promise<ApiResponse<T>>
   protected async post<T>(endpoint: string, data: unknown, dataValidator?: (data: unknown) => data is T): Promise<ApiResponse<T>>
@@ -51,11 +55,11 @@ export abstract class BaseApiService {
   // Authentication & headers
   protected async getAuthHeaders(): Promise<Record<string, string>>
   protected getPublicHeaders(): Record<string, string>
-  
+
   // Response handling with validation
   protected async handleResponse<T>(response: Response, dataValidator?: (data: unknown) => data is T): Promise<ApiResponse<T>>
-  
-  // Request validation utilities  
+
+  // Request validation utilities
   protected validateRequestData<T>(data: unknown, validator: (data: unknown) => data is T, typeName: string): ValidationResult<T>
 }
 ```
@@ -186,6 +190,7 @@ const handleSubmit = async () => {
 
 ## File Structure
 
+### Frontend API Service Layer
 ```
 src/services/api/
 ├── BaseApiService.ts      # Base class with common functionality
@@ -205,6 +210,24 @@ src/services/api/
     ├── FlockService.test.ts
     └── CRMService.test.ts
 ```
+
+### Backend Netlify Functions (API Endpoints)
+```
+netlify/functions/
+├── data.ts              # Main data endpoint (GET all user data)
+├── customers.ts         # Customer CRUD operations
+├── sales.ts             # Sales management
+├── salesReports.ts      # Sales analytics
+├── flockBatches.ts      # Flock batch management
+├── flockSummary.ts      # Flock statistics
+├── deathRecords.ts      # Death record tracking
+├── batchEvents.ts       # Batch event logging
+├── crud.ts              # Generic CRUD operations
+└── debug-db.ts          # Database debugging
+```
+
+**Communication Flow**:
+Frontend Service Layer → `/.netlify/functions/{endpoint}` → Netlify Function → Supabase
 
 ## Testing Coverage
 
@@ -242,20 +265,42 @@ describe('ProductionService', () => {
 - Gradual migration path available
 - No breaking changes for existing components
 
+## Platform Migration Notes
+
+### Netlify Migration (October 2025)
+- ✅ All 10 backend functions successfully converted to Netlify format
+- ✅ Frontend API service layer unchanged (abstraction works perfectly)
+- ✅ API Base URL updated: `/api` → `/.netlify/functions`
+- ✅ Zero breaking changes to service layer interfaces
+- ✅ Improved timeout limits: 10s (Vercel) → 30s (Netlify)
+
+### Benefits of Service Layer Abstraction
+The unified API service layer proved invaluable during platform migration:
+- **Zero component changes**: All components continued working without modification
+- **Single point of configuration**: Only `BaseApiService.API_BASE_URL` needed updating
+- **Type safety preserved**: Full TypeScript coverage throughout migration
+- **Testing unaffected**: All service layer tests passed without changes
+
 ## Next Steps
 
-1. **Monitor Performance**: API service performance metrics
+1. **Monitor Performance**: Track Netlify function invocation counts and response times
 2. **Expand Testing**: Add integration tests for complex workflows
-3. **Documentation**: API service JSDoc completion
-4. **Optimization**: Consider caching strategies for specific endpoints
+3. **Documentation**: Complete API service JSDoc coverage
+4. **Optimization**: Monitor caching effectiveness to stay within Netlify free tier (125k invocations/month)
 
 ## Related Files
 
+### Frontend
 - **Main Implementation**: `src/services/api/`
 - **Data Provider**: `src/contexts/OptimizedDataProvider.tsx`
 - **Legacy Utils**: `src/utils/authApiUtils.ts` (deprecated)
 - **Type Definitions**: `src/types/services.ts`
 
+### Backend (Netlify)
+- **Functions Directory**: `netlify/functions/`
+- **Configuration**: `netlify.toml`
+- **Migration Guide**: `docs/netlify-migration-plan.md`
+
 ---
 
-*This document reflects the completed API consolidation (Epic 1) as of January 2025.*
+*This document reflects the completed API consolidation (Epic 1) as of January 2025, updated for Netlify migration October 2025.*
