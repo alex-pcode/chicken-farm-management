@@ -71,10 +71,15 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
 
     try {
       // Save to API and immediately refresh to get real data
-      await apiService.production.saveEggEntries([optimisticEntry]);
+      const response = await apiService.production.saveEggEntries([optimisticEntry]);
+      console.log('✅ Entry saved to API:', response);
+
       // Force immediate data refresh to update UI
+      console.log('🔄 Triggering silent refresh...');
       await silentRefresh();
+      console.log('✅ Silent refresh completed');
     } catch (error) {
+      console.error('❌ Error saving entry:', error);
       // If API call fails, refresh anyway to ensure consistency
       await silentRefresh();
       throw error;
