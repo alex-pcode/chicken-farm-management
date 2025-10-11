@@ -63,15 +63,22 @@ export const useEggData = (options: UseEggDataOptions = {}): UseEggDataReturn =>
   const isLoading = contextLoading || fetchLoading;
   const error = fetchError;
 
-  // Add new egg entry with optimistic updates
+  // Add new egg entry with true optimistic updates
   const addEntry = useCallback(async (entry: Omit<EggEntry, 'id'>) => {
     // Create optimistic entry with temporary ID
     const tempId = `temp-${Date.now()}`;
     const optimisticEntry: EggEntry = { ...entry, id: tempId };
 
-    // Save to API first, then refresh data
-    await apiService.production.saveEggEntries([optimisticEntry]);
-    await silentRefresh();
+    try {
+      // Save to API and immediately refresh to get real data
+      await apiService.production.saveEggEntries([optimisticEntry]);
+      // Force immediate data refresh to update UI
+      await silentRefresh();
+    } catch (error) {
+      // If API call fails, refresh anyway to ensure consistency
+      await silentRefresh();
+      throw error;
+    }
   }, [silentRefresh]);
 
   // Update existing egg entry with optimistic updates

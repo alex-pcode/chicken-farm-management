@@ -138,7 +138,7 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
         summary: undefined,
         userProfile: null
       };
-      
+
       const newData = {
         eggEntries: dbData?.eggEntries || [],
         expenses: dbData?.expenses || [],
@@ -152,15 +152,16 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
         deathRecords: dbData?.deathRecords || [],
         userProfile: dbData?.userProfile || null
       };
-      
-      setData(newData);
+
+      // Force new object reference to trigger React re-renders
+      setData({ ...newData });
       browserCache.set(CACHE_KEYS.APP_DATA, newData, 10, user.id);
-      
+
       // Cache subscription status separately for faster tier detection
       if (newData.userProfile?.subscription_status) {
         browserCache.set(CACHE_KEYS.SUBSCRIPTION_STATUS, newData.userProfile.subscription_status, 60, user.id);
       }
-      
+
       setLastFetched(new Date());
       setIsSubscriptionLoading(false);
     } catch (err) {
