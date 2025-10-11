@@ -76,7 +76,10 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       return {
         statusCode: 200,
         headers: jsonHeaders,
-        body: JSON.stringify(customers)
+        body: JSON.stringify({
+          success: true,
+          data: customers
+        })
       };
     }
 
@@ -109,7 +112,10 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       return {
         statusCode: 201,
         headers: jsonHeaders,
-        body: JSON.stringify(data)
+        body: JSON.stringify({
+          success: true,
+          data: data
+        })
       };
     }
 
@@ -160,7 +166,10 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
       return {
         statusCode: 200,
         headers: jsonHeaders,
-        body: JSON.stringify(data)
+        body: JSON.stringify({
+          success: true,
+          data: data
+        })
       };
     }
 
