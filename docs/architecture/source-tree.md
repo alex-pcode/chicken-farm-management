@@ -44,17 +44,37 @@ aplikacija/ (D:\Koke\Aplikacija\)
 ├── node_modules/               # NPM dependencies (generated)
 ├── public/                     # Static public assets served by Vite
 ├── src/                        # Frontend React application source
-│   ├── components/             # React components
-│   │   ├── ui/                 # Design system components (cards, layout)
+│   ├── components/             # React components (feature-based organization)
+│   │   ├── features/           # Feature-based business logic components
+│   │   │   ├── auth/           # Authentication (Auth.tsx, ProtectedRoute.tsx)
+│   │   │   ├── crm/            # Customer relationship management (CRM.tsx, CustomerList.tsx)
+│   │   │   ├── dashboard/      # Dashboard and event tracking (Dashboard.tsx, UpcomingEvents.tsx)
+│   │   │   ├── eggs/           # Egg production tracking (EggCounter.tsx)
+│   │   │   ├── expenses/       # Cost tracking (Expenses.tsx, Savings.tsx, Costs.tsx)
+│   │   │   ├── feed/           # Feed management (FeedTracker.tsx, FeedCostCalculator.tsx)
+│   │   │   ├── flock/          # Flock management (FlockBatchManager.tsx, BatchDetailView.tsx, etc.)
+│   │   │   ├── profile/        # User profiles (ProfilePage.tsx, Profile.tsx, UserProfile.tsx)
+│   │   │   ├── reports/        # Analytics and reporting (SalesReport.tsx)
+│   │   │   └── sales/          # Sales transactions (SalesList.tsx, QuickSale.tsx)
+│   │   ├── landing/            # Marketing and public pages
+│   │   │   ├── animations/     # Animated PNG components (AnimatedChickenViabilityPNG.tsx, etc.)
+│   │   │   ├── LandingPage.tsx # Main marketing landing page
+│   │   │   └── LandingNavbar.tsx # Public navigation
+│   │   ├── common/             # Shared application components
+│   │   │   ├── ErrorBoundary.tsx        # Error handling boundary
+│   │   │   ├── FeatureFlagProvider.tsx  # Feature flag management
+│   │   │   └── PremiumFeatureGate.tsx   # Subscription feature gating
+│   │   ├── ui/                 # Design system components
 │   │   │   ├── cards/          # StatCard and analytics displays
+│   │   │   ├── forms/          # Form inputs (TextInput, NumberInput, DateInput, etc.)
 │   │   │   ├── layout/         # Navigation and page structure
+│   │   │   ├── modals/         # Modal dialogs (FormModal, ConfirmDialog, etc.)
+│   │   │   ├── tables/         # Data tables and grids
+│   │   │   ├── timeline/       # Timeline components
 │   │   │   └── [shared].tsx    # Reusable UI primitives
 │   │   ├── onboarding/         # New user onboarding flow
-│   │   ├── Dashboard.tsx       # Main dashboard with flock overview
-│   │   ├── EggCounter.tsx      # Daily egg production tracking
-│   │   ├── ProtectedRoute.tsx  # Authentication guard component
-│   │   ├── Savings.tsx         # Cost analysis and ROI calculations
-│   │   └── [feature].tsx       # Feature-specific components
+│   │   ├── examples/           # Component examples and demos
+│   │   └── __tests__/          # Component tests
 │   ├── contexts/               # React Context providers
 │   │   ├── AuthContext.tsx     # Supabase authentication state
 │   │   ├── OptimizedDataProvider.tsx  # Intelligent data caching (5-min cache)
@@ -149,7 +169,13 @@ Organized by chicken keeping workflows rather than technical patterns:
 **Migration Note**: All 10 functions successfully migrated from Vercel to Netlify (October 2025) with improved timeout limits and zero breaking changes to frontend.
 
 ### Frontend Structure (`/src`)
-- **Component Hierarchy**: UI components separated from business logic components
+- **Feature-Based Architecture**: Components organized by business domain (auth, crm, dashboard, eggs, expenses, feed, flock, profile, reports, sales)
+- **Component Hierarchy**: 
+  - `features/` - Domain-specific business logic components
+  - `landing/` - Marketing and public-facing pages with animations
+  - `common/` - Shared application components (error boundaries, feature flags)
+  - `ui/` - Reusable design system primitives (forms, modals, cards, tables)
+  - `onboarding/` - User onboarding flows
 - **Context Providers**: Authentication, data caching, and onboarding state management
 - **Service Layer**: API abstraction with domain separation
 - **Type Safety**: Consolidated TypeScript definitions for all business entities
@@ -198,6 +224,28 @@ Comprehensive documentation supporting AI-driven development:
 - Cleaner configuration with explicit `netlify.toml`
 - Seamless developer experience with `netlify dev`
 
+## Component Organization Principles
+
+### Feature-Based Architecture (November 2025 Reorganization)
+Components are organized by business domain rather than technical function, improving:
+- **Developer Navigation**: Related components grouped together by feature
+- **Code Maintenance**: Changes to a feature are localized to one directory
+- **Import Clarity**: Clear import paths show component relationships
+- **Scalability**: New features can be added without restructuring
+
+### Component Categories
+1. **Features** (`features/`): Domain-specific components with business logic
+2. **Landing** (`landing/`): Public marketing pages and animations
+3. **Common** (`common/`): Shared application utilities (error handling, feature flags)
+4. **UI** (`ui/`): Reusable design system components without business logic
+5. **Onboarding** (`onboarding/`): User setup and introduction flows
+
+### Import Path Patterns
+- Features → Types: `import type { FlockBatch } from '../../../types'`
+- Features → Services: `import { apiService } from '../../../services/api'`
+- Features → UI Components: `import { FormCard } from '../../ui/forms/FormCard'`
+- Features → Common: `import { ErrorBoundary } from '../../common/ErrorBoundary'`
+
 ---
 
-*This source tree reflects the current state of Chicken Manager as a modern, full-stack chicken care application built for the growing market of data-driven chicken keepers seeking integrated tracking, financial management, and customer relationship tools. Last updated: October 2025 (Netlify migration).*
+*This source tree reflects the current state of Chicken Manager as a modern, full-stack chicken care application built for the growing market of data-driven chicken keepers seeking integrated tracking, financial management, and customer relationship tools. Last updated: November 2025 (Feature-based component reorganization).*

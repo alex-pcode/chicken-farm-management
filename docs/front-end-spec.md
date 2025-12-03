@@ -65,7 +65,7 @@ This document defines the user experience goals, information architecture, user 
 
 ### Current Application Structure
 
-The Chicken Manager application follows a **feature-based architecture** with clear domain separation:
+The Chicken Manager application follows a **feature-based architecture** with clear domain separation. As of November 2025, the component structure has been reorganized into feature-specific folders for improved maintainability and scalability.
 
 #### Site Map / Screen Inventory
 

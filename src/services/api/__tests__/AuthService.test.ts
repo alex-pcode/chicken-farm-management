@@ -303,7 +303,7 @@ describe('AuthService', () => {
 
       const result = await authService.migrateUserData();
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/migrateUserData', {
+      expect(mockFetch).toHaveBeenCalledWith('/.netlify/functions/migrateUserData', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

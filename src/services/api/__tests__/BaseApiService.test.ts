@@ -142,7 +142,7 @@ describe('BaseApiService', () => {
   describe('buildUrl', () => {
     it('should build correct API URL', () => {
       const url = service.testBuildUrl('/test');
-      expect(url).toBe('/api/test');
+      expect(url).toBe('/.netlify/functions/test');
     });
   });
 
@@ -173,7 +173,7 @@ describe('BaseApiService', () => {
 
         const result = await service.testGet('/test');
 
-        expect(mockFetch).toHaveBeenCalledWith('/api/test', {
+        expect(mockFetch).toHaveBeenCalledWith('/.netlify/functions/test', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -222,7 +222,7 @@ describe('BaseApiService', () => {
 
         const result = await service.testPost('/test', testData);
 
-        expect(mockFetch).toHaveBeenCalledWith('/api/test', {
+        expect(mockFetch).toHaveBeenCalledWith('/.netlify/functions/test', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -250,7 +250,7 @@ describe('BaseApiService', () => {
 
         const result = await service.testPut('/test/1', testData);
 
-        expect(mockFetch).toHaveBeenCalledWith('/api/test/1', {
+        expect(mockFetch).toHaveBeenCalledWith('/.netlify/functions/test/1', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -277,7 +277,7 @@ describe('BaseApiService', () => {
 
         const result = await service.testDelete('/test/1');
 
-        expect(mockFetch).toHaveBeenCalledWith('/api/test/1', {
+        expect(mockFetch).toHaveBeenCalledWith('/.netlify/functions/test/1', {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -303,7 +303,7 @@ describe('BaseApiService', () => {
 
         const result = await service.testDelete('/test/1', deleteData);
 
-        expect(mockFetch).toHaveBeenCalledWith('/api/test/1', {
+        expect(mockFetch).toHaveBeenCalledWith('/.netlify/functions/test/1', {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',

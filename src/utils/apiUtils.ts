@@ -1,6 +1,6 @@
 // Utility to get the correct API base URL for both development and production
 export const getApiUrl = (endpoint: string): string => {
-  // Always use relative API routes - Vite will proxy to Vercel functions in dev
+  // Always use relative API routes - Vite will proxy to Netlify functions in dev
   return `/api${endpoint}`;
 };
 

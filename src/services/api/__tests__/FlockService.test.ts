@@ -67,7 +67,7 @@ describe('FlockService', () => {
 
       const result = await service.saveFlockProfile(flockProfile);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/crud?operation=flockProfile', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/crud?operation=flockProfile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ describe('FlockService', () => {
 
       const result = await service.saveFlockEvents(flockEvents);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/crud?operation=flockEvents', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/crud?operation=flockEvents', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -165,7 +165,7 @@ describe('FlockService', () => {
 
       const result = await service.saveFlockEvent(flockProfileId, flockEvent);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/crud?operation=flockEvents', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/crud?operation=flockEvents', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -209,7 +209,7 @@ describe('FlockService', () => {
 
       const result = await service.saveFlockEvent(flockProfileId, flockEvent, eventId);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/crud?operation=flockEvents', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/crud?operation=flockEvents', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -244,7 +244,7 @@ describe('FlockService', () => {
 
       const result = await service.deleteFlockEvent(eventId);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/crud?operation=flockEvents', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/crud?operation=flockEvents', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -293,7 +293,7 @@ describe('FlockService', () => {
 
       const result = await service.saveFlockBatch(flockBatch);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/flockBatches', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/flockBatches', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -337,7 +337,7 @@ describe('FlockService', () => {
 
       const result = await service.saveDeathRecord(deathRecord);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/deathRecords', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/deathRecords', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -377,7 +377,7 @@ describe('FlockService', () => {
 
       const result = await service.getFlockSummary();
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/flockSummary', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/flockSummary', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

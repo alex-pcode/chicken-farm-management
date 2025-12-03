@@ -22,7 +22,7 @@ describe('WelcomeScreen', () => {
   it('renders welcome message and branding', () => {
     render(<WelcomeScreen {...defaultProps} />);
     
-    expect(screen.getByText('Welcome to Chicken Manager')).toBeInTheDocument();
+    expect(screen.getByText('Welcome to Chicken Care App')).toBeInTheDocument();
     expect(screen.getByText('Your complete solution for managing chickens and maximizing egg production')).toBeInTheDocument();
     expect(screen.getByText('🐔')).toBeInTheDocument();
   });
@@ -89,8 +89,8 @@ describe('WelcomeScreen', () => {
   it('has proper accessibility attributes', () => {
     render(<WelcomeScreen {...defaultProps} />);
     
-    const setupButton = screen.getByText('Set Up My Flock');
-    const skipButton = screen.getByText('Skip for Now');
+    const setupButton = screen.getByRole('button', { name: /Set Up My Flock/i });
+    const skipButton = screen.getByRole('button', { name: /Skip for Now/i });
     
     expect(setupButton).toHaveAttribute('type', 'button');
     expect(skipButton).toHaveAttribute('type', 'button');

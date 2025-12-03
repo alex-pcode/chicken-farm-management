@@ -5,7 +5,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HistoricalEggTrackingModal } from '../modals/HistoricalEggTrackingModal';
+import { HistoricalEggTrackingModal } from '../ui/modals/HistoricalEggTrackingModal';
 
 interface FreeUserOnboardingProps {
   onComplete: () => void;

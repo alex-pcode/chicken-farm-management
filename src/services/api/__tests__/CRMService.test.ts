@@ -54,7 +54,7 @@ describe('CRMService', () => {
 
       const result = await service.getCustomers();
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/customers', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/customers', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -93,7 +93,7 @@ describe('CRMService', () => {
 
       const result = await service.saveCustomer(customerData);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/customers', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/customers', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -142,7 +142,7 @@ describe('CRMService', () => {
 
       const result = await service.saveSale(saleData);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/sales', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/sales', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -186,7 +186,7 @@ describe('CRMService', () => {
 
       const result = await service.getCRMData();
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/crm-data', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/crm-data', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

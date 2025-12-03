@@ -67,7 +67,7 @@ describe('ProductionService', () => {
 
       const result = await service.getEggEntries();
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/data?type=production', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/data?type=production', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +146,7 @@ describe('ProductionService', () => {
 
       const result = await service.saveEggEntries(eggEntries);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/crud?operation=eggs', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/crud?operation=eggs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -194,7 +194,7 @@ describe('ProductionService', () => {
 
       const result = await service.saveFeedInventory(feedEntries);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/crud?operation=feed', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/crud?operation=feed', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -243,7 +243,7 @@ describe('ProductionService', () => {
 
       const result = await service.getExpenses();
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/data?type=expenses', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/data?type=expenses', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -324,7 +324,7 @@ describe('ProductionService', () => {
 
       const result = await service.saveExpenses(expenses);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/crud?operation=expenses', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/crud?operation=expenses', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -362,7 +362,7 @@ describe('ProductionService', () => {
 
       const result = await service.getProductionAnalytics();
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/productionAnalytics', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/productionAnalytics', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -398,7 +398,7 @@ describe('ProductionService', () => {
 
       const result = await service.getProductionAnalytics(dateRange);
       
-      expect(global.fetch).toHaveBeenCalledWith('/api/productionAnalytics?start=2025-01-01&end=2025-01-31', {
+      expect(global.fetch).toHaveBeenCalledWith('/.netlify/functions/productionAnalytics?start=2025-01-01&end=2025-01-31', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

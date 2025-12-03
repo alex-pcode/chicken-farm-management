@@ -87,7 +87,7 @@ describe('DataService', () => {
 
       const result = await dataService.fetchAllData();
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/data?type=all', {
+      expect(mockFetch).toHaveBeenCalledWith('/.netlify/functions/data?type=all', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -164,7 +164,7 @@ describe('DataService', () => {
 
       const result = await dataService.fetchAllData();
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/data?type=all', {
+      expect(mockFetch).toHaveBeenCalledWith('/.netlify/functions/data?type=all', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

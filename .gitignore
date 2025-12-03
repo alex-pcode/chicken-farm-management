@@ -29,6 +29,11 @@ dist-ssr
 .env.development.local
 .env.test.local
 .env.production.local
+.env.supabase-local
+
+# Supabase local development (Docker volumes, etc.)
+supabase/.branches
+supabase/.temp
 
 .vercel
 .env.vercel

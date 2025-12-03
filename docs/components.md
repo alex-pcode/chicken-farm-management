@@ -1,5 +1,46 @@
 # Component Documentation
 
+## Project Reorganization (November 2025) ✅ Complete
+
+**Component structure reorganized into feature-based architecture** for improved maintainability:
+
+### New Structure
+```
+src/components/
+├── features/          # Feature-specific components by domain
+│   ├── auth/         # Authentication (Auth.tsx, ProtectedRoute.tsx)
+│   ├── crm/          # Customer management
+│   ├── dashboard/    # Dashboard views
+│   ├── eggs/         # Egg production tracking
+│   ├── expenses/     # Financial management
+│   ├── feed/         # Feed tracking
+│   ├── flock/        # Flock and batch management
+│   ├── profile/      # User profile
+│   ├── reports/      # Sales reporting
+│   └── sales/        # Sales management
+├── landing/          # Landing page with animations/
+├── common/           # Shared cross-feature components
+├── onboarding/       # User onboarding flows
+├── ui/               # Shared UI component library
+│   ├── cards/
+│   ├── forms/
+│   ├── layout/
+│   ├── modals/
+│   ├── navigation/
+│   └── tables/
+├── examples/         # Component demos
+└── __tests__/        # Integration tests
+```
+
+### Benefits
+- ✅ **Clear Domain Boundaries**: Each feature has dedicated folder
+- ✅ **Improved Discoverability**: Components grouped by business domain
+- ✅ **Better Scalability**: Easy to add new features
+- ✅ **Reduced Cognitive Load**: Related components co-located
+- ✅ **Type Safety Maintained**: All imports updated, build passes
+
+---
+
 ## API Service Integration (Epic 1.1 - ✅ Complete)
 
 **All components now use the unified API service layer** (`src/services/api/`) instead of legacy `authApiUtils.ts` patterns.

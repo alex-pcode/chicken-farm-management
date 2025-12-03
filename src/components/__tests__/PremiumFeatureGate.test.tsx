@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { PremiumFeatureGate } from '../PremiumFeatureGate';
+import { PremiumFeatureGate } from '../common/PremiumFeatureGate';
 import { useUserTier } from '../../contexts/OptimizedDataProvider';
 
 // Mock the OptimizedDataProvider hook

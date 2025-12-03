@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { FormCard } from '../../ui/forms/FormCard';
 import { FormField } from '../../ui/forms/FormField';
 import { FormButton } from '../../ui/forms/FormButton';
-import { TextInput } from '../../forms/TextInput';
-import { NumberInput } from '../../forms/NumberInput';
-import { DateInput } from '../../forms/DateInput';
-import { NeumorphicSelect } from '../../forms/NeumorphicSelect';
-import { TextareaInput } from '../../forms/TextareaInput';
+import { TextInput } from '../../ui/forms/TextInput';
+import { NumberInput } from '../../ui/forms/NumberInput';
+import { DateInput } from '../../ui/forms/DateInput';
+import { NeumorphicSelect } from '../../ui/forms/NeumorphicSelect';
+import { TextareaInput } from '../../ui/forms/TextareaInput';
 
 const FormsTab: React.FC = () => {
   const [eggFormData, setEggFormData] = useState({

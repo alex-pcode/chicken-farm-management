@@ -2,26 +2,26 @@ import { useState, useEffect, lazy, Suspense } from 'react'
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom'
 
 // Code-split route components for better performance
-const Dashboard = lazy(() => import('./components/Dashboard').then(module => ({ default: module.Dashboard })));
-const EggCounter = lazy(() => import('./components/EggCounter').then(module => ({ default: module.EggCounter })));
-const Expenses = lazy(() => import('./components/Expenses').then(module => ({ default: module.Expenses })));
-const FeedTracker = lazy(() => import('./components/FeedTracker').then(module => ({ default: module.FeedTracker })));
-const Savings = lazy(() => import('./components/Savings').then(module => ({ default: module.Savings })));
-const Profile = lazy(() => import('./components/Profile').then(module => ({ default: module.Profile })));
-const ProfilePage = lazy(() => import('./components/ProfilePage').then(module => ({ default: module.ProfilePage })));
-const CRM = lazy(() => import('./components/CRM').then(module => ({ default: module.CRM })));
-const ChickenViability = lazy(() => import('./components/ChickenViability').then(module => ({ default: module.ChickenViability })));
-const FlockBatchManager = lazy(() => import('./components/FlockBatchManager').then(module => ({ default: module.FlockBatchManager })));
+const Dashboard = lazy(() => import('./components/features/dashboard/Dashboard').then(module => ({ default: module.Dashboard })));
+const EggCounter = lazy(() => import('./components/features/eggs/EggCounter').then(module => ({ default: module.EggCounter })));
+const Expenses = lazy(() => import('./components/features/expenses/Expenses').then(module => ({ default: module.Expenses })));
+const FeedTracker = lazy(() => import('./components/features/feed/FeedTracker').then(module => ({ default: module.FeedTracker })));
+const Savings = lazy(() => import('./components/features/expenses/Savings').then(module => ({ default: module.Savings })));
+const Profile = lazy(() => import('./components/features/profile/Profile').then(module => ({ default: module.Profile })));
+const ProfilePage = lazy(() => import('./components/features/profile/ProfilePage').then(module => ({ default: module.ProfilePage })));
+const CRM = lazy(() => import('./components/features/crm/CRM').then(module => ({ default: module.CRM })));
+const ChickenViability = lazy(() => import('./components/features/flock/ChickenViability').then(module => ({ default: module.ChickenViability })));
+const FlockBatchManager = lazy(() => import('./components/features/flock/FlockBatchManager').then(module => ({ default: module.FlockBatchManager })));
 const CardShowcase = lazy(() => import('./components/examples/CardShowcase').then(module => ({ default: module.default })));
-const Costs = lazy(() => import('./components/Costs').then(module => ({ default: module.Costs })));
+const Costs = lazy(() => import('./components/features/expenses/Costs').then(module => ({ default: module.Costs })));
 // Import LandingPage directly - no lazy loading for main entry point
-import { LandingPage } from './components/LandingPage';
+import { LandingPage } from './components/landing/LandingPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { OptimizedDataProvider, useUserTier } from './contexts/OptimizedDataProvider'
 import { OnboardingProvider } from './contexts/OnboardingProvider'
-import { ProtectedRoute } from './components/ProtectedRoute'
-import { UserProfile } from './components/UserProfile'
-import { PremiumFeatureGate } from './components/PremiumFeatureGate'
+import { ProtectedRoute } from './components/features/auth/ProtectedRoute'
+import { UserProfile } from './components/features/auth/UserProfile'
+import { PremiumFeatureGate } from './components/common/PremiumFeatureGate'
 // Simple Modal Component
 // import { Login } from './components/Login' // Temporarily disabled
 
@@ -48,25 +48,56 @@ const premiumNavigation: NavigationItem[] = [
   { name: 'Feed', emoji: '🌾', href: '/app/feed-tracker' },
   { name: 'Savings', emoji: '📈', href: '/app/savings' },
   { name: 'Viability', emoji: '🧮', href: '/app/viability' },
+];
+
+// Admin-only navigation items
+const adminNavigation: NavigationItem[] = [
   { name: 'Cards', emoji: '🎨', href: '/app/cards' },
 ];
 
-// Function to get navigation items based on user tier
-const getNavigationItems = (userTier: 'free' | 'premium'): NavigationItem[] => {
-  return userTier === 'premium'
-    ? [...premiumNavigation, { name: 'Account', emoji: '⚙️', href: '/app/account' }]
-    : freeNavigation;
+// Function to get navigation items based on user tier and admin status
+const getNavigationItems = (userTier: 'free' | 'premium', isAdmin: boolean): NavigationItem[] => {
+  if (userTier === 'free') {
+    return freeNavigation;
+  }
+
+  const baseNav = [...premiumNavigation];
+
+  // Add admin-only navigation items for admin users
+  if (isAdmin) {
+    baseNav.push(...adminNavigation);
+  }
+
+  // Add Account at the end
+  baseNav.push({ name: 'Account', emoji: '⚙️', href: '/app/account' });
+
+  return baseNav;
 };
 
-// Function to get mobile navigation items based on user tier
-const getMobileNavigationItems = (userTier: 'free' | 'premium'): { primary: NavigationItem[]; secondary: NavigationItem[] } => {
+// Function to get mobile navigation items based on user tier and admin status
+const getMobileNavigationItems = (userTier: 'free' | 'premium', isAdmin: boolean): { primary: NavigationItem[]; secondary: NavigationItem[] } => {
   if (userTier === 'free') {
     return {
       primary: freeNavigation,
       secondary: []
     };
   }
-  
+
+  const secondaryNav: NavigationItem[] = [
+    { name: 'My Flock', emoji: '🐔', href: '/app/profile' },
+    { name: 'Feed', emoji: '🌾', href: '/app/feed-tracker' },
+    { name: 'Savings', emoji: '📈', href: '/app/savings' },
+    { name: 'Viability', emoji: '🧮', href: '/app/viability' },
+  ];
+
+  // Add admin-only navigation items for admin users
+  if (isAdmin) {
+    secondaryNav.push(...adminNavigation);
+  }
+
+  // Add Account Settings at the end
+  secondaryNav.push({ name: 'Account Settings', emoji: '⚙️', href: '/app/account' });
+
   return {
     primary: [
       { name: 'Dashboard', emoji: '🏠', href: '/app/dashboard' },
@@ -74,14 +105,7 @@ const getMobileNavigationItems = (userTier: 'free' | 'premium'): { primary: Navi
       { name: 'Sales', emoji: '💼', href: '/app/crm' },
       { name: 'Expenses', emoji: '💰', href: '/app/expenses' }
     ],
-    secondary: [
-      { name: 'My Flock', emoji: '🐔', href: '/app/profile' },
-      { name: 'Feed', emoji: '🌾', href: '/app/feed-tracker' },
-      { name: 'Savings', emoji: '📈', href: '/app/savings' },
-      { name: 'Viability', emoji: '🧮', href: '/app/viability' },
-      { name: 'Cards', emoji: '🎨', href: '/app/cards' },
-      { name: 'Account Settings', emoji: '⚙️', href: '/app/account' },
-    ]
+    secondary: secondaryNav
   };
 };
 
@@ -139,19 +163,19 @@ function App() {
 }
 
 const MainApp = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const { userTier } = useUserTier();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const location = useLocation();
-  
+
   // Get default route based on user tier
   const getDefaultRoute = (userTier: 'free' | 'premium') => {
     return userTier === 'premium' ? '/app/dashboard' : '/app/egg-counter';
   };
-  
-  const navigation = getNavigationItems(userTier);
-  const mobileNav = getMobileNavigationItems(userTier);
+
+  const navigation = getNavigationItems(userTier, isAdmin);
+  const mobileNav = getMobileNavigationItems(userTier, isAdmin);
 
   // Close mobile menu when route changes and scroll to top
   useEffect(() => {
@@ -391,11 +415,10 @@ const MainApp = () => {
                 <ChickenViability />
               </PremiumFeatureGate>
             } />
-            <Route path="cards" element={
-              <PremiumFeatureGate featureName="Design Showcase">
-                <CardShowcase />
-              </PremiumFeatureGate>
-            } />
+            {/* Admin-only route - Cards tab only visible to admins */}
+            {isAdmin && (
+              <Route path="cards" element={<CardShowcase />} />
+            )}
             
             {/* Free Features - Available to all users */}
             <Route path="egg-counter" element={<EggCounter />} />

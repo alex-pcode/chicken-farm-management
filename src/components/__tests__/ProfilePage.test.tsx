@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
-import { ProfilePage } from '../ProfilePage';
+import { ProfilePage } from '../features/profile/ProfilePage';
 import { AuthContext } from '../../contexts/AuthContext';
 import { supabase } from '../../contexts/AuthContext';
 import type { User } from '@supabase/supabase-js';
@@ -71,6 +71,7 @@ const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     user: mockUser,
     session: null,
     loading: false,
+    isAdmin: false,
     signOut: vi.fn(),
   };
 

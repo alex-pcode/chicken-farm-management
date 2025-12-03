@@ -77,21 +77,72 @@ Based on the structural refactoring PRD, these areas will be heavily affected:
 ```text
 D:\Koke\Aplikacija/
 ├── src/
-│   ├── components/          # 25+ React components with shared UI library
-│   │   ├── Profile.tsx      # 1039 lines - STILL NEEDS BREAKING DOWN
-│   │   ├── FlockBatchManager.tsx # 886 lines - Complex batch management
-│   │   ├── [core app components]
-│   │   ├── forms/           # ✅ Shared form components
-│   │   │   ├── DateInput.tsx, NumberInput.tsx, TextInput.tsx
-│   │   │   ├── FormCard.tsx, FormGroup.tsx, FormRow.tsx
-│   │   │   └── __tests__/    # Component tests
-│   │   └── ui/              # ✅ Shared UI component library
-│   │       ├── cards/       # StatCard, ProgressCard, etc.
-│   │       ├── layout/      # GridContainer, PageContainer, etc.
-│   │       ├── modals/      # AlertDialog, ConfirmDialog, etc.
-│   │       ├── navigation/  # Pagination components
-│   │       ├── tables/      # DataTable, EmptyState, etc.
-│   │       └── __tests__/   # UI component tests
+│   ├── components/          # ✅ FEATURE-BASED ARCHITECTURE (reorganized Nov 2025)
+│   │   ├── features/        # Feature-specific components organized by domain
+│   │   │   ├── auth/        # Authentication components
+│   │   │   │   ├── Auth.tsx
+│   │   │   │   └── ProtectedRoute.tsx
+│   │   │   ├── crm/         # Customer relationship management
+│   │   │   │   ├── CRM.tsx
+│   │   │   │   └── CustomerList.tsx
+│   │   │   ├── dashboard/   # Dashboard and overview
+│   │   │   │   ├── Dashboard.tsx
+│   │   │   │   └── UpcomingEvents.tsx
+│   │   │   ├── eggs/        # Egg production tracking
+│   │   │   │   └── EggCounter.tsx
+│   │   │   ├── expenses/    # Financial management
+│   │   │   │   ├── Expenses.tsx
+│   │   │   │   ├── Savings.tsx
+│   │   │   │   └── Costs.tsx
+│   │   │   ├── feed/        # Feed tracking and management
+│   │   │   │   ├── FeedTracker.tsx
+│   │   │   │   └── FeedCostCalculator.tsx
+│   │   │   ├── flock/       # Flock batch and bird management
+│   │   │   │   ├── FlockBatchManager.tsx  # 993 lines - Complex batch management
+│   │   │   │   ├── BatchDetailView.tsx
+│   │   │   │   ├── BatchTimeline.tsx
+│   │   │   │   ├── ChickenViability.tsx
+│   │   │   │   ├── EventForm.tsx
+│   │   │   │   ├── EventTimeline.tsx
+│   │   │   │   ├── FlockOverview.tsx
+│   │   │   │   └── FlockSummaryDisplay.tsx
+│   │   │   ├── profile/     # User profile and flock configuration
+│   │   │   │   ├── ProfilePage.tsx  # 819 lines - Main profile interface
+│   │   │   │   ├── Profile.tsx      # 594 lines - Legacy profile component
+│   │   │   │   └── UserProfile.tsx
+│   │   │   ├── reports/     # Sales reporting
+│   │   │   │   └── SalesReport.tsx
+│   │   │   └── sales/       # Sales management
+│   │   │       ├── SalesList.tsx
+│   │   │       └── QuickSale.tsx
+│   │   ├── landing/         # Landing page and marketing
+│   │   │   ├── animations/  # Animation components
+│   │   │   │   ├── AnimatedChickenViabilityPNG.tsx
+│   │   │   │   ├── AnimatedFarmPNG.tsx
+│   │   │   │   ├── AnimatedFeedPNG.tsx
+│   │   │   │   └── [other animations]
+│   │   │   ├── LandingPage.tsx
+│   │   │   └── LandingNavbar.tsx
+│   │   ├── common/          # Shared cross-feature components
+│   │   │   ├── ErrorBoundary.tsx
+│   │   │   ├── FeatureFlagProvider.tsx
+│   │   │   └── PremiumFeatureGate.tsx
+│   │   ├── onboarding/      # User onboarding flows
+│   │   │   ├── FreeUserOnboarding.tsx
+│   │   │   └── OnboardingWizardUpdated.tsx
+│   │   ├── ui/              # ✅ Shared UI component library
+│   │   │   ├── cards/       # StatCard, ProgressCard, etc.
+│   │   │   ├── forms/       # ✅ Form input components
+│   │   │   │   ├── DateInput.tsx, NumberInput.tsx, TextInput.tsx
+│   │   │   │   ├── FormCard.tsx, FormGroup.tsx, FormRow.tsx
+│   │   │   │   └── __tests__/    # Component tests
+│   │   │   ├── layout/      # GridContainer, PageContainer, etc.
+│   │   │   ├── modals/      # AlertDialog, ConfirmDialog, HistoricalEggTrackingModal
+│   │   │   ├── navigation/  # Pagination components
+│   │   │   ├── tables/      # DataTable, EmptyState, etc.
+│   │   │   └── __tests__/   # UI component tests
+│   │   ├── examples/        # Component examples and demos
+│   │   └── __tests__/       # Component integration tests
 │   ├── contexts/            # React contexts for auth and data
 │   │   ├── AuthContext.tsx  # Supabase auth integration
 │   │   └── OptimizedDataProvider.tsx # ✅ Modern data provider
