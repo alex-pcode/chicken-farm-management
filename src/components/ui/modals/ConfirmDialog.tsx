@@ -79,7 +79,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             {styles.icon}
           </div>
           <div>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               {message}
             </p>
           </div>

@@ -354,19 +354,19 @@ export const Profile = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
         >
-          <div className="glass-card bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200">
+          <div className="glass-card bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 border-yellow-200 dark:border-yellow-700">
             <div className="flex items-start gap-4">
               <span className="text-3xl">📦</span>
               <div className="flex-1">
-                <h2 className="text-xl font-bold text-gray-900 mb-2">🚀 Batch Management Available!</h2>
-                <p className="text-gray-700 mb-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">🚀 Batch Management Available!</h2>
+                <p className="text-gray-700 dark:text-gray-300 mb-4">
                   Upgrade your flock tracking with our new batch management system. Track groups of chickens, 
                   log losses automatically, and get better production insights.
                 </p>
                 
-                <div className="bg-white rounded-lg p-4 border border-yellow-200 mb-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">✨ Benefits:</h3>
-                  <ul className="text-sm text-gray-700 space-y-1">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-yellow-200 dark:border-yellow-700 mb-4">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">✨ Benefits:</h3>
+                  <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
                     <li>• Track chickens in groups instead of individual counts</li>
                     <li>• Automatic count updates when logging deaths/losses</li>
                     <li>• Production analysis based on actual flock size</li>
@@ -375,11 +375,11 @@ export const Profile = () => {
                   </ul>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                  <h4 className="font-semibold text-blue-900 text-sm mb-1">🔧 Setup Required:</h4>
-                  <p className="text-sm text-blue-800">
-                    Run the database migration in your Supabase dashboard. 
-                    See <code className="bg-blue-100 px-1 rounded">BATCH_MANAGEMENT_SETUP.md</code> for instructions.
+                <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg p-3 mb-4">
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-300 text-sm mb-1">🔧 Setup Required:</h4>
+                  <p className="text-sm text-blue-800 dark:text-blue-400">
+                    Run the database migration in your Supabase dashboard.
+                    See <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">BATCH_MANAGEMENT_SETUP.md</code> for instructions.
                   </p>
                 </div>
 
@@ -424,12 +424,12 @@ export const Profile = () => {
           transition={{ delay: 0.5 }}
         >
           <div className="neu-form">
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
               <div className="flex items-start gap-3">
                 <span className="text-yellow-500 text-lg">💡</span>
                 <div>
-                  <h4 className="font-semibold text-yellow-800 mb-1">Upgrade to Batch Management</h4>
-                  <p className="text-sm text-yellow-700 mb-3">
+                  <h4 className="font-semibold text-yellow-800 dark:text-yellow-300 mb-1">Upgrade to Batch Management</h4>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-400 mb-3">
                     You're currently tracking {profile.hens + profile.roosters + profile.chicks + profile.brooding} birds individually. 
                     Batch management lets you track groups of chickens, log losses automatically, and get better production insights.
                   </p>
@@ -451,12 +451,12 @@ export const Profile = () => {
         <h2 className="neu-title">📝 {isEditMode ? 'Edit Event' : 'Add New Event'}</h2>
         
         {success.value && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-800">
+          <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg text-green-800 dark:text-green-300">
             {isEditMode ? "Event updated successfully!" : "Event added successfully!"}
           </div>
         )}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-800">
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg text-red-800 dark:text-red-300">
             {error}
           </div>
         )}
@@ -563,9 +563,9 @@ export const Profile = () => {
                 title: event.description,
                 description: event.notes,
                 content: event.affectedBirds ? (
-                  <div className="flex items-center gap-1 text-xs bg-gray-50 px-2 py-1 rounded-full w-fit">
+                  <div className="flex items-center gap-1 text-xs bg-gray-50 dark:bg-gray-700 px-2 py-1 rounded-full w-fit">
                     <span>🐔</span>
-                    <span className="font-medium text-gray-600">{event.affectedBirds} birds affected</span>
+                    <span className="font-medium text-gray-600 dark:text-gray-300">{event.affectedBirds} birds affected</span>
                   </div>
                 ) : undefined,
                 actions: [

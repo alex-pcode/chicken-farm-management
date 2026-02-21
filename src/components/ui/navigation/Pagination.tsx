@@ -63,8 +63,8 @@ export const Pagination: React.FC<PaginationProps> = ({
           disabled={isFirstPage}
           className={`relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md
             ${isFirstPage
-              ? 'text-gray-300 cursor-not-allowed'
-              : 'text-gray-700 hover:bg-gray-50 border border-gray-300'}`}
+              ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 border border-gray-300 dark:border-gray-600'}`}
         >
           Previous
         </button>
@@ -73,8 +73,8 @@ export const Pagination: React.FC<PaginationProps> = ({
           disabled={isLastPage}
           className={`relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium rounded-md
             ${isLastPage
-              ? 'text-gray-300 cursor-not-allowed'
-              : 'text-gray-700 hover:bg-gray-50 border border-gray-300'}`}
+              ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 border border-gray-300 dark:border-gray-600'}`}
         >
           Next
         </button>
@@ -84,7 +84,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 
   return (
     <div 
-      className={`mt-6 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 ${className}`}
+      className={`mt-6 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a1a1a] px-4 py-3 sm:px-6 ${className}`}
       data-testid={testId}
     >
       {/* Mobile pagination */}
@@ -94,8 +94,8 @@ export const Pagination: React.FC<PaginationProps> = ({
           disabled={isFirstPage}
           className={`relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md
             ${isFirstPage
-              ? 'text-gray-300 cursor-not-allowed'
-              : 'text-gray-700 hover:bg-gray-50'}`}
+              ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}
         >
           Previous
         </button>
@@ -104,8 +104,8 @@ export const Pagination: React.FC<PaginationProps> = ({
           disabled={isLastPage}
           className={`relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium rounded-md
             ${isLastPage
-              ? 'text-gray-300 cursor-not-allowed'
-              : 'text-gray-700 hover:bg-gray-50'}`}
+              ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'}`}
         >
           Next
         </button>
@@ -115,7 +115,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
         {showInfo && (
           <div>
-            <p className="text-sm text-gray-700">
+            <p className="text-sm text-gray-700 dark:text-gray-400">
               Showing <span className="font-medium">{startItem}</span> to{' '}
               <span className="font-medium">{endItem}</span> of{' '}
               <span className="font-medium">{totalItems}</span> results
@@ -127,10 +127,10 @@ export const Pagination: React.FC<PaginationProps> = ({
             <button
               onClick={onPreviousPage}
               disabled={isFirstPage}
-              className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-sm ring-1 ring-inset ring-gray-300
+              className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600
                 ${isFirstPage
-                  ? 'text-gray-300 cursor-not-allowed bg-gray-50'
-                  : 'text-gray-500 hover:bg-gray-50 bg-white'}`}
+                  ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 bg-white dark:bg-gray-800'}`}
             >
               <span className="sr-only">Previous</span>
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -145,7 +145,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                 className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold
                   ${currentPage === page
                     ? 'z-10 bg-indigo-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
-                    : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 bg-white'}`}
+                    : 'text-gray-900 dark:text-gray-200 ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 focus:z-20 focus:outline-offset-0 bg-white dark:bg-gray-800'}`}
               >
                 {page}
               </button>
@@ -154,10 +154,10 @@ export const Pagination: React.FC<PaginationProps> = ({
             <button
               onClick={onNextPage}
               disabled={isLastPage}
-              className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-sm ring-1 ring-inset ring-gray-300
+              className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600
                 ${isLastPage
-                  ? 'text-gray-300 cursor-not-allowed bg-gray-50'
-                  : 'text-gray-500 hover:bg-gray-50 bg-white'}`}
+                  ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed bg-gray-50 dark:bg-gray-800'
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 bg-white dark:bg-gray-800'}`}
             >
               <span className="sr-only">Next</span>
               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

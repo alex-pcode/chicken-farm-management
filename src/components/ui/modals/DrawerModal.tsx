@@ -87,7 +87,7 @@ export const DrawerModal: React.FC<DrawerModalProps> = ({
     }
   };
 
-  const drawerClasses = `h-full ${sizeClasses[size]} bg-white shadow-xl border-${position === 'left' ? 'r' : 'l'} border-gray-200 ${className}`;
+  const drawerClasses = `h-full ${sizeClasses[size]} bg-white dark:bg-gray-800 shadow-xl border-${position === 'left' ? 'r' : 'l'} border-gray-200 dark:border-gray-700 ${className}`;
   const positionClasses = position === 'left' ? 'justify-start' : 'justify-end';
 
   return (
@@ -123,16 +123,16 @@ export const DrawerModal: React.FC<DrawerModalProps> = ({
               aria-labelledby={title ? "drawer-title" : undefined}
             >
               {(title || showCloseButton) && (
-                <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                   {title && (
-                    <h2 id="drawer-title" className="text-xl font-semibold text-gray-900">
+                    <h2 id="drawer-title" className="text-xl font-semibold text-gray-900 dark:text-white">
                       {title}
                     </h2>
                   )}
                   {showCloseButton && (
                     <button
                       onClick={onClose}
-                      className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md hover:bg-gray-100"
+                      className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                       aria-label="Close drawer"
                     >
                       <svg

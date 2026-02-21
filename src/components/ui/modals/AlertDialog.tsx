@@ -75,7 +75,7 @@ export const AlertDialog: React.FC<AlertDialogProps> = ({
             {styles.icon}
           </div>
           <div className="flex-1">
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               {message}
             </p>
           </div>

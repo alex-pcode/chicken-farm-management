@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Customer, SaleWithCustomer } from '../../../types/crm';
 import { apiService } from '../../../services/api';
@@ -29,8 +29,8 @@ export const SalesList = ({ sales, customers, onDataChange }: SalesListProps) =>
     notes: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [error, setError] = useState<React.ReactNode | null>(null);
+  const [success, setSuccess] = useState<React.ReactNode | null>(null);
   
   // Price per egg for quick calculation
   const [pricePerEgg, setPricePerEgg] = useState(0.30);
@@ -72,11 +72,15 @@ export const SalesList = ({ sales, customers, onDataChange }: SalesListProps) =>
 
     try {
       await apiService.crm.deleteSale(sale.id);
-      setSuccess(`Sale for ${customerName} has been deleted`);
+      setSuccess(
+        <span className="text-green-800 dark:text-green-300">Sale for {customerName} has been deleted</span>
+      );
       onDataChange();
     } catch (err) {
       console.error('Error deleting sale:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete sale');
+      setError(
+        <span className="text-red-800 dark:text-red-300">{err instanceof Error ? err.message : 'Failed to delete sale'}</span>
+      );
     }
   };
 
@@ -89,19 +93,25 @@ export const SalesList = ({ sales, customers, onDataChange }: SalesListProps) =>
     // Validation for new sale
     if (!editingSale) {
       if (!formData.customer_id) {
-        setError('Please select a customer');
+        setError(
+          <span className="text-red-800 dark:text-red-300">Please select a customer</span>
+        );
         setIsSubmitting(false);
         return;
       }
 
       if (formData.eggs_count === 0) {
-        setError('Please enter at least some eggs');
+        setError(
+          <span className="text-red-800 dark:text-red-300">Please enter at least some eggs</span>
+        );
         setIsSubmitting(false);
         return;
       }
 
       if (formData.total_amount < 0) {
-        setError('Total amount cannot be negative');
+        setError(
+          <span className="text-red-800 dark:text-red-300">Total amount cannot be negative</span>
+        );
         setIsSubmitting(false);
         return;
       }
@@ -450,7 +460,7 @@ export const SalesList = ({ sales, customers, onDataChange }: SalesListProps) =>
         transition={{ delay: 0.2 }}
       >
 
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
           {sales.length === 0 ? (
             <EmptyState
               icon="🧾"

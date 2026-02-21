@@ -31,13 +31,13 @@ export const FormField: React.FC<FormFieldProps> = ({
   return (
     <div className={`${containerClasses} ${className}`} data-testid={testId}>
       <div className={inline ? 'min-w-0 flex-1' : ''}>
-        <label className="block text-gray-600 text-sm mb-2">
+        <label className="block text-gray-600 dark:text-gray-400 text-sm mb-2">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
         {children}
         {help && !error && (
-          <p className="text-gray-500 text-xs mt-1">{help}</p>
+          <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">{help}</p>
         )}
         {error && (
           <p className="text-red-500 text-xs mt-1">{error}</p>

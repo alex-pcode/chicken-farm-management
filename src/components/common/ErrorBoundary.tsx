@@ -163,7 +163,7 @@ const DefaultErrorFallback: React.FC<{ error?: Error; resetError?: () => void }>
   const { title, message, isRetryable } = getErrorMessage(error);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="mx-auto h-12 w-12 text-red-600">
@@ -171,10 +171,10 @@ const DefaultErrorFallback: React.FC<{ error?: Error; resetError?: () => void }>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
             {title}
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             {message}
           </p>
           
@@ -188,10 +188,10 @@ const DefaultErrorFallback: React.FC<{ error?: Error; resetError?: () => void }>
           {/* Development error details */}
           {import.meta.env.DEV && error && (
             <details className="mt-4 text-left">
-              <summary className="cursor-pointer text-sm text-gray-500">
+              <summary className="cursor-pointer text-sm text-gray-500 dark:text-gray-400">
                 Error Details (Development Only)
               </summary>
-              <pre className="mt-2 text-xs text-red-600 overflow-x-auto bg-gray-100 p-2 rounded">
+              <pre className="mt-2 text-xs text-red-600 overflow-x-auto bg-gray-100 dark:bg-gray-800 p-2 rounded">
                 {error.toString()}
                 {error.stack}
               </pre>
@@ -210,7 +210,7 @@ const DefaultErrorFallback: React.FC<{ error?: Error; resetError?: () => void }>
             
             <button
               onClick={() => window.location.href = '/'}
-              className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               {error instanceof AuthenticationError ? 'Refresh & Login' : 'Go Home'}
             </button>

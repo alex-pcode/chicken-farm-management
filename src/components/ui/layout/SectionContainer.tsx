@@ -23,7 +23,7 @@ const spacingClasses = {
 
 const variantClasses = {
   default: '',
-  card: 'bg-white rounded-lg p-6 border border-gray-200 shadow-sm',
+  card: 'bg-white dark:bg-[#1a1a1a] rounded-lg p-6 border border-gray-200 dark:border-gray-700 shadow-sm',
   glass: 'glass-card',
 };
 
@@ -46,12 +46,12 @@ export const SectionContainer: React.FC<SectionContainerProps> = ({
       {(title || description) && (
         <div className="mb-6">
           {title && (
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               {title}
             </h2>
           )}
           {description && (
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               {description}
             </p>
           )}

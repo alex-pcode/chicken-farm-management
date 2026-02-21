@@ -26,7 +26,7 @@ export const PaginationInfo: React.FC<PaginationInfoProps> = ({
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
-  const baseClasses = 'text-sm text-gray-700';
+  const baseClasses = 'text-sm text-gray-700 dark:text-gray-300';
   const combinedClassName = `${baseClasses} ${className}`;
 
   if (variant === 'compact') {
@@ -45,7 +45,7 @@ export const PaginationInfo: React.FC<PaginationInfoProps> = ({
           <span className="font-medium">{endItem}</span> of{' '}
           <span className="font-medium">{totalItems}</span> results
         </div>
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-gray-500 dark:text-gray-400">
           Page {currentPage} of {totalPages} ({itemsPerPage} per page)
         </div>
       </div>

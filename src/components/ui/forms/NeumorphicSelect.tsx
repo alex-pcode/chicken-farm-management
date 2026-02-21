@@ -73,10 +73,10 @@ export const NeumorphicSelect: React.FC<NeumorphicSelectProps> = ({
     <div className={className} ref={dropdownRef}>
       <label 
         htmlFor={inputId}
-        className="block text-gray-600 text-sm mb-2"
+        className="block text-gray-600 dark:text-gray-300 text-sm mb-2"
       >
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <span className="text-red-500 dark:text-red-400 ml-1">*</span>}
       </label>
       
       <div className="relative">
@@ -84,17 +84,17 @@ export const NeumorphicSelect: React.FC<NeumorphicSelectProps> = ({
           type="button"
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
-          className={`neu-input w-full text-left flex items-center justify-between ${hasError ? 'border-red-300' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+          className={`neu-input w-full text-left flex items-center justify-between bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 ${hasError ? 'border-red-300 dark:border-red-500' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           aria-expanded={isOpen}
           aria-haspopup="listbox"
         >
-          <span className={value ? 'text-gray-900' : 'text-gray-500'}>
+          <span className={value ? 'text-gray-900 dark:text-gray-200' : 'text-gray-500 dark:text-gray-400'}>
             {displayValue}
           </span>
           <motion.svg
             animate={{ rotate: isOpen ? 180 : 0 }}
             transition={{ duration: 0.2 }}
-            className="w-5 h-5 text-gray-400"
+            className="w-5 h-5 text-gray-400 dark:text-gray-500"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -110,7 +110,7 @@ export const NeumorphicSelect: React.FC<NeumorphicSelectProps> = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.15 }}
-              className="absolute z-10 w-full mt-1 neu-form border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+              className="absolute z-10 w-full mt-1 neu-form border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg shadow-lg max-h-60 overflow-auto"
             >
               {normalizedOptions.map((option, index) => (
                 <button
@@ -118,9 +118,7 @@ export const NeumorphicSelect: React.FC<NeumorphicSelectProps> = ({
                   type="button"
                   onClick={() => !option.disabled && handleOptionClick(option.value)}
                   disabled={option.disabled}
-                  className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg ${
-                    option.value === value ? 'bg-blue-50 text-blue-700' : 'text-gray-900'
-                  } ${option.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  className={`w-full text-left px-4 py-2 text-sm ${option.disabled ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed' : 'text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                 >
                   {option.label}
                 </button>

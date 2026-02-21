@@ -4,6 +4,7 @@ export { NumberInput } from './NumberInput';
 export { DateInput } from './DateInput';
 export { SelectInput } from './SelectInput';
 export { TextareaInput } from './TextareaInput';
+export { ThemeToggle } from './ThemeToggle';
 
 // Form Layout Components
 export { FormGroup } from './FormGroup';

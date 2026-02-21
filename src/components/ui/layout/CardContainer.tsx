@@ -18,10 +18,10 @@ interface CardContainerProps extends BaseUIComponentProps {
 }
 
 const variantClasses = {
-  default: 'bg-white rounded-lg shadow-sm border border-gray-200',
+  default: 'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700',
   glass: 'glass-card',
-  bordered: 'bg-white rounded-lg border-2 border-gray-300',
-  elevated: 'bg-white rounded-xl shadow-lg border border-gray-100',
+  bordered: 'bg-white dark:bg-gray-800 rounded-lg border-2 border-gray-300 dark:border-gray-600',
+  elevated: 'bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700',
 };
 
 const paddingClasses = {

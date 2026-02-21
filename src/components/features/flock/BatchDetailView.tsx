@@ -288,13 +288,13 @@ export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: Bat
           <div className="space-y-2">
             {event.affectedCount && (
               <div className="flex items-center gap-2">
-                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">
+                <span className="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full font-medium">
                   {event.affectedCount} birds affected
                 </span>
               </div>
             )}
             {event.notes && (
-              <p className="text-sm text-gray-600 italic">
+              <p className="text-sm text-gray-600 dark:text-gray-400 italic">
                 {event.notes}
               </p>
             )}
@@ -339,12 +339,12 @@ export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: Bat
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-4 py-3 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors min-h-[44px] self-start sm:self-auto"
+          className="flex items-center gap-2 px-4 py-3 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors min-h-[44px] self-start sm:self-auto"
         >
           ← Back to Batches
         </button>
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3 flex-wrap">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3 flex-wrap">
             <span className="text-xl sm:text-2xl flex-shrink-0">
               {batch.type === 'hens' ? '🐔' : 
                batch.type === 'roosters' ? '🐓' : 
@@ -352,7 +352,7 @@ export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: Bat
             </span>
             <span className="break-words min-w-0">{batch.batchName}</span>
           </h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1 break-words">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1 break-words">
             {batch.breed} • {batch.type.charAt(0).toUpperCase() + batch.type.slice(1)}
           </p>
         </div>
@@ -365,7 +365,7 @@ export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: Bat
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm"
+            className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 rounded-lg text-sm"
           >
             {success}
           </motion.div>
@@ -375,7 +375,7 @@ export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: Bat
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm"
+            className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400 rounded-lg text-sm"
           >
             {error}
           </motion.div>
@@ -384,7 +384,7 @@ export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: Bat
 
       {/* Batch Composition */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Batch Composition</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Batch Composition</h2>
         <button
           onClick={openEditComposition}
           className="flex items-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors text-sm font-medium min-h-[44px] w-full sm:w-auto justify-center sm:justify-start"
@@ -452,50 +452,50 @@ export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: Bat
 
       {/* Additional Details */}
       <div className="neu-form !px-[10px]">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Batch Details</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Batch Details</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Acquired</label>
-            <p className="text-gray-900">{new Date(batch.acquisitionDate).toLocaleDateString()}</p>
-            <p className="text-xs text-gray-500">{getAgeInWeeks()} weeks ago</p>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Acquired</label>
+            <p className="text-gray-900 dark:text-white">{new Date(batch.acquisitionDate).toLocaleDateString()}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{getAgeInWeeks()} weeks ago</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Age at Acquisition</label>
-            <p className="text-gray-900 capitalize">{batch.ageAtAcquisition}</p>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Age at Acquisition</label>
+            <p className="text-gray-900 dark:text-white capitalize">{batch.ageAtAcquisition}</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Source</label>
-            <p className="text-gray-900">{batch.source}</p>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Source</label>
+            <p className="text-gray-900 dark:text-white">{batch.source}</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Cost</label>
-            <p className="text-gray-900">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cost</label>
+            <p className="text-gray-900 dark:text-white">
               {batch.cost && batch.cost > 0 ? `$${batch.cost.toFixed(2)}` : 'Free'}
             </p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Started With</label>
-            <p className="text-gray-900">{batch.initialCount} birds</p>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Started With</label>
+            <p className="text-gray-900 dark:text-white">{batch.initialCount} birds</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Laying Status</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Laying Status</label>
             <div className="flex items-center gap-2">
               {batch.actualLayingStartDate ? (
                 <>
                   <span className="text-green-600">🥚 Laying</span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
                     since {new Date(batch.actualLayingStartDate).toLocaleDateString()}
                   </span>
                 </>
               ) : (
-                <span className="text-amber-600">⏳ Not laying yet</span>
+                <span className="text-amber-600 dark:text-amber-400">⏳ Not laying yet</span>
               )}
             </div>
           </div>
           {batch.notes && (
             <div className="sm:col-span-2 lg:col-span-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-              <p className="text-gray-900 text-sm break-words">{batch.notes}</p>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+              <p className="text-gray-900 dark:text-white text-sm break-words">{batch.notes}</p>
             </div>
           )}
         </div>
@@ -611,11 +611,11 @@ export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: Bat
         size="lg"
       >
         <div className="space-y-6">
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
             <p className="mb-2">
               Batch: <span className="font-medium">{batch.batchName}</span> ({batch.breed})
             </p>
-            <p className="text-amber-600">
+            <p className="text-amber-600 dark:text-amber-400">
               💡 Use this to update bird counts when chicks grow up or batch composition changes
             </p>
           </div>
@@ -665,9 +665,9 @@ export const BatchDetailView = ({ batch, onBack, onBatchUpdate, className }: Bat
 
           {/* Show total count preview */}
           {((parseInt(editingComposition.hens) || 0) + (parseInt(editingComposition.roosters) || 0) + (parseInt(editingComposition.chicks) || 0) + (parseInt(editingComposition.brooding) || 0)) > 0 && (
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Updated Composition:</h4>
-              <div className="text-sm text-gray-600">
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Updated Composition:</h4>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
                 <p>
                   <strong>Total: {(parseInt(editingComposition.hens) || 0) + (parseInt(editingComposition.roosters) || 0) + (parseInt(editingComposition.chicks) || 0) + (parseInt(editingComposition.brooding) || 0)} birds</strong>
                 </p>

@@ -87,7 +87,7 @@ export const Timeline: React.FC<TimelineProps> = ({
       case 'danger':
         return `${baseClasses} bg-indigo-600 text-white hover:bg-indigo-700`;
       default:
-        return `${baseClasses} bg-gray-50 text-gray-600 hover:bg-gray-100`;
+        return `${baseClasses} bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600`;
     }
   };
 
@@ -97,11 +97,11 @@ export const Timeline: React.FC<TimelineProps> = ({
         <div className="space-y-6">
           {[...Array(3)].map((_, index) => (
             <div key={index} className="flex gap-4 animate-pulse">
-              <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+              <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
               <div className="flex-1 space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-                <div className="h-6 bg-gray-200 rounded w-2/3"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
               </div>
             </div>
           ))}
@@ -115,7 +115,7 @@ export const Timeline: React.FC<TimelineProps> = ({
       <div className={`glass-card ${variantClasses[variant]} ${className}`} data-testid={testId}>
         <div className="text-center py-8">
           <div className="text-4xl mb-4">{emptyIcon}</div>
-          <p className="text-gray-500 font-medium">{emptyMessage}</p>
+          <p className="text-gray-500 dark:text-gray-400 font-medium">{emptyMessage}</p>
         </div>
       </div>
     );
@@ -131,7 +131,7 @@ export const Timeline: React.FC<TimelineProps> = ({
         <div className="relative">
           {/* Center line for alternating layout */}
           {showConnector && (
-            <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
+            <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
           )}
           
           <div className="space-y-8">
@@ -150,27 +150,27 @@ export const Timeline: React.FC<TimelineProps> = ({
                         initial={{ opacity: 0, x: isEven ? -20 : 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.1 }}
-                        className={`bg-white rounded-lg shadow-md p-4 relative cursor-pointer hover:shadow-lg transition-shadow ${
-                          onItemClick ? 'hover:bg-gray-50' : ''
+                        className={`bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 relative cursor-pointer hover:shadow-lg transition-shadow ${
+                          onItemClick ? 'hover:bg-gray-50 dark:hover:bg-gray-700/60' : ''
                         }`}
                         onClick={() => onItemClick?.(item)}
                       >
                         {/* Date badge */}
                         <div className={`flex gap-2 mb-3 ${isEven ? 'justify-end' : 'justify-start'}`}>
-                          <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
                             {formatDate(item.date)}
                           </span>
-                          <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
                             {formatTime(item.date)}
                           </span>
                         </div>
 
-                        <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                           {item.title}
                         </h4>
 
                         {item.description && (
-                          <p className="text-sm text-gray-600 mb-3">
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
                             {item.description}
                           </p>
                         )}
@@ -206,7 +206,7 @@ export const Timeline: React.FC<TimelineProps> = ({
 
                     {/* Center dot */}
                     <div className="relative">
-                      <div className={`w-10 h-10 rounded-full bg-white border-4 ${colorClass.split(' ')[1]} relative z-10 flex items-center justify-center`}>
+                      <div className={`w-10 h-10 rounded-full bg-white dark:bg-gray-800 border-4 ${colorClass.split(' ')[1]} relative z-10 flex items-center justify-center`}>
                         {item.icon && (
                           <span className="text-lg">{item.icon}</span>
                         )}
@@ -235,33 +235,33 @@ export const Timeline: React.FC<TimelineProps> = ({
                         </div>
                         {/* Mobile connector line from icon to icon */}
                         {showConnector && index < sortedItems.length - 1 && (
-                          <div className="absolute left-1/2 top-10 w-0.5 h-16 bg-gray-300 transform -translate-x-1/2"></div>
+                          <div className="absolute left-1/2 top-10 w-0.5 h-16 bg-gray-300 dark:bg-gray-600 transform -translate-x-1/2"></div>
                         )}
                       </div>
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
-                        className={`flex-1 bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow ${
-                          onItemClick ? 'hover:bg-gray-50' : ''
+                        className={`flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow ${
+                          onItemClick ? 'hover:bg-gray-50 dark:hover:bg-gray-700/60' : ''
                         }`}
                         onClick={() => onItemClick?.(item)}
                       >
                         <div className="flex flex-wrap gap-2 mb-2">
-                          <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
                             {formatDate(item.date)}
                           </span>
-                          <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
                             {formatTime(item.date)}
                           </span>
                         </div>
                         
-                        <h4 className="text-base font-semibold text-gray-900 mb-2">
+                        <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
                           {item.title}
                         </h4>
                         
                         {item.description && (
-                          <p className="text-sm text-gray-600 mb-3">
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
                             {item.description}
                           </p>
                         )}
@@ -307,7 +307,7 @@ export const Timeline: React.FC<TimelineProps> = ({
       <div className="relative">
         {/* Vertical connector line */}
         {showConnector && items.length > 1 && (
-          <div className="absolute left-5 top-10 bottom-10 w-0.5 bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
+          <div className="absolute left-5 top-10 bottom-10 w-0.5 bg-gradient-to-b from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
         )}
         
         <div className="space-y-6">
@@ -331,26 +331,26 @@ export const Timeline: React.FC<TimelineProps> = ({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className={`flex-1 bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow ${
-                    onItemClick ? 'hover:bg-gray-50' : ''
+                  className={`flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow ${
+                    onItemClick ? 'hover:bg-gray-50 dark:hover:bg-gray-700/60' : ''
                   }`}
                   onClick={() => onItemClick?.(item)}
                 >
                   <div className="flex flex-wrap gap-2 mb-2">
-                    <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
                       {formatDate(item.date)}
                     </span>
-                    <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
                       {formatTime(item.date)}
                     </span>
                   </div>
                   
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                     {item.title}
                   </h4>
                   
                   {item.description && (
-                    <p className="text-sm text-gray-600 mb-3">
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
                       {item.description}
                     </p>
                   )}

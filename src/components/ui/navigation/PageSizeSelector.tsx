@@ -29,12 +29,12 @@ export const PageSizeSelector: React.FC<PageSizeSelectorProps> = ({
     onPageSizeChange(parseInt(event.target.value, 10));
   };
 
-  const baseClasses = 'flex items-center gap-2 text-sm text-gray-700';
+  const baseClasses = 'flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300';
   const combinedClassName = `${baseClasses} ${className}`;
 
   const selectClasses = variant === 'compact' 
-    ? 'border border-gray-300 rounded px-2 py-1 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
-    : 'border border-gray-300 rounded-md px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500';
+    ? 'border border-gray-300 rounded px-2 py-1 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200'
+    : 'border border-gray-300 rounded-md px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200';
 
   if (variant === 'compact') {
     return (

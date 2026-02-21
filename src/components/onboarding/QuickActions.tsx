@@ -120,7 +120,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
 
   return (
     <CardContainer variant="glass" padding="md" className={className}>
-      <h4 className="text-md font-semibold text-gray-900 mb-3" style={{ fontFamily: 'Fraunces, serif' }}>
+      <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3" style={{ fontFamily: 'Fraunces, serif' }}>
         Quick Actions
       </h4>
       
@@ -138,10 +138,10 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       {/* Phase-specific guidance */}
       <div className="mb-4">
         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border border-indigo-200">
-          <h5 className="text-sm font-semibold text-gray-900 mb-2">Current Phase</h5>
+          <h5 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Current Phase</h5>
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
-              <span className="text-gray-600">Stage:</span>
+              <span className="text-gray-600 dark:text-gray-400">Stage:</span>
               <span className="font-medium text-indigo-700">
                 {percentage <= 40 ? "Getting Started" : 
                  percentage <= 70 ? "Building Features" : 
@@ -149,7 +149,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
               </span>
             </div>
             <div className="flex justify-between text-xs">
-              <span className="text-gray-600">Focus:</span>
+              <span className="text-gray-600 dark:text-gray-400">Focus:</span>
               <span className="font-medium text-purple-700">
                 {percentage <= 40 ? "Basic Setup" : 
                  percentage <= 70 ? "Track Sales" : 
@@ -176,10 +176,10 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
             <div className="flex items-center gap-3">
               <div className="text-2xl">{action.icon}</div>
               <div className="flex-1">
-                <div className="text-sm font-semibold text-gray-900 mb-1">
+                <div className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
                   {action.title}
                 </div>
-                <div className="text-xs text-gray-600">
+                <div className="text-xs text-gray-600 dark:text-gray-400">
                   {action.description}
                 </div>
               </div>

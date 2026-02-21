@@ -44,11 +44,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         {icon}
       </div>
       {title && (
-        <h3 className={`font-semibold text-gray-900 ${isCompact ? 'text-base mb-1' : 'text-lg mb-2'}`}>
+        <h3 className={`font-semibold text-gray-900 dark:text-gray-100 ${isCompact ? 'text-base mb-1' : 'text-lg mb-2'}`}>
           {title}
         </h3>
       )}
-      <p className={`text-gray-500 ${isCompact ? 'text-sm' : ''} ${action ? 'mb-4' : ''}`}>
+      <p className={`text-gray-500 dark:text-gray-400 ${isCompact ? 'text-sm' : ''} ${action ? 'mb-4' : ''}`}>
         {message}
       </p>
       {action && (

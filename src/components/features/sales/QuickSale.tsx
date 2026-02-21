@@ -109,8 +109,8 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Quick Sale ⚡</h2>
-        <p className="text-gray-600">Record a sale in seconds with smart calculations</p>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Quick Sale ⚡</h2>
+        <p className="text-gray-600 dark:text-gray-400">Record a sale in seconds with smart calculations</p>
       </div>
 
 
@@ -119,43 +119,21 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-green-50 border border-green-200 rounded-lg p-4"
+          className="p-4 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-md"
         >
-          <div className="flex items-start">
-            <span className="text-green-600 text-xl mr-3">✅</span>
-            <div className="flex-1">
-              <p className="text-green-700 font-medium">{success}</p>
-              <FormButton
-                onClick={() => setSuccess(null)}
-                variant="secondary"
-                size="sm"
-                className="mt-2"
-              >
-                Dismiss
-              </FormButton>
-            </div>
-          </div>
+          {success}
         </motion.div>
       )}
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-start">
-            <span className="text-red-600 text-xl mr-3">❌</span>
-            <div className="flex-1">
-              <p className="text-red-700 font-medium">{error}</p>
-              <FormButton
-                onClick={() => setError(null)}
-                variant="secondary"
-                size="sm"
-                className="mt-2"
-              >
-                Dismiss
-              </FormButton>
-            </div>
-          </div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-md"
+        >
+          {error}
+        </motion.div>
       )}
 
       {/* Main Form */}
@@ -246,7 +224,7 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
               variant="primary"
               disabled={isSubmitting || !formData.customer_id || formData.eggs_count === 0}
               loading={isSubmitting}
-              className="px-8 py-4 text-lg font-semibold"
+              className="px-8 py-4 text-lg font-semibold dark:bg-blue-700 dark:hover:bg-blue-800 dark:focus:ring-blue-900"
             >
               {formData.total_amount === 0 
                 ? 'Record Free Eggs 🥚' 

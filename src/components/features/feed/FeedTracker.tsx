@@ -149,7 +149,7 @@ export const FeedTracker = () => {
       render: (_, feed) => (
         <button
           onClick={() => handleDeleteClick(feed)}
-          className="inline-flex items-center p-2 rounded-full text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+          className="inline-flex items-center p-2 rounded-full text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
           title="Delete feed"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -289,8 +289,8 @@ export const FeedTracker = () => {
         loading={isSubmitting}
       >
         {errorMsg && (
-          <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-sm text-red-600">{errorMsg}</p>
+          <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-md">
+            <p className="text-sm text-red-600 dark:text-red-400">{errorMsg}</p>
           </div>
         )}
         
@@ -368,7 +368,7 @@ export const FeedTracker = () => {
           </div>
         </div>
 
-          <div className="border-t border-gray-200 pt-6 mt-6">
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
             <div className="flex justify-center">
               <FormButton
                 type="submit"
@@ -382,7 +382,7 @@ export const FeedTracker = () => {
           </div>
       </FormCard>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden relative mt-8">
+      <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden relative mt-8">
         <div className="absolute pointer-events-none transition-opacity duration-300" style={{
           top: '-25%',
           right: '-15%',

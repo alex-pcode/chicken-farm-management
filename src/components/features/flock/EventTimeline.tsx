@@ -85,7 +85,7 @@ export const EventTimeline = memo(({
     >
       <div className="relative">
         {/* Main timeline line */}
-        <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-gray-400 to-transparent"></div>
+        <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-gray-400 dark:via-gray-600 to-transparent"></div>
         
         {/* Events */}
         <div className="space-y-12">
@@ -113,38 +113,38 @@ export const EventTimeline = memo(({
                     <motion.div
                       initial={{ opacity: 0, x: isEven ? -20 : 20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="bg-white rounded-lg shadow-md p-6 relative"
+                      className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 relative"
                     >
                       {/* Date badge */}
                       <div className={`flex gap-2 mb-3 ${isEven ? 'justify-end' : 'justify-start'}`}>
-                        <span className="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                        <span className="text-sm font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
                           {new Date(event.date).toLocaleDateString('en-US', { 
                             year: 'numeric', 
                             month: 'long', 
                             day: 'numeric' 
                           })}
                         </span>
-                        <span className="text-sm font-semibold px-3 py-1 rounded-full bg-gray-100 text-gray-600">
+                        <span className="text-sm font-semibold px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                           {EVENT_TYPES[event.type].replace(/^[^a-zA-Z]*/, '')}
                         </span>
                       </div>
 
-                      <h4 className="text-lg font-bold text-gray-900 mb-3">
+                      <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-3">
                         {event.description}
                       </h4>
 
                       {event.affectedBirds && (
                         <div className="mb-3">
-                          <span className={`inline-flex items-center gap-2 text-sm bg-gray-50 px-3 py-1.5 rounded-full ${isEven ? 'flex-row-reverse' : 'flex-row'}`}>
+                            <span className={`inline-flex items-center gap-2 text-sm bg-gray-50 dark:bg-gray-700 px-3 py-1.5 rounded-full ${isEven ? 'flex-row-reverse' : 'flex-row'}`}>
                             <span className="text-base">🐔</span>
-                            <span className="font-medium text-gray-600">{event.affectedBirds} birds affected</span>
+                            <span className="font-medium text-gray-600 dark:text-gray-400">{event.affectedBirds} birds affected</span>
                           </span>
                         </div>
                       )}
 
                       {event.notes && (
-                        <div className="mt-4 p-3 bg-gray-50 rounded-lg border-l-4 border-gray-200">
-                          <p className="text-sm text-gray-600 italic">{event.notes}</p>
+                        <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-l-4 border-gray-200 dark:border-gray-600">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 italic">{event.notes}</p>
                         </div>
                       )}
 
@@ -152,7 +152,7 @@ export const EventTimeline = memo(({
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => handleDeleteEvent(event.id)}
-                        className={`absolute ${isEven ? '-left-2 translate-x-full' : '-right-2 -translate-x-full'} top-0 w-6 h-6 rounded-full bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 flex items-center justify-center text-sm`}
+                        className={`absolute ${isEven ? '-left-2 translate-x-full' : '-right-2 -translate-x-full'} top-0 w-6 h-6 rounded-full bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 hover:text-red-700 flex items-center justify-center text-sm`}
                         disabled={isLoading}
                         title="Remove event"
                       >
@@ -163,7 +163,7 @@ export const EventTimeline = memo(({
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => onEditEvent(event)}
-                        className={`absolute ${isEven ? '-left-2 translate-x-full' : '-right-2 -translate-x-full'} top-8 w-6 h-6 rounded-full bg-blue-50 text-blue-500 hover:bg-blue-100 hover:text-blue-700 flex items-center justify-center text-sm`}
+                        className={`absolute ${isEven ? '-left-2 translate-x-full' : '-right-2 -translate-x-full'} top-8 w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-blue-700 flex items-center justify-center text-sm`}
                         disabled={isLoading}
                         title="Edit event"
                       >
@@ -188,35 +188,35 @@ export const EventTimeline = memo(({
                 </div>
 
                 {/* Mobile layout */}
-                <div className="md:hidden bg-white rounded-lg shadow-sm p-4 relative">
+                <div className="md:hidden bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 relative">
                   <div className="flex items-start gap-4">
                     <div className={`shrink-0 w-8 h-8 ${eventColor} rounded-full flex items-center justify-center`}>
                       <span className="text-sm text-white">{eventIcon}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-wrap gap-2 mb-2">
-                        <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
                           {new Date(event.date).toLocaleDateString('en-US', { 
                             year: 'numeric', 
                             month: 'short', 
                             day: 'numeric' 
                           })}
                         </span>
-                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                           {EVENT_TYPES[event.type].replace(/^[^a-zA-Z]*/, '')}
                         </span>
                       </div>
-                      <h4 className="text-base font-semibold text-gray-900 mb-2">{event.description}</h4>
+                      <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-2">{event.description}</h4>
                       {event.affectedBirds && (
                         <div className="mb-2">
-                          <span className="inline-flex items-center gap-1 text-xs bg-gray-50 px-2 py-1 rounded-full">
+                          <span className="inline-flex items-center gap-1 text-xs bg-gray-50 dark:bg-gray-700 px-2 py-1 rounded-full">
                             <span>🐔</span>
-                            <span className="font-medium text-gray-600">{event.affectedBirds} birds</span>
+                            <span className="font-medium text-gray-600 dark:text-gray-400">{event.affectedBirds} birds</span>
                           </span>
                         </div>
                       )}
                       {event.notes && (
-                        <p className="text-xs text-gray-600 italic">{event.notes}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 italic">{event.notes}</p>
                       )}
                     </div>
                     <div className="flex flex-col gap-2">
@@ -224,7 +224,7 @@ export const EventTimeline = memo(({
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => onEditEvent(event)}
-                        className="shrink-0 w-6 h-6 rounded-full bg-blue-50 text-blue-500 hover:bg-blue-100 hover:text-blue-700 flex items-center justify-center text-sm"
+                        className="shrink-0 w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-blue-700 flex items-center justify-center text-sm"
                         disabled={isLoading}
                         title="Edit event"
                       >
@@ -234,7 +234,7 @@ export const EventTimeline = memo(({
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => handleDeleteEvent(event.id)}
-                        className="shrink-0 w-6 h-6 rounded-full bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 flex items-center justify-center text-sm"
+                        className="shrink-0 w-6 h-6 rounded-full bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 hover:text-red-700 flex items-center justify-center text-sm"
                         disabled={isLoading}
                         title="Remove event"
                       >

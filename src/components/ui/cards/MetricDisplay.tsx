@@ -85,8 +85,8 @@ export const MetricDisplay: React.FC<MetricDisplayProps> = ({
     return (
       <div className={combinedClassName} data-testid={testId}>
         <div className="animate-pulse">
-          <div className={`bg-gray-200 rounded mb-2 ${variant === 'large' ? 'h-16' : variant === 'compact' ? 'h-6' : 'h-10'}`}></div>
-          <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+          <div className={`bg-gray-200 dark:bg-gray-700 rounded mb-2 ${variant === 'large' ? 'h-16' : variant === 'compact' ? 'h-6' : 'h-10'}`}></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mx-auto"></div>
         </div>
       </div>
     );
@@ -104,12 +104,12 @@ export const MetricDisplay: React.FC<MetricDisplayProps> = ({
       <div className={valueClasses}>
         {formattedValue}
         {unit && (
-          <span className="text-sm text-gray-500 ml-1 font-normal">
+          <span className="text-sm text-gray-500 dark:text-gray-400 ml-1 font-normal">
             {unit}
           </span>
         )}
       </div>
-      <div className="text-black font-medium" style={{ fontSize: '18px' }}>
+      <div className="text-black dark:text-white font-medium" style={{ fontSize: '18px' }}>
         {label}
       </div>
     </motion.div>

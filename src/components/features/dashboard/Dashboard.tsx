@@ -3,14 +3,29 @@ import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContaine
 import { useOptimizedAppData } from '../../../contexts/OptimizedDataProvider'
 import { useOnboarding } from '../../../contexts/OnboardingProvider'
 import { useAuth } from '../../../contexts/AuthContext'
+import { useTheme } from '../../../contexts/ThemeContext'
 import { SetupProgress } from '../../onboarding'
 import { StatCard, PageContainer, SectionContainer, GridContainer, ChartCard } from '../../ui'
-import { UpcomingEvents } from './UpcomingEvents'
+// import { UpcomingEvents } from './UpcomingEvents' // TODO: Re-enable when feature is developed
 
 export const Dashboard = () => {
   const { user } = useAuth();
   const { data, isLoading } = useOptimizedAppData();
   const { onboardingState, calculateProgress, restartOnboarding } = useOnboarding();
+  const { resolvedTheme } = useTheme();
+
+  // Memoized chart styles based on theme
+  const chartStyles = useMemo(() => ({
+    tooltip: {
+      backgroundColor: resolvedTheme === 'dark' ? 'rgba(26, 26, 26, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+      border: 'none',
+      borderRadius: '12px',
+      boxShadow: resolvedTheme === 'dark' ? '0 4px 12px rgba(0, 0, 0, 0.4)' : '0 4px 12px rgba(0, 0, 0, 0.1)',
+      color: resolvedTheme === 'dark' ? '#fff' : '#1f2937',
+    },
+    gridStroke: resolvedTheme === 'dark' ? '#374151' : '#e5e7eb',
+    axisColor: resolvedTheme === 'dark' ? '#9ca3af' : '#6b7280',
+  }), [resolvedTheme]);
   
   // Memoize expensive calculations based on data changes only
   const stats = useMemo(() => {
@@ -304,24 +319,24 @@ export const Dashboard = () => {
             variant="corner-gradient"
             className="!p-3"
           />
-          <StatCard 
-            title="Last 7 Days" 
-            total={stats.last7DaysTotal} 
+          <StatCard
+            title="Last 7 Days"
+            total={stats.last7DaysTotal}
             label={
               <span className="flex items-center gap-1 flex-wrap">
                 {stats.previous7DaysTotal > 0 && (
                   <>
                     <span className={`text-xs px-1 py-0.5 rounded ${
-                      stats.last7DaysTotal > stats.previous7DaysTotal 
-                        ? 'bg-green-100 text-green-600' 
+                      stats.last7DaysTotal > stats.previous7DaysTotal
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
                         : stats.last7DaysTotal < stats.previous7DaysTotal
-                        ? 'bg-red-100 text-red-600'
-                        : 'bg-gray-100 text-gray-600'
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                     }`}>
-                      {stats.last7DaysTotal > stats.previous7DaysTotal 
+                      {stats.last7DaysTotal > stats.previous7DaysTotal
                         ? '+' : ''}{Math.round(((stats.last7DaysTotal - stats.previous7DaysTotal) / stats.previous7DaysTotal) * 100)}%
                     </span>
-                    <span className="text-xs text-gray-500">vs previous</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">vs previous</span>
                   </>
                 )}
               </span>
@@ -330,24 +345,24 @@ export const Dashboard = () => {
             variant="corner-gradient"
             className="!p-3"
           />
-          <StatCard 
-            title="This Month" 
-            total={stats.thisMonthProduction} 
+          <StatCard
+            title="This Month"
+            total={stats.thisMonthProduction}
             label={
               <span className="flex items-center gap-1 flex-wrap">
                 {stats.lastMonthProduction > 0 && (
                   <>
                     <span className={`text-xs px-1 py-0.5 rounded ${
-                      stats.thisMonthProduction > stats.lastMonthProduction 
-                        ? 'bg-green-100 text-green-600' 
+                      stats.thisMonthProduction > stats.lastMonthProduction
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
                         : stats.thisMonthProduction < stats.lastMonthProduction
-                        ? 'bg-red-100 text-red-600'
-                        : 'bg-gray-100 text-gray-600'
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                     }`}>
-                      {stats.thisMonthProduction > stats.lastMonthProduction 
+                      {stats.thisMonthProduction > stats.lastMonthProduction
                         ? '+' : ''}{Math.round(((stats.thisMonthProduction - stats.lastMonthProduction) / stats.lastMonthProduction) * 100)}%
                     </span>
-                    <span className="text-xs text-gray-500">vs last month</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">vs last month</span>
                   </>
                 )}
               </span>
@@ -370,12 +385,7 @@ export const Dashboard = () => {
             margin={{ top: 5, right: 5, left: 5, bottom: 0 }}
           >
             <Tooltip
-              contentStyle={{
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                border: 'none',
-                borderRadius: '12px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-              }}
+              contentStyle={chartStyles.tooltip}
               formatter={(value: number) => [`${value} eggs`, 'Production']}
               labelFormatter={(label, payload) => {
                 if (payload && payload.length > 0 && payload[0].payload) {
@@ -427,13 +437,13 @@ export const Dashboard = () => {
       </SectionContainer>
 
       <SectionContainer
-        title="Analytics & Events"
+        title="Analytics"
         variant="default"
         spacing="md"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Revenue Chart - 2 columns */}
-          <div className="lg:col-span-2">
+        <div>
+          {/* Revenue Chart */}
+          <div>
             {/* Mobile Chart - 6 weeks */}
             <div className="lg:hidden">
               <ChartCard 
@@ -446,22 +456,29 @@ export const Dashboard = () => {
                     data={mobileWeeklyRevenueData}
                     margin={{ top: 5, right: 5, left: 0, bottom: -5 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="week" 
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartStyles.gridStroke} />
+                    <XAxis
+                      dataKey="week"
+                      tick={{ fill: chartStyles.axisColor }}
+                      axisLine={{ stroke: chartStyles.gridStroke }}
+                      tickLine={{ stroke: chartStyles.gridStroke }}
                     />
-                    <YAxis 
-                      width={35} 
+                    <YAxis
+                      width={35}
                       domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.2)]}
+                      tick={{ fill: chartStyles.axisColor }}
+                      axisLine={{ stroke: chartStyles.gridStroke }}
+                      tickLine={{ stroke: chartStyles.gridStroke }}
                     />
-                    <Tooltip 
+                    <Tooltip
+                      contentStyle={chartStyles.tooltip}
                       formatter={(value) => [`$${value}`, 'Weekly Revenue']}
                       labelFormatter={(label) => `Week of ${label}`}
                     />
-                    <Area 
-                      type="monotone" 
-                      dataKey="revenue" 
-                      stroke="#544CE6" 
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#544CE6"
                       fill="#544CE6"
                       fillOpacity={0.3}
                       strokeWidth={2}
@@ -473,7 +490,7 @@ export const Dashboard = () => {
 
             {/* Desktop Chart - 12 weeks */}
             <div className="hidden lg:block">
-              <ChartCard 
+              <ChartCard
                 title="Revenue Trend"
                 subtitle="Weekly revenue over last 12 weeks"
                 height={400}
@@ -483,15 +500,22 @@ export const Dashboard = () => {
                     data={stats.weeklyRevenueData}
                     margin={{ top: 5, right: 5, left: 0, bottom: -5 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="week" 
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartStyles.gridStroke} />
+                    <XAxis
+                      dataKey="week"
+                      tick={{ fill: chartStyles.axisColor }}
+                      axisLine={{ stroke: chartStyles.gridStroke }}
+                      tickLine={{ stroke: chartStyles.gridStroke }}
                     />
-                    <YAxis 
-                      width={35} 
+                    <YAxis
+                      width={35}
                       domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.2)]}
+                      tick={{ fill: chartStyles.axisColor }}
+                      axisLine={{ stroke: chartStyles.gridStroke }}
+                      tickLine={{ stroke: chartStyles.gridStroke }}
                     />
-                    <Tooltip 
+                    <Tooltip
+                      contentStyle={chartStyles.tooltip}
                       formatter={(value) => [`$${value}`, 'Weekly Revenue']}
                       labelFormatter={(label) => `Week of ${label}`}
                     />
@@ -508,9 +532,9 @@ export const Dashboard = () => {
               </ChartCard>
             </div>
           </div>
-          
-          {/* Upcoming Events - 1 column */}
-          <UpcomingEvents data={data} isLoading={isLoading} />
+
+          {/* TODO: Re-enable Upcoming Events when feature is developed */}
+          {/* <UpcomingEvents data={data} isLoading={isLoading} /> */}
         </div>
       </SectionContainer>
 

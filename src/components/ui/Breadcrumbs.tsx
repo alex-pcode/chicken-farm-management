@@ -18,7 +18,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
           <li key={index} className="flex items-center">
             {index > 0 && (
               <svg
-                className="flex-shrink-0 h-4 w-4 text-gray-400 mx-2"
+                className="flex-shrink-0 h-4 w-4 text-gray-400 dark:text-gray-500 mx-2"
                 fill="currentColor"
                 viewBox="0 0 20 20"
                 aria-hidden="true"
@@ -31,18 +31,18 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
               </svg>
             )}
             {item.current ? (
-              <span className="text-sm font-medium text-gray-900" aria-current="page">
+              <span className="text-sm font-medium text-gray-900 dark:text-white" aria-current="page">
                 {item.label}
               </span>
             ) : item.href ? (
               <a
                 href={item.href}
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
                 {item.label}
               </a>
             ) : (
-              <span className="text-sm font-medium text-gray-600">
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 {item.label}
               </span>
             )}

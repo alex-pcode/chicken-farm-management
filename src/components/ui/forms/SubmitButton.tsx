@@ -20,7 +20,7 @@ const getVariantClasses = (variant: string) => {
     case 'primary':
       return 'shiny-cta bg-blue-600 hover:bg-blue-700 text-white';
     case 'secondary':
-      return 'bg-gray-200 hover:bg-gray-300 text-gray-800 border border-gray-300';
+      return 'bg-gray-200 hover:bg-gray-300 text-gray-800 border border-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 dark:border-gray-600';
     case 'danger':
       return 'bg-red-600 hover:bg-red-700 text-white';
     default:

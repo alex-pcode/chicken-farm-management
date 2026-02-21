@@ -74,9 +74,9 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({
     return (
       <div className={combinedClassName} data-testid={testId}>
         <div className="animate-pulse">
-          <div className="h-5 bg-gray-200 rounded w-3/4 mb-4"></div>
-          <div className="h-3 bg-gray-200 rounded-full mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
+          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded-full mb-2"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
         </div>
       </div>
     );
@@ -91,7 +91,7 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({
     >
       <div className="space-y-2">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
           {showPercentage && (
             <span 
               className={`text-sm font-medium ${typeof colors.text === 'string' ? colors.text : ''}`}
@@ -103,7 +103,7 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({
         </div>
         
         {variant === 'detailed' && showValues && (
-          <div className="flex justify-between text-sm text-gray-600">
+          <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
             <span>{safeValue.toLocaleString()}</span>
             <span>{safeMax.toLocaleString()}</span>
           </div>
@@ -128,10 +128,10 @@ export const ProgressCard: React.FC<ProgressCardProps> = ({
         {variant !== 'compact' && (
           <div className="flex justify-between items-center">
             {label && (
-              <span className="text-sm text-gray-500">{label}</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{label}</span>
             )}
             {showValues && variant !== 'detailed' && (
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
                 {safeValue.toLocaleString()} / {safeMax.toLocaleString()}
               </span>
             )}

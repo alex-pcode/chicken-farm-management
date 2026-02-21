@@ -87,7 +87,7 @@ export const CustomerList = ({ customers, onDataChange }: CustomerListProps) => 
       label: 'Customer Name',
       sortable: true,
       render: (_value, customer) => (
-        <div className="font-medium text-gray-900">
+        <div className="font-medium text-gray-900 dark:text-gray-200">
           {customer.name}
         </div>
       )
@@ -97,9 +97,9 @@ export const CustomerList = ({ customers, onDataChange }: CustomerListProps) => 
       label: 'Phone',
       sortable: false,
       render: (_value, customer) => customer.phone ? (
-        <span className="text-gray-600">📞 {customer.phone}</span>
+        <span className="text-gray-600 dark:text-gray-400">📞 {customer.phone}</span>
       ) : (
-        <span className="text-gray-400">-</span>
+        <span className="text-gray-400 dark:text-gray-500">-</span>
       )
     },
     {
@@ -108,10 +108,10 @@ export const CustomerList = ({ customers, onDataChange }: CustomerListProps) => 
       sortable: false,
       render: (_value, customer) => customer.notes ? (
         <div className="max-w-xs">
-          <span className="text-gray-600 text-sm truncate block">📝 {customer.notes}</span>
+          <span className="text-gray-600 dark:text-gray-400 text-sm truncate block">📝 {customer.notes}</span>
         </div>
       ) : (
-        <span className="text-gray-400">-</span>
+        <span className="text-gray-400 dark:text-gray-500">-</span>
       )
     },
     {
@@ -119,30 +119,28 @@ export const CustomerList = ({ customers, onDataChange }: CustomerListProps) => 
       label: 'Added',
       sortable: true,
       render: (_value, customer) => (
-        <span className="text-xs text-gray-500">
+        <span className="text-gray-500 dark:text-gray-400 text-sm">
           {new Date(customer.created_at).toLocaleDateString()}
         </span>
       )
     },
     {
-      key: 'id',
+      key: 'actions',
       label: 'Actions',
       sortable: false,
-      render: (_, customer) => (
-        <div className="flex gap-2">
+      render: (_value, customer) => (
+        <div className="flex space-x-2">
           <button
             onClick={() => handleEdit(customer)}
-            className="inline-flex items-center p-2 rounded-full text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
-            title="Edit customer"
+            className="text-blue-600 dark:text-blue-400 hover:underline"
           >
-            ✏️
+            Edit
           </button>
           <button
             onClick={() => handleDeactivate(customer)}
-            className="inline-flex items-center p-2 rounded-full text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
-            title="Deactivate customer"
+            className="text-red-600 dark:text-red-400 hover:underline"
           >
-            🗑️
+            Deactivate
           </button>
         </div>
       )
@@ -238,7 +236,7 @@ export const CustomerList = ({ customers, onDataChange }: CustomerListProps) => 
       )}
 
       {/* Customer Table */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
         {customers.length === 0 ? (
           <EmptyState
             icon="👥"

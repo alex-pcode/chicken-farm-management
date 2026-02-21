@@ -45,14 +45,14 @@ export const TextareaInput: React.FC<TextareaInputProps> = ({
       <div className="flex justify-between items-end mb-2">
         <label 
           htmlFor={inputId}
-          className="block text-gray-600 text-sm"
+          className="block text-gray-600 dark:text-gray-400 text-sm"
         >
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
         
         {showCharCount && maxLength && (
-          <span className={`text-xs ${isNearLimit ? 'text-orange-500' : 'text-gray-400'}`}>
+          <span className={`text-xs ${isNearLimit ? 'text-orange-500' : 'text-gray-400 dark:text-gray-500'}`}>
             {charCount}/{maxLength}
           </span>
         )}

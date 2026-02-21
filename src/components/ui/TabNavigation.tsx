@@ -19,7 +19,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
   onTabChange
 }) => {
   return (
-    <div className="border-b border-gray-200 mb-8">
+    <div className="border-b border-gray-200 dark:border-gray-700 mb-8">
       <nav className="-mb-px flex space-x-0 sm:space-x-8 overflow-x-auto">
         {tabs.map((tab) => (
           <button
@@ -28,8 +28,8 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({
             className={`
               relative whitespace-nowrap py-4 px-2 sm:px-1 border-b-2 font-medium text-sm transition-colors duration-200 flex-1 sm:flex-initial
               ${activeTab === tab.id
-                ? 'border-[#524AE6] text-[#524AE6]'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-[#524AE6] text-[#524AE6] dark:border-[#7B73FF] dark:text-[#7B73FF]'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-600'
               }
             `}
           >

@@ -87,7 +87,7 @@ export const EggCounter = () => {
       label: 'Eggs',
       render: (value: unknown, row: EggEntry) => {
         const countValue = typeof value === 'number' ? value : row?.count;
-        return <span className="font-medium text-gray-900">{countValue || 0}</span>;
+        return <span className="font-medium text-gray-900 dark:text-white">{countValue || 0}</span>;
       }
     },
     {
@@ -95,9 +95,9 @@ export const EggCounter = () => {
       label: 'Size',
       render: (value: unknown, row: EggEntry) => {
         const sizeValue = typeof value === 'string' ? value : row?.size;
-        if (!sizeValue) return <span className="text-gray-400">-</span>;
+        if (!sizeValue) return <span className="text-gray-400 dark:text-gray-500">-</span>;
         const sizeDisplay = sizeValue.charAt(0).toUpperCase() + sizeValue.slice(1).replace('-', ' ');
-        return <span className="text-gray-700 text-sm">{sizeDisplay}</span>;
+        return <span className="text-gray-700 dark:text-gray-300 text-sm">{sizeDisplay}</span>;
       }
     },
     {
@@ -105,12 +105,12 @@ export const EggCounter = () => {
       label: 'Color',
       render: (value: unknown, row: EggEntry) => {
         const colorValue = typeof value === 'string' ? value : row?.color;
-        if (!colorValue) return <span className="text-gray-400">-</span>;
+        if (!colorValue) return <span className="text-gray-400 dark:text-gray-500">-</span>;
         const colorDisplay = colorValue.charAt(0).toUpperCase() + colorValue.slice(1);
         return (
-          <span className="text-gray-700 text-sm inline-flex items-center gap-1">
-            <span 
-              className="w-3 h-3 rounded-full border border-gray-300"
+          <span className="text-gray-700 dark:text-gray-300 text-sm inline-flex items-center gap-1">
+            <span
+              className="w-3 h-3 rounded-full border border-gray-300 dark:border-gray-600"
               style={{
                 backgroundColor: 
                   colorValue === 'white' ? '#ffffff' :
@@ -133,7 +133,7 @@ export const EggCounter = () => {
       render: (value: unknown, row: EggEntry) => {
         const notesValue = typeof value === 'string' ? value : row?.notes;
         return (
-          <span className="text-gray-600 text-sm max-w-32 truncate" title={notesValue || ''}>
+          <span className="text-gray-600 dark:text-gray-400 text-sm max-w-32 truncate" title={notesValue || ''}>
             {notesValue || '-'}
           </span>
         );
@@ -146,7 +146,7 @@ export const EggCounter = () => {
         return (
           <button
             onClick={() => handleDeleteEntry(row.id)}
-            className="text-red-600 hover:text-red-800 transition-colors duration-200 p-1 rounded hover:bg-red-50"
+            className="text-red-600 hover:text-red-800 dark:text-red-500 dark:hover:text-red-400 transition-colors duration-200 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30"
             title="Delete entry"
             aria-label={`Delete egg entry for ${new Date(row.date).toLocaleDateString()}`}
           >
@@ -405,12 +405,12 @@ export const EggCounter = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="text-center sm:text-left flex-1">
               <h2 className="neu-title">Log Daily Eggs</h2>
-              <p className="text-gray-600 text-sm mt-1">Record your daily egg production</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">Record your daily egg production</p>
             </div>
             {eggEntries.length === 0 && (
               <button
                 onClick={() => setShowHistoricalModal(true)}
-                className="flex items-center gap-2 px-4 py-2 text-sm bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 text-blue-700 hover:text-blue-800 font-medium"
+                className="flex items-center gap-2 px-4 py-2 text-sm bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border border-blue-200 dark:border-blue-700 rounded-lg hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-800/40 dark:hover:to-indigo-800/40 transition-all duration-200 text-blue-700 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium"
                 title="Add historical egg tracking data"
               >
                 <span className="text-lg">📊</span>
@@ -426,7 +426,7 @@ export const EggCounter = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <div>
-                  <label className="block text-gray-600 text-sm mb-2">
+                  <label className="block text-gray-600 dark:text-gray-400 text-sm mb-2">
                     Date<span className="text-red-500 ml-1">*</span>
                   </label>
                   <input
@@ -445,7 +445,7 @@ export const EggCounter = () => {
               </div>
               <div className="space-y-2">
                 <div>
-                  <label className="block text-gray-600 text-sm mb-2">
+                  <label className="block text-gray-600 dark:text-gray-400 text-sm mb-2">
                     Number of Eggs<span className="text-red-500 ml-1">*</span>
                   </label>
                   <input
@@ -467,7 +467,7 @@ export const EggCounter = () => {
               </div>
               <div className="space-y-2">
                 <div>
-                  <label className="block text-gray-600 text-sm mb-2">
+                  <label className="block text-gray-600 dark:text-gray-400 text-sm mb-2">
                     Notes
                   </label>
                   <input
@@ -500,17 +500,17 @@ export const EggCounter = () => {
                   }}
                   className="neu-checkbox"
                 />
-                <label htmlFor="enableAdvanced" className="text-gray-600 text-sm cursor-pointer">
+                <label htmlFor="enableAdvanced" className="text-gray-600 dark:text-gray-400 text-sm cursor-pointer">
                   Enable detailed egg tracking (size & color)
                 </label>
               </div>
               
               {/* Advanced Fields - Only show when checkbox is checked */}
               {eggForm.values.enableAdvanced && (
-                <div className="glass-card-compact p-4 rounded-xl border border-gray-200">
+                <div className="glass-card-compact p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="block text-gray-600 text-sm mb-2">
+                      <label className="block text-gray-600 dark:text-gray-400 text-sm mb-2">
                         Egg Size
                       </label>
                       <select
@@ -528,7 +528,7 @@ export const EggCounter = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <label className="block text-gray-600 text-sm mb-2">
+                      <label className="block text-gray-600 dark:text-gray-400 text-sm mb-2">
                         Egg Color
                       </label>
                       <select
@@ -610,10 +610,10 @@ export const EggCounter = () => {
           <div className="glass-card p-6 text-center">
             <div className="flex flex-col items-center gap-3">
               <span className="text-4xl">🎯</span>
-              <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Fraunces, serif' }}>
                 Set Your Annual Goal
               </h3>
-              <p className="text-gray-600 text-sm max-w-md">
+              <p className="text-gray-600 dark:text-gray-400 text-sm max-w-md">
                 Visit your profile page to set a yearly egg production goal and track your monthly progress.
               </p>
               <button
@@ -734,7 +734,7 @@ export const EggCounter = () => {
       </div>
 
 
-      <h2 className="text-2xl font-bold text-gray-900" style={{ marginBottom: 0 }}>Recent Entries</h2>
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white" style={{ marginBottom: 0 }}>Recent Entries</h2>
       
       
       <motion.div

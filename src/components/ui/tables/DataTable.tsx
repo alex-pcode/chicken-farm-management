@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 
 export interface TableColumn<T> {
   key: keyof T | string;
@@ -36,7 +35,7 @@ export const DataTable = <T = Record<string, unknown>>({
   onSort,
   sortColumn,
   sortDirection,
-  responsive = true,
+  responsive: _responsive = true,
   className = '',
   testId,
 }: DataTableProps<T>) => {
@@ -57,10 +56,9 @@ export const DataTable = <T = Record<string, unknown>>({
   };
 
   const baseClasses = 'min-w-full';
-  const responsiveClasses = responsive ? 'overflow-x-auto w-full' : '';
   const combinedClassName = `${baseClasses} ${className}`;
   
-  const containerClasses = 'bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden relative';
+  const containerClasses = 'bg-white dark:bg-[#1a1a1a] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden relative';
 
   if (loading) {
     return (
@@ -77,7 +75,7 @@ export const DataTable = <T = Record<string, unknown>>({
         }}></div>
         <div className="relative">
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400"></div>
           </div>
         </div>
       </div>
@@ -100,7 +98,7 @@ export const DataTable = <T = Record<string, unknown>>({
         <div className="relative">
           <div className="text-center py-12">
             <div className="text-6xl mb-4">📊</div>
-            <p className="text-gray-500">{emptyMessage}</p>
+            <p className="text-gray-500 dark:text-gray-400">{emptyMessage}</p>
           </div>
         </div>
       </div>
@@ -120,68 +118,32 @@ export const DataTable = <T = Record<string, unknown>>({
         opacity: 0.6
       }}></div>
       <div className="relative">
-        <div className={responsiveClasses}>
-          <table className={combinedClassName} data-testid={testId}>
-            <thead>
-              <tr>
-                {columns.map((column) => (
-                  <th
-                    key={String(column.key)}
-                    className={`px-6 py-4 text-left text-sm font-semibold text-gray-900 bg-gray-50/50 ${
-                      sortable && column.sortable !== false
-                        ? 'cursor-pointer hover:bg-gray-100/50 transition-colors'
-                        : ''
-                    } ${column.className || ''}`}
-                    onClick={() => 
-                      sortable && column.sortable !== false 
-                        ? handleSort(column.key as keyof T) 
-                        : undefined
-                    }
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>{column.label}</span>
-                      {sortable && column.sortable !== false && (
-                        <span className="text-gray-400 text-xs">
-                          {getSortIcon(column.key as keyof T) || '↕'}
-                        </span>
-                      )}
-                    </div>
-                  </th>
+        <table className={combinedClassName} data-testid={testId}>
+          <thead>
+            <tr>
+              {columns.map((column, index) => (
+                <th
+                  key={index}
+                  onClick={() => column.sortable && handleSort(column.key as keyof T)}
+                  className={`px-4 py-2 text-left text-gray-600 dark:text-gray-300 ${column.className || ''}`}
+                >
+                  {column.label} {column.sortable && getSortIcon(column.key as keyof T)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((row, rowIndex) => (
+              <tr key={rowIndex} className="hover:bg-gray-100 dark:hover:bg-gray-800">
+                {columns.map((column, colIndex) => (
+                  <td key={colIndex} className={`px-4 py-2 text-gray-900 dark:text-gray-200 ${column.className || ''}`}>
+                    {column.render ? column.render(row[column.key as keyof T], row) : row[column.key as keyof T] as React.ReactNode}
+                  </td>
                 ))}
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {data.map((row, index) => {
-                // Use row's id if available, otherwise fallback to index
-                const rowKey = (row as Record<string, unknown>)?.id
-                  ? String((row as Record<string, unknown>).id)
-                  : `row-${index}`;
-
-                return (
-                  <motion.tr
-                    key={rowKey}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="hover:bg-gray-50/50 transition-colors"
-                  >
-                    {columns.map((column) => (
-                      <td
-                        key={String(column.key)}
-                        className="px-6 py-4 text-sm text-gray-600"
-                      >
-                        {column.render
-                          ? column.render(row[column.key as keyof T] ?? row, row)
-                          : String(row[column.key as keyof T] || '')
-                        }
-                      </td>
-                    ))}
-                  </motion.tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

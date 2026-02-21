@@ -198,44 +198,44 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
         <div className="space-y-6">
           <div className="text-center">
             <div className="text-6xl mb-4">📊</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
               Backfill Your Egg Production History
             </h3>
-            <p className="text-gray-600 leading-relaxed">
+            <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
               Have you been raising chickens for a while? This tool helps you add historical egg production 
               data to get accurate trends and analytics from day one.
             </p>
           </div>
           
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
-            <h4 className="font-semibold text-blue-900 mb-3">What this does:</h4>
-            <ul className="space-y-2 text-sm text-blue-800">
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-lg p-6 border border-blue-200 dark:border-blue-700">
+            <h4 className="font-semibold text-blue-900 dark:text-blue-200 mb-3">What this does:</h4>
+            <ul className="space-y-2 text-sm text-blue-800 dark:text-blue-300">
               <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">•</span>
+                <span className="text-blue-600 dark:text-blue-400 dark:text-blue-400 mt-0.5">•</span>
                 <span>Creates daily entries based on your average production</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">•</span>
+                <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
                 <span>Adds realistic variation to make data look natural</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">•</span>
+                <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
                 <span>Enables accurate trend analysis and forecasting</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">•</span>
+                <span className="text-blue-600 dark:text-blue-400 mt-0.5">•</span>
                 <span>Marks entries as historical for transparency</span>
               </li>
             </ul>
           </div>
 
           {userTier === 'free' && (
-            <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+            <div className="bg-orange-50 dark:bg-orange-900/30 rounded-lg p-4 border border-orange-200 dark:border-orange-700">
               <div className="flex items-start gap-3">
-                <span className="text-orange-600 text-xl mt-0.5">ℹ️</span>
+                <span className="text-orange-600 dark:text-orange-400 text-xl mt-0.5">ℹ️</span>
                 <div>
-                  <h4 className="font-medium text-orange-900 mb-1">Free User Limit</h4>
-                  <p className="text-sm text-orange-800">
+                  <h4 className="font-medium text-orange-900 dark:text-orange-200 mb-1">Free User Limit</h4>
+                  <p className="text-sm text-orange-800 dark:text-orange-300">
                     Free accounts can import up to 90 days of historical data. 
                     <span className="font-medium"> Upgrade to premium for unlimited historical imports.</span>
                   </p>
@@ -244,12 +244,12 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
             </div>
           )}
           
-          <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+          <div className="bg-amber-50 dark:bg-amber-900/30 rounded-lg p-4 border border-amber-200 dark:border-amber-700">
             <div className="flex items-start gap-3">
-              <span className="text-amber-600 text-xl mt-0.5">💡</span>
+              <span className="text-amber-600 dark:text-amber-400 text-xl mt-0.5">💡</span>
               <div>
-                <h4 className="font-medium text-amber-900 mb-1">Pro Tip</h4>
-                <p className="text-sm text-amber-800">
+                <h4 className="font-medium text-amber-900 dark:text-amber-200 mb-1">Pro Tip</h4>
+                <p className="text-sm text-amber-800 dark:text-amber-300">
                   You can always edit or delete individual entries later if needed. 
                   This just gives you a good starting baseline.
                 </p>
@@ -260,7 +260,7 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
           <div className="flex justify-end gap-3 pt-4">
             <button
               onClick={handleClose}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
             >
               Cancel
             </button>
@@ -278,7 +278,7 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-gray-700 text-sm font-medium mb-2">
+              <label className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
                 Start Date <span className="text-red-500">*</span>
               </label>
               <input
@@ -297,7 +297,7 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
             </div>
             
             <div>
-              <label className="block text-gray-700 text-sm font-medium mb-2">
+              <label className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
                 End Date <span className="text-red-500">*</span>
               </label>
               <input
@@ -318,7 +318,7 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
           </div>
           
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-2">
+            <label className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
               Average Daily Eggs <span className="text-red-500">*</span>
             </label>
             <input
@@ -332,7 +332,7 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
               className="neu-input"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Your estimated average eggs per day during this period
             </p>
             {errors.find(e => e.field === 'averageDaily') && (
@@ -343,7 +343,7 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
           </div>
           
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-2">
+            <label className="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
               Additional Notes
             </label>
             <textarea
@@ -359,10 +359,10 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-green-50 rounded-lg p-4 border border-green-200"
+              className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4 border border-green-200 dark:border-green-700"
             >
-              <h4 className="font-medium text-green-900 mb-2">Preview</h4>
-              <div className="text-sm text-green-800 space-y-1">
+              <h4 className="font-medium text-green-900 dark:text-green-200 mb-2">Preview</h4>
+              <div className="text-sm text-green-800 dark:text-green-300 space-y-1">
                 <p><strong>Period:</strong> {days} days ({weeks} weeks)</p>
                 {userTier === 'free' && (
                   <p><strong>Free user limit:</strong> {days}/90 days</p>
@@ -371,19 +371,19 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
                 <p><strong>Daily Variation:</strong> ±20% for realistic data</p>
               </div>
               {userTier === 'free' && days > 80 && days <= 90 && (
-                <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+                <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded text-xs text-amber-800 dark:text-amber-300">
                   ⚠️ You're near your 90-day limit for free users
                 </div>
               )}
             </motion.div>
           )}
           
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+          <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
             <div className="flex items-start gap-3">
-              <span className="text-blue-600 text-lg mt-0.5">⏱️</span>
+              <span className="text-blue-600 dark:text-blue-400 text-lg mt-0.5">⏱️</span>
               <div>
-                <h4 className="font-medium text-blue-900 mb-1">Processing Time</h4>
-                <p className="text-sm text-blue-800">
+                <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-1">Processing Time</h4>
+                <p className="text-sm text-blue-800 dark:text-blue-300">
                   Generating historical entries may take a few minutes, especially for longer date ranges. 
                   Please be patient and don't close this window during processing.
                 </p>
@@ -392,8 +392,8 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
           </div>
           
           {errors.find(e => e.field === 'submit') && (
-            <div className="bg-red-50 rounded-lg p-4 border border-red-200">
-              <p className="text-red-800 text-sm">
+            <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-4 border border-red-200 dark:border-red-700">
+              <p className="text-red-800 dark:text-red-300 text-sm">
                 {errors.find(e => e.field === 'submit')?.message}
               </p>
             </div>
@@ -405,33 +405,33 @@ export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProp
         <div className="text-center space-y-6">
           <div className="text-6xl">🎉</div>
           <div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
               Historical Data Generated!
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-300">
               Successfully created historical entries for your specified period.
             </p>
           </div>
           
-          <div className="bg-green-50 rounded-lg p-6 border border-green-200">
+          <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-6 border border-green-200 dark:border-green-700">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
               <div>
-                <div className="text-2xl font-bold text-green-800">{days}</div>
-                <div className="text-sm text-green-600">Days of Data</div>
+                <div className="text-2xl font-bold text-green-800 dark:text-green-300">{days}</div>
+                <div className="text-sm text-green-600 dark:text-green-400">Days of Data</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-800">{generatedEntries.toLocaleString()}</div>
-                <div className="text-sm text-green-600">Total Eggs</div>
+                <div className="text-2xl font-bold text-green-800 dark:text-green-300">{generatedEntries.toLocaleString()}</div>
+                <div className="text-sm text-green-600 dark:text-green-400">Total Eggs</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-800">{Math.round(generatedEntries / days)}</div>
-                <div className="text-sm text-green-600">Avg per Day</div>
+                <div className="text-2xl font-bold text-green-800 dark:text-green-300">{Math.round(generatedEntries / days)}</div>
+                <div className="text-sm text-green-600 dark:text-green-400">Avg per Day</div>
               </div>
             </div>
           </div>
           
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-            <p className="text-sm text-blue-800">
+          <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
+            <p className="text-sm text-blue-800 dark:text-blue-300">
               Your dashboard and analytics will now show complete historical trends. 
               You can continue adding daily entries as normal going forward.
             </p>

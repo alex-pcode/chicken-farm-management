@@ -22,7 +22,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   className = ''
 }) => {
   return (
-    <div className={`min-h-screen bg-gray-50 flex items-center justify-center p-4 ${className}`}>
+    <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 ${className}`}>
       <PageContainer maxWidth="md" padding="lg" className="w-full">
         <CardContainer variant="glass" padding="xl" className="text-center relative overflow-hidden">
           {/* Corner Gradient Overlay */}
@@ -51,10 +51,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
                 <span className="text-3xl">🐔</span>
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2" style={{ fontFamily: 'Fraunces, serif' }}>
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-2" style={{ fontFamily: 'Fraunces, serif' }}>
                 Welcome to Chicken Care App
               </h1>
-              <p className="text-lg text-gray-600 font-medium">
+              <p className="text-lg text-gray-600 dark:text-gray-400 font-medium">
                 Your complete solution for managing chickens and maximizing egg production
               </p>
             </motion.div>
@@ -99,10 +99,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               transition={{ duration: 0.6, delay: 0.6 }}
             >
               <CardContainer variant="glass" padding="lg" className="bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
-                <h2 className="text-xl font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Fraunces, serif' }}>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2" style={{ fontFamily: 'Fraunces, serif' }}>
                   Ready to get started?
                 </h2>
-                <p className="text-gray-700">
+                <p className="text-gray-700 dark:text-gray-300">
                   Let's set up your flock in just a few simple steps. It takes less than 2 minutes 
                   and you'll immediately see your personalized dashboard.
                 </p>
@@ -129,7 +129,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 onClick={onSkipToApp}
                 variant="secondary"
                 size="lg"
-                className="bg-white text-gray-700 border-2 border-gray-200 hover:bg-gray-50"
+                className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-2 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Skip for Now
               </FormButton>
@@ -137,7 +137,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
             {/* Help Text */}
             <motion.p
-              className="text-sm text-gray-500 mt-6"
+              className="text-sm text-gray-500 dark:text-gray-400 mt-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.6, delay: 1.0 }}

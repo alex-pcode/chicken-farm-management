@@ -64,16 +64,16 @@ export const StatCard: React.FC<StatCardProps> = ({
   const getChangeColor = () => {
     if (changeType === 'increase') return 'text-green-600';
     if (changeType === 'decrease') return 'text-red-600';
-    return 'text-gray-600';
+    return 'text-gray-600 dark:text-gray-400';
   };
 
   if (loading) {
     return (
       <div className={combinedClassName} data-testid={testId}>
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-          <div className="h-8 bg-gray-200 rounded w-3/4 mb-2"></div>
-          <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2"></div>
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
         </div>
       </div>
     );
@@ -104,31 +104,31 @@ export const StatCard: React.FC<StatCardProps> = ({
         {/* Icon positioned in top-right corner */}
         {icon && (
           <div className={`absolute -top-1 -right-1 size-6 flex items-center justify-center ${
-            variant === 'dark' ? 'text-white/70' : 'text-gray-400'
+            variant === 'dark' ? 'text-white/70' : 'text-gray-400 dark:text-gray-500'
           }`}>
             <span className="text-base">{icon}</span>
           </div>
         )}
-        
+
         {/* Content Section */}
         <div className="pr-[10px]">
           {/* Title */}
           <div className={`font-bold text-base lg:text-lg mb-2 leading-tight ${
-            variant === 'dark' ? 'text-white' : 'text-gray-900'
+            variant === 'dark' ? 'text-white' : 'text-gray-900 dark:text-white'
           }`}>
             {title}
           </div>
-          
+
           {/* Value */}
           <div className={`font-bold mb-2 text-2xl ${
-            variant === 'dark' ? 'text-white' : 'text-gray-900'
+            variant === 'dark' ? 'text-white' : 'text-gray-900 dark:text-white'
           }`}>
             {total}
           </div>
-          
+
           {/* Label and Change */}
           <div className={`text-xs lg:text-sm leading-relaxed ${
-            variant === 'dark' ? 'text-white/90' : 'text-gray-500'
+            variant === 'dark' ? 'text-white/90' : 'text-gray-500 dark:text-gray-400'
           }`}>
             {change !== undefined && (
               <span className={`font-medium ${

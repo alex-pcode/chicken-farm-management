@@ -76,7 +76,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
     <div className={className}>
       <label 
         htmlFor={inputId}
-        className="block text-gray-600 text-sm mb-2"
+        className="block text-gray-600 dark:text-gray-400 text-sm mb-2"
       >
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}

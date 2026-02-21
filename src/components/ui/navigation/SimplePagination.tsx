@@ -36,8 +36,8 @@ export const SimplePagination: React.FC<SimplePaginationProps> = ({
   const combinedClassName = `${baseClasses} ${className}`;
 
   const buttonClasses = variant === 'compact'
-    ? 'relative inline-flex items-center px-3 py-1 text-sm font-medium rounded border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
-    : 'relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors';
+    ? 'relative inline-flex items-center px-3 py-1 text-sm font-medium rounded border border-gray-300 bg-white hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+    : 'relative inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors';
 
   if (variant === 'compact') {
     return (
@@ -50,7 +50,7 @@ export const SimplePagination: React.FC<SimplePaginationProps> = ({
           ← {previousText}
         </button>
         {showPageInfo && (
-          <span className="flex items-center px-2 text-sm text-gray-700">
+          <span className="flex items-center px-2 text-sm text-gray-700 dark:text-gray-300">
             {currentPage} / {totalPages}
           </span>
         )}
@@ -79,7 +79,7 @@ export const SimplePagination: React.FC<SimplePaginationProps> = ({
       </button>
       
       {showPageInfo && (
-        <div className="text-sm text-gray-700">
+        <div className="text-sm text-gray-700 dark:text-gray-300">
           Page <span className="font-medium">{currentPage}</span> of{' '}
           <span className="font-medium">{totalPages}</span>
         </div>

@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import type { FeedEntry } from '../../../types';
 import { useOptimizedAppData } from '../../../contexts/OptimizedDataProvider';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { 
   StatCard, 
   SectionContainer, 
@@ -64,8 +65,21 @@ interface MonthlyFeedCostData {
 
 export const FeedCostCalculator = () => {
   const { data } = useOptimizedAppData();
+  const { resolvedTheme } = useTheme();
   const flockProfile = data.flockProfile;
   const feedInventory = data.feedInventory;
+
+  const chartStyles = useMemo(() => ({
+    tooltip: {
+      backgroundColor: resolvedTheme === 'dark' ? 'rgba(26, 26, 26, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+      border: 'none',
+      borderRadius: '12px',
+      boxShadow: resolvedTheme === 'dark' ? '0 4px 12px rgba(0, 0, 0, 0.4)' : '0 4px 12px rgba(0, 0, 0, 0.1)',
+      color: resolvedTheme === 'dark' ? '#fff' : '#1f2937',
+    },
+    gridStroke: resolvedTheme === 'dark' ? '#374151' : '#e5e7eb',
+    axisColor: resolvedTheme === 'dark' ? '#9ca3af' : '#6b7280',
+  }), [resolvedTheme]);
   
   const [flockHistory, setFlockHistory] = useState<FlockSizeAtDate[]>([]);
   const [feedPeriods, setFeedPeriods] = useState<FeedPeriod[]>([]);
@@ -407,15 +421,15 @@ export const FeedCostCalculator = () => {
         <div
           className={`neu-form cursor-pointer transition-all duration-200 ${
             isSelected 
-              ? 'ring-2 ring-green-500 bg-green-50 border-2 border-green-500' 
-              : 'hover:bg-gray-50 border-2 border-transparent'
+              ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-900/20 border-2 border-green-500' 
+              : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 border-2 border-transparent'
           }`}
           onClick={() => setSelectedPeriod(isSelected ? null : period)}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <h4 className="font-semibold text-gray-900">{period.feedEntry.brand}</h4>
-              <p className="text-sm text-gray-600">{period.feedEntry.type}</p>
+              <h4 className="font-semibold text-gray-900 dark:text-white">{period.feedEntry.brand}</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{period.feedEntry.type}</p>
               {period.hasFlockChanges && (
                 <div className="mt-1 space-y-1">
                   <p className="text-xs text-orange-600 font-medium">
@@ -428,28 +442,28 @@ export const FeedCostCalculator = () => {
               )}
             </div>
             <div>
-              <p className="text-sm text-gray-600">Period</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Period</p>
               <p className="font-medium">{period.startDate} to {period.endDate}</p>
-              <p className="text-xs text-gray-500">{period.duration} days</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{period.duration} days</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Flock Size</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Flock Size</p>
               <p className="font-medium">{period.flockSize.totalBirds} birds</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 {period.flockSize.hens}H {period.flockSize.roosters}R {period.flockSize.chicks}C {period.flockSize.brooding}B
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Cost Per Bird</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Cost Per Bird</p>
               <p className="font-medium text-green-600">${period.costPerBirdPerMonth.toFixed(2)}/month</p>
-              <p className="text-xs text-gray-500">${period.costPerBirdPerDay.toFixed(3)}/day</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">${period.costPerBirdPerDay.toFixed(3)}/day</p>
             </div>
           </div>
 
           {/* Flock Changes Section */}
           {period.hasFlockChanges && period.flockChanges && period.flockChanges.length > 0 && (
             <div className="mt-4 pl-6 border-l-2 border-orange-200">
-              <h5 className="text-sm font-semibold text-gray-700 mb-2">🔄 Flock Changes During This Period:</h5>
+              <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">🔄 Flock Changes During This Period:</h5>
               <div className="space-y-2">
                 {period.flockChanges.map((change, changeIndex) => (
                   <motion.div
@@ -459,13 +473,13 @@ export const FeedCostCalculator = () => {
                     transition={{ delay: (index * 0.05) + (changeIndex * 0.02) }}
                     className={`rounded-lg p-3 border ${
                       change.type === 'acquisition' 
-                        ? 'bg-green-50 border-green-200' 
-                        : 'bg-red-50 border-red-200'
+                        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700' 
+                        : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700'
                     }`}
                   >
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div>
-                        <p className="text-xs text-gray-600">Date</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Date</p>
                         <p className="text-sm font-medium">{change.date}</p>
                         <p className={`text-xs font-medium mt-1 ${
                           change.type === 'acquisition' ? 'text-green-600' : 'text-red-600'
@@ -474,7 +488,7 @@ export const FeedCostCalculator = () => {
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-600">Change</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Change</p>
                         <p className={`text-sm font-medium ${
                           change.type === 'acquisition' ? 'text-green-700' : 'text-red-700'
                         }`}>
@@ -487,8 +501,8 @@ export const FeedCostCalculator = () => {
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-600">Details</p>
-                        <p className="text-sm text-gray-700">{change.description}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Details</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">{change.description}</p>
                         {change.batchName && (
                           <p className="text-xs text-blue-600 mt-1">Batch: {change.batchName}</p>
                         )}
@@ -506,29 +520,29 @@ export const FeedCostCalculator = () => {
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="mt-4 pt-4 border-t border-gray-200"
+              className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
             >
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <h5 className="font-semibold text-gray-900 mb-2">Feed Details</h5>
+                  <h5 className="font-semibold text-gray-900 dark:text-white mb-2">Feed Details</h5>
                   <div className="space-y-1 text-sm">
-                    <p><span className="text-gray-600">Quantity:</span> {period.feedEntry.quantity} {period.feedEntry.unit}</p>
-                    <p><span className="text-gray-600">Total Price:</span> ${period.feedEntry.total_cost}</p>
-                    <p><span className="text-gray-600">Total Cost:</span> ${period.totalCost.toFixed(2)}</p>
+                    <p><span className="text-gray-600 dark:text-gray-400">Quantity:</span> {period.feedEntry.quantity} {period.feedEntry.unit}</p>
+                    <p><span className="text-gray-600 dark:text-gray-400">Total Price:</span> ${period.feedEntry.total_cost}</p>
+                    <p><span className="text-gray-600 dark:text-gray-400">Total Cost:</span> ${period.totalCost.toFixed(2)}</p>
                   </div>
                 </div>
                 <div>
-                  <h5 className="font-semibold text-gray-900 mb-2">Consumption</h5>
+                  <h5 className="font-semibold text-gray-900 dark:text-white mb-2">Consumption</h5>
                   <div className="space-y-1 text-sm">
-                    <p><span className="text-gray-600">Daily per bird:</span> {(period.feedEntry.quantity / period.duration / period.flockSize.totalBirds).toFixed(3)} {period.feedEntry.unit}</p>
-                    <p><span className="text-gray-600">Monthly per bird:</span> {(period.feedEntry.quantity / period.duration / period.flockSize.totalBirds * 30).toFixed(2)} {period.feedEntry.unit}</p>
+                    <p><span className="text-gray-600 dark:text-gray-400">Daily per bird:</span> {(period.feedEntry.quantity / period.duration / period.flockSize.totalBirds).toFixed(3)} {period.feedEntry.unit}</p>
+                    <p><span className="text-gray-600 dark:text-gray-400">Monthly per bird:</span> {(period.feedEntry.quantity / period.duration / period.flockSize.totalBirds * 30).toFixed(2)} {period.feedEntry.unit}</p>
                   </div>
                 </div>
                 <div>
-                  <h5 className="font-semibold text-gray-900 mb-2">Cost Analysis</h5>
+                  <h5 className="font-semibold text-gray-900 dark:text-white mb-2">Cost Analysis</h5>
                   <div className="space-y-1 text-sm">
-                    <p><span className="text-gray-600">Daily total:</span> ${(period.totalCost / period.duration).toFixed(2)}</p>
-                    <p><span className="text-gray-600">Monthly total:</span> ${(period.totalCost / period.duration * 30).toFixed(2)}</p>
+                    <p><span className="text-gray-600 dark:text-gray-400">Daily total:</span> ${(period.totalCost / period.duration).toFixed(2)}</p>
+                    <p><span className="text-gray-600 dark:text-gray-400">Monthly total:</span> ${(period.totalCost / period.duration * 30).toFixed(2)}</p>
                   </div>
                 </div>
               </div>
@@ -780,10 +794,10 @@ export const FeedCostCalculator = () => {
         <>
           <SectionContainer 
             variant="card"
-            className="border-0 bg-gradient-to-br from-gray-50 to-slate-50"
+            className="border-0 bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-800 dark:to-gray-900"
           >
             <div className="flex items-center justify-between gap-4">
-              <h2 className="text-2xl font-bold text-gray-900">💰 Cost Summary</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">💰 Cost Summary</h2>
               <div className="min-w-[200px]">
                 <NeumorphicSelect
                   label="Time Range"
@@ -849,17 +863,21 @@ export const FeedCostCalculator = () => {
             >
               <ResponsiveContainer width="100%" height={265}>
                 <LineChart data={mobileTrends} margin={{ top: 5, right: 5, left: 0, bottom: -5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartStyles.gridStroke} />
                   <XAxis 
                     dataKey="month"
                     fontSize={10}
-                    tick={{ fontSize: 10 }}
+                    tick={{ fontSize: 10, fill: chartStyles.axisColor }}
+                    axisLine={{ stroke: chartStyles.gridStroke }}
+                    tickLine={{ stroke: chartStyles.gridStroke }}
                   />
                   <YAxis 
                     yAxisId="cost"
                     width={25}
                     fontSize={10}
-                    tick={{ fontSize: 10 }}
+                    tick={{ fontSize: 10, fill: chartStyles.axisColor }}
+                    axisLine={{ stroke: chartStyles.gridStroke }}
+                    tickLine={{ stroke: chartStyles.gridStroke }}
                   />
                   <Tooltip 
                     formatter={(value, name) => {
@@ -868,7 +886,7 @@ export const FeedCostCalculator = () => {
                       return [value, name];
                     }}
                     labelFormatter={(label) => `Month: ${label}`}
-                    contentStyle={{ fontSize: 11 }}
+                    contentStyle={{ ...chartStyles.tooltip, fontSize: 11 }}
                   />
                   <Line 
                     yAxisId="cost"
@@ -894,11 +912,13 @@ export const FeedCostCalculator = () => {
             >
               <ResponsiveContainer width="100%" height={340}>
                 <LineChart data={monthlyTrends} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartStyles.gridStroke} />
                   <XAxis 
                     dataKey="month" 
                     fontSize={12}
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 12, fill: chartStyles.axisColor }}
+                    axisLine={{ stroke: chartStyles.gridStroke }}
+                    tickLine={{ stroke: chartStyles.gridStroke }}
                   />
                   <YAxis 
                     yAxisId="cost"
@@ -906,6 +926,7 @@ export const FeedCostCalculator = () => {
                     width={20}
                     fontSize={12}
                     tick={false}
+                    axisLine={{ stroke: chartStyles.gridStroke }}
                   />
                   <YAxis 
                     yAxisId="total"
@@ -914,6 +935,7 @@ export const FeedCostCalculator = () => {
                     width={20}
                     fontSize={12}
                     tick={false}
+                    axisLine={{ stroke: chartStyles.gridStroke }}
                   />
                   <Tooltip 
                     formatter={(value, name) => {
@@ -922,8 +944,8 @@ export const FeedCostCalculator = () => {
                       if (name === 'Avg Flock Size') return [`${value} birds`, name];
                       return [value, name];
                     }}
-                    labelStyle={{ fontSize: 12 }}
-                    contentStyle={{ fontSize: 12 }}
+                    labelStyle={{ fontSize: 12, color: chartStyles.tooltip.color }}
+                    contentStyle={{ ...chartStyles.tooltip, fontSize: 12 }}
                   />
                   <Legend />
                   <Line 
@@ -997,28 +1019,28 @@ export const FeedCostCalculator = () => {
           <SectionContainer
             title="📚 How Calculations Work"
             variant="card"
-            className="bg-blue-50 border-blue-200"
+            className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
               <div className="space-y-6">
                 <div className="flex items-start gap-4 min-h-[80px]">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
                     <span className="text-xl">🧮</span>
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-2">Consumption-Based Allocation</h4>
-                    <p className="text-sm text-gray-700 leading-relaxed">
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Consumption-Based Allocation</h4>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                       Establishes consistent cost per bird per day across the entire period, then allocates feed quantity and costs based on actual consumption patterns.
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 min-h-[80px]">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
                     <span className="text-xl">📊</span>
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-2">Usage Tips</h4>
-                    <p className="text-sm text-gray-700 leading-relaxed">
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Usage Tips</h4>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                       For accuracy: Record flock changes in Profile timeline, mark feed as depleted in Feed Tracker.
                     </p>
                   </div>
@@ -1026,23 +1048,23 @@ export const FeedCostCalculator = () => {
               </div>
               <div className="space-y-6">
                 <div className="flex items-start gap-4 min-h-[80px]">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center">
                     <span className="text-xl">📅</span>
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-2">Sub-Period Breakdown</h4>
-                    <p className="text-sm text-gray-700 leading-relaxed">
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Sub-Period Breakdown</h4>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                       Feed periods with flock changes are divided into sub-periods, each with proportional cost allocation based on actual consumption.
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4 min-h-[80px]">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
                     <span className="text-xl">🎯</span>
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 mb-2">Planning Tool</h4>
-                    <p className="text-sm text-gray-700 leading-relaxed">
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Planning Tool</h4>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                       Use these metrics to optimize feed purchasing and budgeting decisions.
                     </p>
                   </div>
@@ -1060,7 +1082,7 @@ export const FeedCostCalculator = () => {
           >
             {flockHistory.length > 0 ? (
               <div className="space-y-3">
-                <p className="text-sm text-gray-600 mb-3">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                   {flockHistory.length > 1 
                     ? `${flockHistory.length} size changes tracked`
                     : `Using current flock size of ${flockHistory[0]?.totalBirds || 0} birds`
@@ -1068,18 +1090,18 @@ export const FeedCostCalculator = () => {
                 </p>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {flockHistory.slice(0, 5).map((size, index) => (
-                    <div key={index} className="text-xs bg-gray-50 p-3 rounded-lg border">
-                      <div className="font-medium text-gray-900">{size.date}</div>
-                      <div className="text-gray-600 mt-1">
+                    <div key={index} className="text-xs bg-gray-50 dark:bg-gray-700 p-3 rounded-lg border dark:border-gray-600">
+                      <div className="font-medium text-gray-900 dark:text-white">{size.date}</div>
+                      <div className="text-gray-600 dark:text-gray-400 mt-1">
                         <strong>{size.totalBirds}</strong> total birds
                       </div>
-                      <div className="text-gray-500 text-xs">
+                      <div className="text-gray-500 dark:text-gray-400 text-xs">
                         {size.hens}H · {size.roosters}R · {size.chicks}C · {size.brooding}B
                       </div>
                     </div>
                   ))}
                   {flockHistory.length > 5 && (
-                    <div className="text-xs text-gray-500 text-center py-2">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 text-center py-2">
                       ...and {flockHistory.length - 5} more entries
                     </div>
                   )}

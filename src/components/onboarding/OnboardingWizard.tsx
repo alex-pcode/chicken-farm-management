@@ -132,9 +132,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   const getTotalSteps = () => formData.hasChickens ? 3 : 2;
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 flex items-center justify-center p-4 ${className}`}>
+    <div className={`min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-gray-900 dark:to-gray-900 flex items-center justify-center p-4 ${className}`}>
       <motion.div
-        className="bg-white/95 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl p-8 max-w-2xl w-full"
+        className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-700/20 shadow-2xl p-8 max-w-2xl w-full"
         style={{ boxShadow: '0 8px 32px rgba(243, 229, 215, 0.1)' }}
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
@@ -143,14 +143,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-2xl font-bold text-gray-900 font-serif" style={{ fontFamily: 'Fraunces, serif' }}>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-serif" style={{ fontFamily: 'Fraunces, serif' }}>
               Set Up Your Flock
             </h2>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               Step {getStepNumber()} of {getTotalSteps()}
             </span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
             <motion.div
               className="bg-gradient-to-r from-purple-600 to-indigo-600 h-2 rounded-full"
               style={{ background: 'linear-gradient(135deg, #4F46E5, #7C3AED)' }}
@@ -175,12 +175,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         </AnimatePresence>
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+        <div className="flex justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={handlePrevious}
             className="
-              px-6 py-2 text-gray-600 hover:text-gray-800
-              border-2 border-gray-200 rounded-lg hover:border-gray-300
+              px-6 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200
+              border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-gray-300 dark:hover:border-gray-500
               transition-colors duration-200
               focus:outline-none focus:ring-4 focus:ring-gray-300
             "
@@ -219,10 +219,10 @@ interface AssessmentStepProps {
 const AssessmentStep: React.FC<AssessmentStepProps> = ({ hasChickens, onUpdate }) => (
   <div className="text-center">
     <div className="text-6xl mb-6">🐔</div>
-    <h3 className="text-xl font-semibold text-gray-900 mb-4 font-serif" style={{ fontFamily: 'Fraunces, serif' }}>
+    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 font-serif" style={{ fontFamily: 'Fraunces, serif' }}>
       Do you currently have chickens?
     </h3>
-    <p className="text-gray-600 mb-8">
+    <p className="text-gray-600 dark:text-gray-400 mb-8">
       This helps us set up your dashboard with the right information from the start.
     </p>
 
@@ -232,8 +232,8 @@ const AssessmentStep: React.FC<AssessmentStepProps> = ({ hasChickens, onUpdate }
         className={`
           p-6 rounded-lg border-2 transition-all duration-200
           ${hasChickens 
-            ? 'border-purple-500 bg-purple-50 text-purple-700' 
-            : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
+            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300' 
+            : 'border-gray-200 dark:border-gray-600 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/10'
           }
         `}
       >
@@ -249,8 +249,8 @@ const AssessmentStep: React.FC<AssessmentStepProps> = ({ hasChickens, onUpdate }
         className={`
           p-6 rounded-lg border-2 transition-all duration-200
           ${!hasChickens 
-            ? 'border-indigo-500 bg-indigo-50 text-indigo-700' 
-            : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50'
+            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300' 
+            : 'border-gray-200 dark:border-gray-600 hover:border-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/10'
           }
         `}
       >
@@ -274,10 +274,10 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
   <div>
     <div className="text-center mb-8">
       <div className="text-4xl mb-4">🐣</div>
-      <h3 className="text-xl font-semibold text-gray-900 mb-2 font-serif" style={{ fontFamily: 'Fraunces, serif' }}>
+      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 font-serif" style={{ fontFamily: 'Fraunces, serif' }}>
         Tell us about your flock
       </h3>
-      <p className="text-gray-600">
+      <p className="text-gray-600 dark:text-gray-400">
         Enter your current bird counts and basic information.
       </p>
     </div>
@@ -285,7 +285,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
     <div className="space-y-6">
       {/* Batch Name */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           What would you like to call this batch?
         </label>
         <input
@@ -294,7 +294,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
           onChange={(e) => onUpdate({ batchName: e.target.value })}
           placeholder="Initial Flock"
           className="
-            w-full px-4 py-2 border border-gray-300 rounded-lg
+            w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg
             focus:ring-2 focus:ring-blue-500 focus:border-blue-500
             transition-colors duration-200
           "
@@ -304,7 +304,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
       {/* Bird Counts */}
       <div className="grid md:grid-cols-4 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Hens (laying females)
           </label>
           <input
@@ -313,7 +313,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
             value={formData.henCount}
             onChange={(e) => onUpdate({ henCount: parseInt(e.target.value) || 0 })}
             className="
-              w-full px-4 py-2 border border-gray-300 rounded-lg
+              w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg
               focus:ring-2 focus:ring-purple-500 focus:border-purple-500
               transition-colors duration-200
             "
@@ -321,7 +321,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Roosters (males)
           </label>
           <input
@@ -330,7 +330,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
             value={formData.roosterCount}
             onChange={(e) => onUpdate({ roosterCount: parseInt(e.target.value) || 0 })}
             className="
-              w-full px-4 py-2 border border-gray-300 rounded-lg
+              w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg
               focus:ring-2 focus:ring-purple-500 focus:border-purple-500
               transition-colors duration-200
             "
@@ -338,7 +338,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Chicks (young birds)
           </label>
           <input
@@ -347,7 +347,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
             value={formData.chickCount}
             onChange={(e) => onUpdate({ chickCount: parseInt(e.target.value) || 0 })}
             className="
-              w-full px-4 py-2 border border-gray-300 rounded-lg
+              w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg
               focus:ring-2 focus:ring-purple-500 focus:border-purple-500
               transition-colors duration-200
             "
@@ -355,7 +355,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Brooding (nesting females)
           </label>
           <input
@@ -364,7 +364,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
             value={formData.broodingCount || 0}
             onChange={(e) => onUpdate({ broodingCount: parseInt(e.target.value) || 0 })}
             className="
-              w-full px-4 py-2 border border-gray-300 rounded-lg
+              w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg
               focus:ring-2 focus:ring-purple-500 focus:border-purple-500
               transition-colors duration-200
             "
@@ -374,14 +374,14 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
 
       {/* Breed Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Primary breed
         </label>
         <select
           value={formData.breed}
           onChange={(e) => onUpdate({ breed: e.target.value })}
           className="
-            w-full px-4 py-2 border border-gray-300 rounded-lg
+            w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg
             focus:ring-2 focus:ring-blue-500 focus:border-blue-500
             transition-colors duration-200
           "
@@ -395,7 +395,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
 
       {/* Acquisition Date */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           When did you get them?
         </label>
         <input
@@ -403,7 +403,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
           value={formData.acquisitionDate}
           onChange={(e) => onUpdate({ acquisitionDate: e.target.value })}
           className="
-            w-full px-4 py-2 border border-gray-300 rounded-lg
+            w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg
             focus:ring-2 focus:ring-blue-500 focus:border-blue-500
             transition-colors duration-200
           "
@@ -412,14 +412,14 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
 
       {/* Age at Acquisition */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Age when you got them
         </label>
         <select
           value={formData.ageAtAcquisition || 'adult'}
           onChange={(e) => onUpdate({ ageAtAcquisition: e.target.value as 'chick' | 'juvenile' | 'adult' })}
           className="
-            w-full px-4 py-2 border border-gray-300 rounded-lg
+            w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg
             focus:ring-2 focus:ring-blue-500 focus:border-blue-500
             transition-colors duration-200
           "
@@ -432,7 +432,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
 
       {/* Source */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Where did you get them from?
         </label>
         <input
@@ -441,7 +441,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
           onChange={(e) => onUpdate({ source: e.target.value })}
           placeholder="Farm, breeder, store, etc."
           className="
-            w-full px-4 py-2 border border-gray-300 rounded-lg
+            w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg
             focus:ring-2 focus:ring-blue-500 focus:border-blue-500
             transition-colors duration-200
           "
@@ -450,7 +450,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
 
       {/* Cost */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Cost (optional)
         </label>
         <input
@@ -461,7 +461,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
           onChange={(e) => onUpdate({ cost: parseFloat(e.target.value) || 0 })}
           placeholder="0.00"
           className="
-            w-full px-4 py-2 border border-gray-300 rounded-lg
+            w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg
             focus:ring-2 focus:ring-blue-500 focus:border-blue-500
             transition-colors duration-200
           "
@@ -470,7 +470,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
 
       {/* Notes */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Notes (optional)
         </label>
         <textarea
@@ -479,7 +479,7 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
           placeholder="Any additional information about your flock..."
           rows={3}
           className="
-            w-full px-4 py-2 border border-gray-300 rounded-lg
+            w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg
             focus:ring-2 focus:ring-blue-500 focus:border-blue-500
             transition-colors duration-200
           "
@@ -488,8 +488,8 @@ const DetailsStep: React.FC<DetailsStepProps> = ({ formData, onUpdate }) => (
 
       {/* Total Count Display */}
       {(formData.henCount + formData.roosterCount + formData.chickCount + (formData.broodingCount || 0)) > 0 && (
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <div className="text-sm text-gray-600">
+        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
             Total birds: <span className="font-semibold">
               {formData.henCount + formData.roosterCount + formData.chickCount + (formData.broodingCount || 0)}
             </span>
@@ -508,14 +508,14 @@ interface ConfirmationStepProps {
 const ConfirmationStep: React.FC<ConfirmationStepProps> = ({ formData }) => (
   <div className="text-center">
     <div className="text-6xl mb-6">✅</div>
-    <h3 className="text-xl font-semibold text-gray-900 mb-4 font-serif" style={{ fontFamily: 'Fraunces, serif' }}>
+    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 font-serif" style={{ fontFamily: 'Fraunces, serif' }}>
       Ready to set up your flock!
     </h3>
 
     {formData.hasChickens ? (
-      <div className="bg-gray-50 p-6 rounded-lg text-left mb-8">
-        <h4 className="font-semibold text-gray-900 mb-4 font-serif" style={{ fontFamily: 'Fraunces, serif' }}>Your Flock Summary:</h4>
-        <div className="space-y-2 text-sm text-gray-700">
+      <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg text-left mb-8">
+        <h4 className="font-semibold text-gray-900 dark:text-white mb-4 font-serif" style={{ fontFamily: 'Fraunces, serif' }}>Your Flock Summary:</h4>
+        <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
           <div className="flex justify-between">
             <span>Batch Name:</span>
             <span className="font-medium">{formData.batchName}</span>
@@ -536,7 +536,7 @@ const ConfirmationStep: React.FC<ConfirmationStepProps> = ({ formData }) => (
             <span>Brooding:</span>
             <span className="font-medium">{formData.broodingCount || 0}</span>
           </div>
-          <div className="flex justify-between border-t border-gray-200 pt-2">
+          <div className="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-2">
             <span>Total Birds:</span>
             <span className="font-semibold">{formData.henCount + formData.roosterCount + formData.chickCount + (formData.broodingCount || 0)}</span>
           </div>
@@ -572,11 +572,11 @@ const ConfirmationStep: React.FC<ConfirmationStepProps> = ({ formData }) => (
       </div>
     )}
 
-    <p className="text-gray-600 mb-4">
+    <p className="text-gray-600 dark:text-gray-400 mb-4">
       We'll create your personalized dashboard and you can start tracking production right away.
     </p>
 
-    <div className="text-sm text-gray-500">
+      <div className="text-sm text-gray-500 dark:text-gray-400">
       Don't worry - you can always update this information later in your profile settings.
     </div>
   </div>

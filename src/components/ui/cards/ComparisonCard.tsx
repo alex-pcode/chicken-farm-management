@@ -84,18 +84,18 @@ export const ComparisonCard: React.FC<ComparisonCardProps> = ({
     return (
       <div className={combinedClassName} data-testid={testId}>
         <div className="animate-pulse">
-          <div className="h-5 bg-gray-200 rounded w-3/4 mb-4"></div>
+          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <div className="h-8 bg-gray-200 rounded"></div>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
             </div>
             <div className="flex justify-center items-center">
-              <div className="h-6 w-6 bg-gray-200 rounded-full"></div>
+              <div className="h-6 w-6 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
             </div>
             <div className="space-y-2">
-              <div className="h-8 bg-gray-200 rounded"></div>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
             </div>
           </div>
         </div>
@@ -112,7 +112,7 @@ export const ComparisonCard: React.FC<ComparisonCardProps> = ({
       onClick={onClick}
     >
       <div className="flex justify-between items-center">
-        <h3 className={`font-semibold text-gray-900 ${variant === 'compact' ? 'text-base' : 'text-lg'}`}>
+        <h3 className={`font-semibold text-gray-900 dark:text-white ${variant === 'compact' ? 'text-base' : 'text-lg'}`}>
           {title}
         </h3>
         <div className="flex items-center gap-3">
@@ -136,10 +136,10 @@ export const ComparisonCard: React.FC<ComparisonCardProps> = ({
       <div className="grid grid-cols-3 gap-4 items-center">
         {/* Before Value */}
         <div className="text-center space-y-1">
-          <div className={`font-bold text-gray-500 ${variant === 'compact' ? 'text-lg' : 'text-2xl'}`}>
+          <div className={`font-bold text-gray-500 dark:text-gray-400 ${variant === 'compact' ? 'text-lg' : 'text-2xl'}`}>
             {formatValue(before.value, format)}
           </div>
-          <div className="text-sm text-gray-400">
+          <div className="text-sm text-gray-400 dark:text-gray-500">
             {before.label}
           </div>
         </div>
@@ -147,7 +147,7 @@ export const ComparisonCard: React.FC<ComparisonCardProps> = ({
         {/* Arrow */}
         {showArrow && (
           <div className="flex justify-center">
-            <div className="text-gray-400 text-2xl">
+            <div className="text-gray-400 dark:text-gray-500 text-2xl">
               →
             </div>
           </div>
@@ -155,10 +155,10 @@ export const ComparisonCard: React.FC<ComparisonCardProps> = ({
 
         {/* After Value */}
         <div className="text-center space-y-1">
-          <div className={`font-bold text-gray-900 ${variant === 'compact' ? 'text-lg' : 'text-2xl'}`}>
+          <div className={`font-bold text-gray-900 dark:text-white ${variant === 'compact' ? 'text-lg' : 'text-2xl'}`}>
             {formatValue(after.value, format)}
           </div>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
             {after.label}
           </div>
         </div>

@@ -51,7 +51,7 @@ export const SelectInput: React.FC<SelectInputProps> = ({
     <div className={className}>
       <label 
         htmlFor={inputId}
-        className="block text-gray-600 text-sm mb-2"
+        className="block text-gray-600 dark:text-gray-400 text-sm mb-2"
       >
         {label}
       </label>

@@ -73,8 +73,8 @@ export const SetupProgress: React.FC<SetupProgressProps> = ({
     <CardContainer variant="glass" padding="lg" className={className}>
       {/* Header */}
       <div className="mb-6" style={{ marginBottom: '0px' }}>
-        <h3 className="text-lg font-semibold text-gray-900 mb-1" style={{ fontFamily: 'Fraunces, serif' }}>Setup Progress</h3>
-        <p className="text-sm text-gray-600">{phase.message}</p>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1" style={{ fontFamily: 'Fraunces, serif' }}>Setup Progress</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400">{phase.message}</p>
       </div>
 
       {/* Enhanced Progress Display */}
@@ -95,7 +95,7 @@ export const SetupProgress: React.FC<SetupProgressProps> = ({
         <div>
           {percentage > 0 && PROGRESS_ITEMS.filter(item => progress[item.key]).length > 0 ? (
             <>
-              <h4 className="text-md font-semibold text-gray-900 mb-3" style={{ fontFamily: 'Fraunces, serif' }}>
+              <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3" style={{ fontFamily: 'Fraunces, serif' }}>
                 Recent Achievements
               </h4>
               <div className="max-h-64 overflow-y-auto">
@@ -114,13 +114,13 @@ export const SetupProgress: React.FC<SetupProgressProps> = ({
             </>
           ) : (
             <>
-              <h4 className="text-md font-semibold text-gray-900 mb-3" style={{ fontFamily: 'Fraunces, serif' }}>
+              <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3" style={{ fontFamily: 'Fraunces, serif' }}>
                 Achievements Timeline
               </h4>
               <div className="text-center py-8 px-4">
                 <div className="text-4xl opacity-40 mb-3">🏆</div>
-                <div className="text-sm text-gray-500 mb-2">No achievements yet</div>
-                <div className="text-xs text-gray-400">
+                <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">No achievements yet</div>
+                <div className="text-xs text-gray-400 dark:text-gray-500">
                   Complete your first setup step to start earning achievements
                 </div>
               </div>
@@ -131,7 +131,7 @@ export const SetupProgress: React.FC<SetupProgressProps> = ({
         {/* Next Actions */}
         {nextActions.length > 0 && (
           <div>
-            <h4 className="text-md font-semibold text-gray-900 mb-3" style={{ fontFamily: 'Fraunces, serif' }}>
+            <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-3" style={{ fontFamily: 'Fraunces, serif' }}>
               Recommended Next Steps
             </h4>
             <div className="space-y-2">
@@ -141,15 +141,15 @@ export const SetupProgress: React.FC<SetupProgressProps> = ({
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="glass-card bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200 p-4"
+                  className="glass-card bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 border-indigo-200 dark:border-indigo-700 p-4"
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <div className="text-2xl">🎯</div>
                     <div className="flex-1">
-                      <div className="text-lg font-semibold text-gray-900 mb-1" style={{ fontFamily: 'Fraunces, serif' }}>
+                      <div className="text-lg font-semibold text-gray-900 dark:text-white mb-1" style={{ fontFamily: 'Fraunces, serif' }}>
                         Complete Your Flock Setup
                       </div>
-                      <div className="text-sm text-gray-700">
+                      <div className="text-sm text-gray-700 dark:text-gray-300">
                         Start the guided setup to add your chickens and create your first batch
                       </div>
                     </div>
@@ -172,10 +172,10 @@ export const SetupProgress: React.FC<SetupProgressProps> = ({
                   onClick={() => onActionClick?.(action.actionKey)}
                   className="
                     w-full flex items-center gap-3 p-3 text-left
-                    border border-gray-200 rounded-lg bg-white/50
-                    hover:border-indigo-300 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50
+                    border border-gray-200 dark:border-gray-700 rounded-lg bg-white/50 dark:bg-gray-800/50
+                    hover:border-indigo-300 dark:hover:border-indigo-600 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 dark:hover:from-indigo-900/30 dark:hover:to-purple-900/30
                     transition-all duration-200
-                    focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1
+                    focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900
                   "
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -183,14 +183,14 @@ export const SetupProgress: React.FC<SetupProgressProps> = ({
                 >
                   <div className="text-xl">{action.icon}</div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
                       {action.action}
                     </div>
-                    <div className="text-xs text-gray-600">
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
                       +{action.points} points • {action.label}
                     </div>
                   </div>
-                  <div className="text-indigo-600">
+                  <div className="text-indigo-600 dark:text-indigo-400">
                     →
                   </div>
                 </motion.button>
@@ -208,13 +208,13 @@ export const SetupProgress: React.FC<SetupProgressProps> = ({
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="text-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+          <div className="text-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 rounded-lg border border-green-200 dark:border-green-700">
             <div className="text-3xl mb-2">🎉</div>
-            <div className="text-lg font-semibold text-gray-900 mb-1" style={{ fontFamily: 'Fraunces, serif' }}>
+            <div className="text-lg font-semibold text-gray-900 dark:text-white mb-1" style={{ fontFamily: 'Fraunces, serif' }}>
               Congratulations!
             </div>
-            <div className="text-sm text-gray-700">
-              You're using all the features available in BMad Farm. 
+            <div className="text-sm text-gray-700 dark:text-gray-300">
+              You're using all the features available in BMad Farm.
               Keep tracking your flock to maximize your profits!
             </div>
           </div>

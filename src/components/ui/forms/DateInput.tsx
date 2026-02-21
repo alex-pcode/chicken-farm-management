@@ -43,7 +43,7 @@ export const DateInput: React.FC<DateInputProps> = ({
     <div className={className}>
       <label 
         htmlFor={inputId}
-        className="block text-gray-600 text-sm mb-2"
+        className="block text-gray-600 dark:text-gray-400 text-sm mb-2"
       >
         {label}
       </label>
@@ -77,7 +77,7 @@ export const DateInput: React.FC<DateInputProps> = ({
       )}
       
       {helperText && !hasError && (
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
           {helperText}
         </p>
       )}

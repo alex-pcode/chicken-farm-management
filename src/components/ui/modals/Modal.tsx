@@ -126,7 +126,7 @@ export const Modal: React.FC<ModalProps> = ({
             
             <motion.div
               ref={modalRef}
-              className={`relative w-full ${sizeClasses[size]} bg-white rounded-lg shadow-xl ${className}`}
+              className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-gray-800 rounded-lg shadow-xl ${className}`}
               variants={modalVariants}
               initial="hidden"
               animate="visible"
@@ -136,16 +136,16 @@ export const Modal: React.FC<ModalProps> = ({
               aria-labelledby={title ? "modal-title" : undefined}
             >
               {(title || showCloseButton) && (
-                <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                   {title && (
-                    <h2 id="modal-title" className="text-xl font-semibold text-gray-900">
+                    <h2 id="modal-title" className="text-xl font-semibold text-gray-900 dark:text-white">
                       {title}
                     </h2>
                   )}
                   {showCloseButton && (
                     <button
                       onClick={onClose}
-                      className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md hover:bg-gray-100"
+                      className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                       aria-label="Close modal"
                     >
                       <svg

@@ -19,9 +19,11 @@ import { LandingPage } from './components/landing/LandingPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { OptimizedDataProvider, useUserTier } from './contexts/OptimizedDataProvider'
 import { OnboardingProvider } from './contexts/OnboardingProvider'
+import { ThemeProvider } from './contexts/ThemeContext'
 import { ProtectedRoute } from './components/features/auth/ProtectedRoute'
 import { UserProfile } from './components/features/auth/UserProfile'
 import { PremiumFeatureGate } from './components/common/PremiumFeatureGate'
+import { ThemeToggle } from './components/ui/forms'
 // Simple Modal Component
 // import { Login } from './components/Login' // Temporarily disabled
 
@@ -129,7 +131,7 @@ const ComponentLoader = () => (
   <div className="flex items-center justify-center min-h-[400px]">
     <div className="flex flex-col items-center gap-4">
       <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-600 border-t-transparent"></div>
-      <p className="text-gray-600 text-sm">Loading...</p>
+      <p className="text-gray-600 dark:text-gray-400 text-sm">Loading...</p>
     </div>
   </div>
 );
@@ -138,26 +140,28 @@ const ComponentLoader = () => (
 function App() {
   return (
     <AuthProvider>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<PublicLandingPage />} />
-        <Route path="/costs" element={
-          <Suspense fallback={<ComponentLoader />}>
-            <Costs />
-          </Suspense>
-        } />
-        
-        {/* Protected Routes */}
-        <Route path="/app/*" element={
-          <OnboardingProvider>
-            <OptimizedDataProvider>
-              <ProtectedRoute>
-                <MainApp />
-              </ProtectedRoute>
-            </OptimizedDataProvider>
-          </OnboardingProvider>
-        } />
-      </Routes>
+      <ThemeProvider>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<PublicLandingPage />} />
+          <Route path="/costs" element={
+            <Suspense fallback={<ComponentLoader />}>
+              <Costs />
+            </Suspense>
+          } />
+
+          {/* Protected Routes */}
+          <Route path="/app/*" element={
+            <OnboardingProvider>
+              <OptimizedDataProvider>
+                <ProtectedRoute>
+                  <MainApp />
+                </ProtectedRoute>
+              </OptimizedDataProvider>
+            </OnboardingProvider>
+          } />
+        </Routes>
+      </ThemeProvider>
     </AuthProvider>
   );
 }
@@ -207,6 +211,10 @@ const MainApp = () => {
           </div>
           <div className="mt-8">
             <UserProfile />
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-xs uppercase font-medium text-gray-500 dark:text-gray-400 mb-2">Theme</p>
+              <ThemeToggle variant="compact" />
+            </div>
             <button
               onClick={signOut}
               className="neu-button w-full bg-red-100 text-red-600 hover:bg-red-200 mt-4"
@@ -218,19 +226,19 @@ const MainApp = () => {
       </aside>
 
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-40 px-4 py-3">
+      <header className="lg:hidden fixed top-0 left-0 right-0 bg-white dark:bg-[#1a1a1a] border-b border-gray-200 dark:border-gray-700 z-40 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xl" role="img" aria-label="brand">🐔</span>
             <div>
-              <h1 className="text-lg font-semibold" style={{ marginBottom: '2px' }}>ChickenCare</h1>
-              <p className="text-[10px] text-gray-500 leading-tight">Egg-ceptional flock management</p>
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-white" style={{ marginBottom: '2px' }}>ChickenCare</h1>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">Egg-ceptional flock management</p>
             </div>
           </div>
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
             >
               <span className="text-xl" role="img" aria-label="user menu">👤</span>
             </button>
@@ -239,7 +247,7 @@ const MainApp = () => {
       </header>
 
       {/* Mobile Bottom Dock */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 px-2 py-3">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-[#1a1a1a] border-t border-gray-200 dark:border-gray-700 z-40 px-2 py-3">
         <div className="flex justify-around items-center max-w-screen-xl mx-auto">
           {/* Primary Navigation Items */}
           {mobileNav.primary.map((item) => {
@@ -249,9 +257,9 @@ const MainApp = () => {
                 key={item.name}
                 to={item.href}
                 className={`flex flex-col items-center justify-center px-3 py-3 rounded-lg transition-all duration-200 min-w-0 flex-1 min-h-[48px] ${
-                  isActive 
-                    ? 'bg-indigo-50 text-indigo-600' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  isActive
+                    ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
               >
                 <span className="text-lg mb-1" role="img" aria-label={item.name}>
@@ -263,12 +271,12 @@ const MainApp = () => {
               </Link>
             );
           })}
-          
+
           {/* More Menu Button - Only show if there are secondary nav items */}
           {mobileNav.secondary.length > 0 && (
             <button
               onClick={() => setShowMobileMenu(true)}
-              className="flex flex-col items-center justify-center px-3 py-3 rounded-lg transition-all duration-200 min-w-0 flex-1 min-h-[48px] text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              className="flex flex-col items-center justify-center px-3 py-3 rounded-lg transition-all duration-200 min-w-0 flex-1 min-h-[48px] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800"
             >
               <span className="text-lg mb-1" role="img" aria-label="More options">
                 ⋯
@@ -284,16 +292,16 @@ const MainApp = () => {
       {/* Mobile Overflow Menu */}
       {showMobileMenu && (
         <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setShowMobileMenu(false)}>
-          <div 
-            className="fixed bottom-0 left-0 right-0 bg-white rounded-t-xl border-t border-gray-200 max-h-[70vh] overflow-y-auto"
+          <div
+            className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[#1a1a1a] rounded-t-xl border-t border-gray-200 dark:border-gray-700 max-h-[70vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">More Options</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">More Options</h3>
                 <button
                   onClick={() => setShowMobileMenu(false)}
-                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                  className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   <span className="text-xl">×</span>
                 </button>
@@ -307,9 +315,9 @@ const MainApp = () => {
                       to={item.href}
                       onClick={() => setShowMobileMenu(false)}
                       className={`flex items-center gap-3 p-4 rounded-lg transition-all duration-200 ${
-                        isActive 
-                          ? 'bg-indigo-50 text-indigo-600 border-indigo-200' 
-                          : 'text-gray-700 hover:bg-gray-50 border-gray-200'
+                        isActive
+                          ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700'
                       } border`}
                     >
                       <span className="text-xl" role="img" aria-label={item.name}>
@@ -332,19 +340,24 @@ const MainApp = () => {
       {/* Simple User Menu Dropdown */}
       {showUserMenu && (
         <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setShowUserMenu(false)}>
-          <div 
-            className="fixed top-16 right-4 bg-white rounded-lg border border-gray-200 shadow-lg min-w-[250px] p-4"
+          <div
+            className="fixed top-16 right-4 bg-white dark:bg-[#1a1a1a] rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg min-w-[250px] p-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-4">
-              <div className="border-b border-gray-100 pb-3">
-                <h3 className="text-lg font-semibold text-gray-900">👤 User Profile</h3>
-                <p className="text-sm text-gray-600">Manage your account</p>
+              <div className="border-b border-gray-100 dark:border-gray-700 pb-3">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">👤 User Profile</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Manage your account</p>
               </div>
               
               <UserProfile />
-              
-              <div className="space-y-2 pt-3 border-t border-gray-100">
+
+              <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
+                <p className="text-xs uppercase font-medium text-gray-500 dark:text-gray-400 mb-2">Theme</p>
+                <ThemeToggle variant="compact" />
+              </div>
+
+              <div className="space-y-2 pt-3 border-t border-gray-100 dark:border-gray-700">
                 <button
                   onClick={() => {
                     signOut();
@@ -354,7 +367,7 @@ const MainApp = () => {
                 >
                   🚪 Logout ({user?.email?.split('@')[0]})
                 </button>
-                
+
                 <button
                   onClick={() => setShowUserMenu(false)}
                   className="neu-button-secondary w-full px-4 py-2 text-sm font-medium"

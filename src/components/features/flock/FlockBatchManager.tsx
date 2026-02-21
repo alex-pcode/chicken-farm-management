@@ -290,7 +290,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
       render: (_, batch) => (
         <button
           onClick={() => setSelectedBatch(batch)}
-          className="flex items-center gap-3 text-left hover:bg-gray-50 p-3 rounded-lg transition-colors w-full min-h-[44px]"
+          className="flex items-center gap-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 p-3 rounded-lg transition-colors w-full min-h-[44px]"
         >
           <span className="text-xl flex-shrink-0">
             {batch.type === 'hens' ? '🐔' : 
@@ -298,8 +298,8 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
              batch.type === 'chicks' ? '🐥' : '🐔'}
           </span>
           <div className="min-w-0 flex-1">
-            <div className="font-semibold text-gray-900 hover:text-indigo-600 break-words">{batch.batchName}</div>
-            <div className="text-sm text-gray-600 break-words">{batch.breed}</div>
+            <div className="font-semibold text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 break-words">{batch.batchName}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 break-words">{batch.breed}</div>
           </div>
         </button>
       )
@@ -342,14 +342,14 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
       key: 'initialCount',
       label: 'Started With',
       sortable: true,
-      render: (_, batch) => <div className="font-semibold text-gray-700">{batch.initialCount}</div>
+      render: (_, batch) => <div className="font-semibold text-gray-700 dark:text-gray-300">{batch.initialCount}</div>
     },
     {
       key: 'acquisitionDate',
       label: 'Acquired',
       sortable: true,
       render: (_, batch) => (
-        <div className="text-sm text-gray-700">
+        <div className="text-sm text-gray-700 dark:text-gray-300">
           {new Date(batch.acquisitionDate).toLocaleDateString()}
         </div>
       )
@@ -358,7 +358,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
       key: 'source',
       label: 'Source',
       sortable: true,
-      render: (value) => <div className="text-sm text-gray-600">{value as string}</div>
+      render: (value) => <div className="text-sm text-gray-600 dark:text-gray-400">{value as string}</div>
     },
     {
       key: 'actualLayingStartDate',
@@ -366,7 +366,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
       sortable: true,
       render: (value, batch) => (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-700">
+          <span className="text-sm text-gray-700 dark:text-gray-300">
             {(batch.type === 'hens' || batch.type === 'mixed') ? (
               value 
                 ? new Date(value as string).toLocaleDateString()
@@ -408,7 +408,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
         return (
           <div className="flex items-center gap-2">
             <span className="text-red-500">😢</span>
-            <span className="font-medium text-gray-900">
+            <span className="font-medium text-gray-900 dark:text-white">
               {batch?.batchName || 'Unknown Batch'}
             </span>
           </div>
@@ -437,7 +437,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
       key: 'description',
       label: 'Description',
       render: (value) => (
-        <div className="text-sm text-gray-600 max-w-xs truncate" title={value as string}>
+        <div className="text-sm text-gray-600 dark:text-gray-400 max-w-xs truncate" title={value as string}>
           {value as string}
         </div>
       )
@@ -461,7 +461,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
         >
           🐔 Flock Batch Manager
         </h1>
-        <p className="text-gray-600 mt-2" role="doc-subtitle">
+        <p className="text-gray-600 dark:text-gray-400 mt-2" role="doc-subtitle">
           Organize chickens into batches, track losses, and manage flock groups
         </p>
       </header>
@@ -556,7 +556,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
             className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex-shrink-0 flex items-center gap-2 ${
               activeTab === tab.id
                 ? 'bg-indigo-600 text-white shadow-lg'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-white/50 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700/50'
             }`}
             role="tab"
             aria-selected={activeTab === tab.id}
@@ -569,7 +569,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
             {tab.id === 'batches' && batches.length > 0 && (
               <span 
                 className={`ml-2 px-2 py-1 rounded-full text-xs font-bold ${
-                  activeTab === tab.id ? 'bg-white/20' : 'bg-gray-200 text-gray-700'
+                  activeTab === tab.id ? 'bg-white/20' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                 }`}
                 aria-label={`${batches.length} batches`}
               >
@@ -579,7 +579,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
             {tab.id === 'deaths' && deathRecords.length > 0 && (
               <span 
                 className={`ml-2 px-2 py-1 rounded-full text-xs font-bold ${
-                  activeTab === tab.id ? 'bg-white/20' : 'bg-gray-200 text-gray-700'
+                  activeTab === tab.id ? 'bg-white/20' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                 }`}
                 aria-label={`${deathRecords.length} death records`}
               >
@@ -606,7 +606,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
             <div className="neu-form !px-[10px]">
               <h2 className="neu-title">Manage Batches</h2>
               {!selectedBatch && batches.length > 0 && (
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                   💡 Click on any batch name to view details, composition, and timeline
                 </p>
               )}
@@ -856,7 +856,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
                 </div>
                 {/* Show total count preview */}
                 {(parseInt(newBatch.hens) || 0) + (parseInt(newBatch.roosters) || 0) + (parseInt(newBatch.chicks) || 0) + (parseInt(newBatch.brooding) || 0) > 0 && (
-                  <div className="mt-2 text-sm text-gray-600 bg-gray-50 rounded px-3 py-2">
+                  <div className="mt-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded px-3 py-2">
                     Total: {(parseInt(newBatch.hens) || 0) + (parseInt(newBatch.roosters) || 0) + (parseInt(newBatch.chicks) || 0) + (parseInt(newBatch.brooding) || 0)} birds
                     {(parseInt(newBatch.hens) || 0) > 0 && ` (${parseInt(newBatch.hens)} hens`}
                     {(parseInt(newBatch.brooding) || 0) > 0 && `, ${parseInt(newBatch.brooding)} brooding`}
@@ -962,7 +962,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
         size="md"
       >
         <div className="space-y-4">
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
             <p className="mb-2">
               Batch: <span className="font-medium">{editingBatch?.batchName}</span> ({editingBatch?.type})
             </p>
@@ -982,7 +982,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
               className="neu-input"
               max={new Date().toISOString().split('T')[0]}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Leave empty to clear the laying date
             </p>
           </FormField>

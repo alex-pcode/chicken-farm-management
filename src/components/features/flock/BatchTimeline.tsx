@@ -165,13 +165,13 @@ export const BatchTimeline = ({ batchId, batchName, className }: BatchTimelinePr
           <div className="space-y-2">
             {event.affectedCount && (
               <div className="flex items-center gap-2">
-                <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">
+                <span className="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full font-medium">
                   {event.affectedCount} birds affected
                 </span>
               </div>
             )}
             {event.notes && (
-              <p className="text-sm text-gray-600 italic">
+              <p className="text-sm text-gray-600 dark:text-gray-400 italic">
                 {event.notes}
               </p>
             )}
@@ -182,18 +182,18 @@ export const BatchTimeline = ({ batchId, batchName, className }: BatchTimelinePr
   };
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 ${className || ''}`}>
+    <div className={`bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 ${className || ''}`}>
       {/* Timeline Header */}
       <div 
-        className="p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
+        className="p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="text-lg">📅</span>
             <div>
-              <h3 className="font-medium text-gray-900">Timeline</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="font-medium text-gray-900 dark:text-white">Timeline</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 {events.length === 0 ? 'No events yet' : `${events.length} event${events.length === 1 ? '' : 's'}`}
               </p>
             </div>
@@ -201,7 +201,7 @@ export const BatchTimeline = ({ batchId, batchName, className }: BatchTimelinePr
           <motion.div
             animate={{ rotate: isExpanded ? 180 : 0 }}
             transition={{ duration: 0.2 }}
-            className="text-gray-400"
+            className="text-gray-400 dark:text-gray-500"
           >
             ▼
           </motion.div>
@@ -226,7 +226,7 @@ export const BatchTimeline = ({ batchId, batchName, className }: BatchTimelinePr
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm"
+                    className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 text-green-700 dark:text-green-400 rounded-lg text-sm"
                   >
                     {success}
                   </motion.div>
@@ -236,7 +236,7 @@ export const BatchTimeline = ({ batchId, batchName, className }: BatchTimelinePr
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm"
+                    className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400 rounded-lg text-sm"
                   >
                     {error}
                   </motion.div>
@@ -245,7 +245,7 @@ export const BatchTimeline = ({ batchId, batchName, className }: BatchTimelinePr
 
               {/* Add Event Button */}
               <div className="flex justify-between items-center mb-4">
-                <h4 className="font-medium text-gray-900">Events for {batchName}</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white">Events for {batchName}</h4>
                 <button
                   onClick={() => setShowAddForm(!showAddForm)}
                   className="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -263,29 +263,29 @@ export const BatchTimeline = ({ batchId, batchName, className }: BatchTimelinePr
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     onSubmit={addEvent}
-                    className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4"
+                    className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 space-y-4"
                   >
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           Date *
                         </label>
                         <input
                           type="date"
                           value={newEvent.date}
                           onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           required
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           Event Type *
                         </label>
                         <select
                           value={newEvent.type}
                           onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           required
                         >
                           <option value="health_check">Health Check</option>
@@ -301,20 +301,20 @@ export const BatchTimeline = ({ batchId, batchName, className }: BatchTimelinePr
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           Description *
                         </label>
                         <input
                           type="text"
                           value={newEvent.description}
                           onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           placeholder="Brief description of the event..."
                           required
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           Affected Count
                         </label>
                         <input
@@ -322,20 +322,20 @@ export const BatchTimeline = ({ batchId, batchName, className }: BatchTimelinePr
                           min="0"
                           value={newEvent.affectedCount || ''}
                           onChange={(e) => setNewEvent({ ...newEvent, affectedCount: e.target.value ? parseInt(e.target.value) : null })}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           placeholder="Number of birds affected"
                         />
                       </div>
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Notes
                       </label>
                       <textarea
                         value={newEvent.notes}
                         onChange={(e) => setNewEvent({ ...newEvent, notes: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         placeholder="Additional details..."
                         rows={2}
                       />
@@ -352,7 +352,7 @@ export const BatchTimeline = ({ batchId, batchName, className }: BatchTimelinePr
                       <button
                         type="button"
                         onClick={() => setShowAddForm(false)}
-                        className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                        className="px-4 py-2 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                       >
                         Cancel
                       </button>

@@ -6,7 +6,7 @@ import { useUserTier, useOptimizedAppData } from '../../../contexts/OptimizedDat
 import { FormCard } from '../../ui/forms/FormCard';
 import { FormButton } from '../../ui/forms/FormButton';
 import { FormField } from '../../ui/forms/FormField';
-import { NumberInput, SelectInput } from '../../ui/forms';
+import { NumberInput, SelectInput, ThemeToggle } from '../../ui/forms';
 import { StatCard } from '../../ui/cards/StatCard';
 import { PageContainer } from '../../ui/layout/PageContainer';
 import { TabNavigation, Tab } from '../../ui/TabNavigation';
@@ -291,9 +291,10 @@ export const ProfilePage: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
+      className="space-y-8"
     >
-      <FormCard 
-        title="Personal Information" 
+      <FormCard
+        title="Personal Information"
         subtitle="Update your profile details"
         icon="👤"
       >
@@ -301,19 +302,19 @@ export const ProfilePage: React.FC = () => {
 
           {/* Account Verification Status */}
           <div className="space-y-3">
-            <h4 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>Account Verification</h4>
+            <h4 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Fraunces, serif' }}>Account Verification</h4>
             <div className="space-y-2">
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+              <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                 <div className="flex items-center gap-2">
                   <span className="text-green-500 text-lg">✅</span>
                   <div>
-                    <span className="text-sm font-medium text-gray-900">Email Address</span>
-                    <p className="text-xs text-gray-600">Your email is verified and secure</p>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">Email Address</span>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Your email is verified and secure</p>
                   </div>
                 </div>
-                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">Verified</span>
+                <span className="text-xs bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300 px-2 py-1 rounded-full font-medium">Verified</span>
               </div>
-              
+
             </div>
           </div>
 
@@ -326,7 +327,7 @@ export const ProfilePage: React.FC = () => {
               type="text"
               value={formData.displayName}
               onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
-              className="neu-input w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#524AE6] focus:border-transparent transition-all duration-200"
+              className="neu-input w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#524AE6] focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white"
               placeholder="Enter your display name"
             />
           </FormField>
@@ -340,7 +341,7 @@ export const ProfilePage: React.FC = () => {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              className="neu-input w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#524AE6] focus:border-transparent transition-all duration-200 opacity-60 cursor-not-allowed"
+              className="neu-input w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#524AE6] focus:border-transparent transition-all duration-200 opacity-60 cursor-not-allowed text-gray-900 dark:text-white"
               placeholder="Enter your email"
               disabled
             />
@@ -356,6 +357,23 @@ export const ProfilePage: React.FC = () => {
           >
             💾 Save Profile
           </FormButton>
+        </div>
+      </FormCard>
+
+      {/* Appearance Settings */}
+      <FormCard
+        title="Appearance"
+        subtitle="Customize your visual experience"
+        icon="🎨"
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <h4 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Fraunces, serif' }}>Theme</h4>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Choose how ChickenCare looks to you. By default, it follows your device settings.
+            </p>
+          </div>
+          <ThemeToggle />
         </div>
       </FormCard>
     </motion.div>

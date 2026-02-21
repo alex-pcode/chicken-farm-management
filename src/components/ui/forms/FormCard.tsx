@@ -44,8 +44,8 @@ export const FormCard: React.FC<FormCardProps> = ({
           {title}
         </h2>
       )}
-      {subtitle && <p className="text-gray-600 text-sm mt-1">{subtitle}</p>}
-      {description && <p className="text-gray-600 text-sm mt-1">{description}</p>}
+      {subtitle && <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">{subtitle}</p>}
+      {description && <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">{description}</p>}
     </div>
   );
 

@@ -163,7 +163,7 @@ export const Savings = () => {
 
       <div className="mb-8">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-semibold" style={{ color: '#111827', marginBottom: 0 }}>
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white" style={{ marginBottom: 0 }}>
             {isBusinessGoal ? "Business Performance" : "Financial Summary"}
           </h2>
           <div className="w-48">
@@ -199,21 +199,21 @@ export const Savings = () => {
           <div className="mb-8 p-6 glass-card">
             <div className="flex flex-col sm:flex-row gap-6">
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-2" style={{ color: '#6B7280' }}>Start Date</label>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Start Date</label>
                 <input
                   type="date"
                   value={customStartDate}
                   onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors duration-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors duration-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-medium mb-2" style={{ color: '#6B7280' }}>End Date</label>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">End Date</label>
                 <input
                   type="date"
                   value={customEndDate}
                   onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors duration-200"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors duration-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                 />
               </div>
             </div>
@@ -264,7 +264,7 @@ export const Savings = () => {
       </div>
 
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-3" style={{ color: '#111827' }}>Lifetime Impact</h2>
+        <h2 className="text-2xl font-semibold mb-3 text-gray-900 dark:text-white">Lifetime Impact</h2>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -357,7 +357,7 @@ export const Savings = () => {
       </div>
 
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-3" style={{ color: '#111827' }}>
+        <h2 className="text-2xl font-semibold mb-3 text-gray-900 dark:text-white">
           {isBusinessGoal ? "Profitability Analysis" : "Cost Analysis"}
         </h2>
         <motion.div
@@ -377,7 +377,7 @@ export const Savings = () => {
               />
             ) : (
               <div className="glass-card p-8 text-center">
-                <p className="text-sm" style={{ color: '#6B7280' }}>No egg production data available</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">No egg production data available</p>
               </div>
             )}
 
@@ -392,7 +392,7 @@ export const Savings = () => {
               />
             ) : (
               <div className="glass-card p-8 text-center">
-                <p className="text-sm" style={{ color: '#6B7280' }}>No egg production data available</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">No egg production data available</p>
               </div>
             )}
 
@@ -408,7 +408,7 @@ export const Savings = () => {
               />
             ) : (
               <div className="glass-card p-8 text-center">
-                <p className="text-sm" style={{ color: '#6B7280' }}>Insufficient data for break-even analysis</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Insufficient data for break-even analysis</p>
               </div>
             )}
           </GridContainer>

@@ -6,6 +6,7 @@ import { CHART_COLORS, CHART_MARGINS } from '../../../constants/chartColors';
 import { LoadingSpinner } from '../../common/LoadingSpinner';
 import type { Expense } from '../../../types';
 import { AnimatedCoinPNG } from '../../landing/animations/AnimatedCoinPNG';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { 
   TextInput, 
   NumberInput, 
@@ -35,6 +36,13 @@ const CATEGORIES = [
 
 
 export const Expenses = () => {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+
+  const tooltipStyle = isDark
+    ? { backgroundColor: '#1f2937', border: '1px solid #374151', color: '#f3f4f6' }
+    : { backgroundColor: '#ffffff', border: '1px solid #e5e7eb', color: '#111827' };
+
   // Use custom hooks for data management
   const { 
     expenses, 
@@ -97,8 +105,8 @@ export const Expenses = () => {
           onClick={() => handleDelete(expense.id!)}
           className={`inline-flex items-center p-2 rounded-full
             ${deleteConfirm === expense.id
-              ? 'text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100'
-              : 'text-gray-400 hover:text-gray-500 hover:bg-gray-100'
+              ? 'text-red-600 hover:text-red-700 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50'
+              : 'text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             } transition-colors`}
           title={deleteConfirm === expense.id ? "Click again to confirm deletion" : "Delete expense"}
         >
@@ -167,7 +175,7 @@ export const Expenses = () => {
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-6 flex items-center gap-2"
+            className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 text-green-800 dark:text-green-300 px-4 py-3 rounded-lg mb-6 flex items-center gap-2"
           >
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
@@ -182,7 +190,7 @@ export const Expenses = () => {
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6 flex items-center gap-2"
+            className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-800 dark:text-red-300 px-4 py-3 rounded-lg mb-6 flex items-center gap-2"
           >
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -237,7 +245,7 @@ export const Expenses = () => {
           />
           
           {/* Submit Button */}
-          <div className="flex justify-center pt-4 border-t border-gray-200">
+          <div className="flex justify-center pt-4 border-t border-gray-200 dark:border-gray-700">
             <FormButton
               type="submit"
               variant="primary"
@@ -273,7 +281,18 @@ export const Expenses = () => {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({ name, percent, x, y, textAnchor }) => (
+                    <text
+                      x={x}
+                      y={y}
+                      textAnchor={textAnchor}
+                      dominantBaseline="central"
+                      fontSize={14}
+                      fill={isDark ? '#e5e7eb' : '#374151'}
+                    >
+                      {`${name} ${(percent * 100).toFixed(0)}%`}
+                    </text>
+                  )}
                   outerRadius={90}
                   fill="#8884d8"
                   dataKey="total"
@@ -282,7 +301,12 @@ export const Expenses = () => {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => [`$${value}`, 'Amount']} />
+                <Tooltip
+                  formatter={(value) => [`$${value}`, 'Amount']}
+                  contentStyle={tooltipStyle}
+                  labelStyle={{ color: isDark ? '#e5e7eb' : '#374151' }}
+                  itemStyle={{ color: isDark ? '#e5e7eb' : '#111827' }}
+                />
               </PieChart>
             </ResponsiveContainer>
           )}
@@ -292,15 +316,15 @@ export const Expenses = () => {
         <div className="glass-card">
           <div className="mb-6">
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-semibold text-gray-900">Category Summary</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Category Summary</h3>
               <div className="text-right">
-                <div className="text-lg font-bold text-gray-900">
+                <div className="text-lg font-bold text-gray-900 dark:text-white">
                   {formatCurrency(categoryData.reduce((sum, cat) => sum + cat.total, 0))}
                 </div>
-                <div className="text-sm text-gray-500">Total</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Total</div>
               </div>
             </div>
-            <p className="text-sm text-gray-600">Detailed breakdown of expenses by category</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Detailed breakdown of expenses by category</p>
           </div>
           
           {isLoading ? (
@@ -313,20 +337,20 @@ export const Expenses = () => {
                 .map((category) => {
                   const percentage = ((category.total / categoryData.reduce((sum, cat) => sum + cat.total, 0)) * 100);
                   return (
-                    <div key={category.name} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div key={category.name} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                       <div className="flex items-center space-x-3">
                         <div 
                           className="w-4 h-4 rounded-full flex-shrink-0"
                           style={{ backgroundColor: category.color }}
                         />
                         <div>
-                          <div className="font-medium text-gray-900">{category.name}</div>
-                          <div className="text-sm text-gray-500">{percentage.toFixed(1)}% of total</div>
+                          <div className="font-medium text-gray-900 dark:text-white">{category.name}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{percentage.toFixed(1)}% of total</div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-semibold text-gray-900">{formatCurrency(category.total)}</div>
-                        <div className="text-sm text-gray-500">
+                        <div className="font-semibold text-gray-900 dark:text-white">{formatCurrency(category.total)}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
                           {expenses.filter(exp => exp.category === category.name).length} transactions
                         </div>
                       </div>
@@ -335,7 +359,7 @@ export const Expenses = () => {
                 })}
               
               {categoryData.filter(item => item.total > 0).length === 0 && (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                   <p>No expenses recorded yet</p>
                   <p className="text-sm mt-1">Add your first expense above to see the breakdown</p>
                 </div>
@@ -352,7 +376,7 @@ export const Expenses = () => {
         className="space-y-6"
       >
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900">Expense Records</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Expense Records</h2>
         </div>
         
         <PaginatedDataTable

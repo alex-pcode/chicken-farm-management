@@ -41,11 +41,11 @@ export const FormGroup: React.FC<FormGroupProps> = ({
     <div className={`space-y-4 ${className}`}>
       {title && (
         <div>
-          <h3 className="text-lg font-medium text-gray-900 mb-1">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
             {title}
           </h3>
           {description && (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {description}
             </p>
           )}
