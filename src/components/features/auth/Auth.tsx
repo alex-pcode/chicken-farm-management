@@ -108,7 +108,7 @@ export const AuthComponent = () => {
                   password_input_placeholder: 'Enter your password',
                   button_label: 'Login',
                   loading_button_label: 'Logging in...',
-                  link_text: "Don't have an account? Sign up",
+                  link_text: 'Already have an account? Sign in',
                 },
                 sign_up: {
                   email_label: 'Email',
@@ -117,7 +117,7 @@ export const AuthComponent = () => {
                   password_input_placeholder: 'Create a password',
                   button_label: 'Create account',
                   loading_button_label: 'Creating account...',
-                  link_text: 'Already have an account? Sign in',
+                  link_text: "Don't have an account? Sign up",
                   confirmation_text: 'Check your email to confirm your account',
                 },
               },

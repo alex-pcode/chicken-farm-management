@@ -20,14 +20,16 @@
       (function() {
         var STORAGE_KEY = 'theme';
         var stored = localStorage.getItem(STORAGE_KEY);
-        var theme = (stored === 'light' || stored === 'dark') ? stored : null;
+        var theme;
 
-        if (!theme && stored !== 'system') {
-          // No valid stored theme, check system preference
+        if (stored === 'light' || stored === 'dark') {
+          theme = stored;
+        } else if (stored === 'system') {
+          // Explicit system mode: follow OS preference
           theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        } else if (stored === 'system' || !stored) {
-          // System mode or no preference stored
-          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        } else {
+          // No stored preference: default to light
+          theme = 'light';
         }
 
         if (theme === 'dark') {
