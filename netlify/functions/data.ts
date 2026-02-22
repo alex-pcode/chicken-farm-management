@@ -157,6 +157,9 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
       case 'crm':
         responseData = await getCRMData(user);
         break;
+      case 'profile':
+        responseData = await getProfileOnly(user);
+        break;
       default:
         responseData = await getAllData(user);
     }
@@ -449,6 +452,32 @@ async function getAllData(user: AuthUser) {
         updated_at: fullUserProfile.updated_at
       } : null,
       summary
+    },
+    timestamp: new Date().toISOString()
+  };
+}
+
+// Profile only (lightweight endpoint for onboarding check)
+async function getProfileOnly(user: AuthUser) {
+  const { data: userProfile } = await supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('user_id', user.id)
+    .single();
+
+  return {
+    message: 'Profile fetched successfully',
+    data: {
+      userProfile: userProfile ? {
+        id: userProfile.id,
+        user_id: userProfile.user_id,
+        onboarding_completed: userProfile.onboarding_completed,
+        onboarding_step: userProfile.onboarding_step,
+        setup_progress: userProfile.setup_progress,
+        subscription_status: userProfile.subscription_status || 'free',
+        created_at: userProfile.created_at,
+        updated_at: userProfile.updated_at
+      } : null
     },
     timestamp: new Date().toISOString()
   };

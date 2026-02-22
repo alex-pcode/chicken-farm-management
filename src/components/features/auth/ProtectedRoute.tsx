@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useOnboarding } from '../../../contexts/OnboardingProvider';
-import { useUserTier } from '../../../contexts/OptimizedDataProvider';
 import { AuthComponent } from './Auth';
 import { LoadingSpinner } from '../../common/LoadingSpinner';
 import { WelcomeScreen } from '../../onboarding';
@@ -15,13 +14,14 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
-  const { 
-    onboardingState, 
+  const {
+    onboardingState,
     isLoading: onboardingLoading,
     completeOnboarding,
-    updateOnboardingStep
+    updateOnboardingStep,
+    userProfile
   } = useOnboarding();
-  
+
   const [currentOnboardingView, setCurrentOnboardingView] = useState<'welcome' | 'wizard'>('welcome');
 
   // Show loading spinner while authentication or onboarding data loads
@@ -40,13 +40,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // Route interception for new users - show onboarding flow
   if (!onboardingState.hasCompletedOnboarding) {
-    // Return a component that will handle tier-aware onboarding inside the data provider
     return (
       <TierAwareOnboardingWrapper
         currentOnboardingView={currentOnboardingView}
         setCurrentOnboardingView={setCurrentOnboardingView}
         completeOnboarding={completeOnboarding}
         updateOnboardingStep={updateOnboardingStep}
+        userTier={userProfile?.subscription_status === 'active' ? 'premium' : 'free'}
       />
     );
   }
@@ -55,89 +55,111 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   return <>{children}</>;
 };
 
-// Wrapper component that can access useUserTier (needs to be inside OptimizedDataProvider)
+// Wrapper component for tier-aware onboarding with error handling
 interface TierAwareOnboardingWrapperProps {
   currentOnboardingView: 'welcome' | 'wizard';
   setCurrentOnboardingView: (view: 'welcome' | 'wizard') => void;
   completeOnboarding: (formData: OnboardingFormData) => Promise<{ success: boolean; flockCreated?: boolean }>;
   updateOnboardingStep: (step: 'welcome' | 'setup' | 'complete') => Promise<void>;
+  userTier: 'free' | 'premium';
 }
 
 const TierAwareOnboardingWrapper: React.FC<TierAwareOnboardingWrapperProps> = ({
   currentOnboardingView,
   setCurrentOnboardingView,
   completeOnboarding,
-  updateOnboardingStep
+  updateOnboardingStep,
+  userTier
 }) => {
-  const { userTier, isSubscriptionLoading } = useUserTier();
+  const [completionError, setCompletionError] = useState<string | null>(null);
+  const [isCompleting, setIsCompleting] = useState(false);
 
-  // Show loading while determining user tier
-  if (isSubscriptionLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner />
+  const handleComplete = async (formData: OnboardingFormData) => {
+    setCompletionError(null);
+    setIsCompleting(true);
+    try {
+      const result = await completeOnboarding(formData);
+      if (!result.success) {
+        setCompletionError("Setup couldn't be saved. Please check your connection and try again.");
+      }
+    } catch {
+      setCompletionError("Setup couldn't be saved. Please check your connection and try again.");
+    } finally {
+      setIsCompleting(false);
+    }
+  };
+
+  const errorBanner = completionError ? (
+    <div className="fixed top-0 left-0 right-0 z-50 bg-red-50 border-b border-red-200 px-4 py-3">
+      <div className="max-w-2xl mx-auto flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-red-500 flex-shrink-0">&#9888;</span>
+          <p className="text-sm text-red-700">{completionError}</p>
+        </div>
+        <button
+          onClick={() => setCompletionError(null)}
+          className="text-red-400 hover:text-red-600 ml-4 flex-shrink-0 text-lg leading-none"
+        >
+          &times;
+        </button>
       </div>
-    );
-  }
+    </div>
+  ) : null;
+
+  const loadingOverlay = isCompleting ? (
+    <div className="fixed inset-0 z-40 bg-white/60 flex items-center justify-center">
+      <LoadingSpinner />
+    </div>
+  ) : null;
+
+  const freeFormData: OnboardingFormData = {
+    hasChickens: false,
+    henCount: 0,
+    roosterCount: 0,
+    chickCount: 0,
+    breed: '',
+    acquisitionDate: new Date().toISOString().split('T')[0]
+  };
 
   // Free users get simplified onboarding focused only on egg tracking
   if (userTier === 'free') {
     return (
-      <FreeUserOnboarding
-        onComplete={async () => {
-          // Mark as completed but with no flock for free users
-          await completeOnboarding({
-            hasChickens: false,
-            henCount: 0,
-            roosterCount: 0,
-            chickCount: 0,
-            breed: '',
-            acquisitionDate: new Date().toISOString().split('T')[0]
-          });
-        }}
-        onBack={() => {
-          // Free users can't go back - they need to complete onboarding
-          // Could show a "Contact Support" option here if needed
-        }}
-      />
+      <>
+        {errorBanner}
+        {loadingOverlay}
+        <FreeUserOnboarding
+          onComplete={() => { handleComplete(freeFormData); }}
+          onBack={() => {}}
+        />
+      </>
     );
   }
-  
+
   // Premium users get full flock onboarding
   if (currentOnboardingView === 'welcome') {
     return (
-      <WelcomeScreen
-        onStartSetup={async () => {
-          await updateOnboardingStep('setup');
-          setCurrentOnboardingView('wizard');
-        }}
-        onSkipToApp={async () => {
-          // Mark as completed but with no flock
-          await completeOnboarding({
-            hasChickens: false,
-            henCount: 0,
-            roosterCount: 0,
-            chickCount: 0,
-            breed: '',
-            acquisitionDate: new Date().toISOString().split('T')[0]
-          });
-        }}
-      />
-    );
-  } else {
-    return (
-      <OnboardingWizardUpdated
-        onComplete={async (formData: OnboardingFormData) => {
-          const result = await completeOnboarding(formData);
-          if (result.success) {
-            // Onboarding complete - the provider will update state and user will see main app
-            console.log('Onboarding completed successfully', result.flockCreated ? 'with flock creation' : 'without flock');
-          }
-        }}
-        onBack={() => {
-          setCurrentOnboardingView('welcome');
-        }}
-      />
+      <>
+        {errorBanner}
+        {loadingOverlay}
+        <WelcomeScreen
+          onStartSetup={async () => {
+            await updateOnboardingStep('setup');
+            setCurrentOnboardingView('wizard');
+          }}
+          onSkipToApp={() => { handleComplete(freeFormData); }}
+        />
+      </>
     );
   }
+
+  return (
+    <>
+      {errorBanner}
+      {loadingOverlay}
+      <OnboardingWizardUpdated
+        onComplete={(formData: OnboardingFormData) => { handleComplete(formData); }}
+        onBack={() => { setCurrentOnboardingView('welcome'); }}
+      />
+    </>
+  );
 };

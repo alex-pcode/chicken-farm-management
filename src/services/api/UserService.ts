@@ -25,7 +25,7 @@ export class UserService extends BaseApiService {
    */
   async getUserProfile(): Promise<ApiResponse<UserProfile | null>> {
     try {
-      const response = await this.get<{ userProfile: UserProfile | null }>('/data');
+      const response = await this.get<{ userProfile: UserProfile | null }>('/data?type=profile');
 
       if (response.success && response.data) {
         return {

@@ -125,15 +125,16 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
   }, [user]);
 
   // Complete onboarding with flock creation
+  // Note: does NOT set isLoading to avoid unmounting the onboarding UI during the API call.
+  // The caller (TierAwareOnboardingWrapper) manages its own completing state.
   const completeOnboarding = useCallback(async (formData: OnboardingFormData) => {
     if (!user) return { success: false };
 
-    setIsLoading(true);
     setError(null);
 
     try {
       const response = await apiService.user.completeOnboarding(formData);
-      
+
       if (response.success && response.data) {
         setUserProfile(response.data.profile);
         setOnboardingState({
@@ -143,10 +144,10 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
           lastActiveDate: response.data.profile.updated_at,
           showGuidance: false
         });
-        
-        return { 
-          success: true, 
-          flockCreated: response.data.flockCreated 
+
+        return {
+          success: true,
+          flockCreated: response.data.flockCreated
         };
       } else {
         const errorMsg = response.error?.message || 'Failed to complete onboarding';
@@ -159,8 +160,6 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
       const errorMsg = error instanceof Error ? error.message : 'Failed to complete onboarding';
       setError(errorMsg);
       return { success: false };
-    } finally {
-      setIsLoading(false);
     }
   }, [user]);
 

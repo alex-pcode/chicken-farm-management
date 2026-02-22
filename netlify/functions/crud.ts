@@ -71,16 +71,6 @@ export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResp
       };
     }
 
-    // Set the user session on the Supabase client for RLS policies
-    const authHeader = event.headers.authorization || event.headers.Authorization;
-    const token = authHeader?.replace('Bearer ', '');
-    if (token) {
-      await supabase.auth.setSession({
-        access_token: token,
-        refresh_token: '',
-      });
-    }
-
     const { operation, table } = event.queryStringParameters || {};
 
     if (event.httpMethod === 'POST') {

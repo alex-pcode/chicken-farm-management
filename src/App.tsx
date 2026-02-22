@@ -153,11 +153,11 @@ function App() {
           {/* Protected Routes */}
           <Route path="/app/*" element={
             <OnboardingProvider>
-              <OptimizedDataProvider>
-                <ProtectedRoute>
+              <ProtectedRoute>
+                <OptimizedDataProvider>
                   <MainApp />
-                </ProtectedRoute>
-              </OptimizedDataProvider>
+                </OptimizedDataProvider>
+              </ProtectedRoute>
             </OnboardingProvider>
           } />
         </Routes>
