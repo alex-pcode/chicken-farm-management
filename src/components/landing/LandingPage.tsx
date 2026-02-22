@@ -2,9 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { LandingNavbar } from './LandingNavbar';
 
-// Import critical CSS modules
-import '../../styles/critical/landing-hero.css';
-import '../../styles/components/landing-components.css';
 
 // TypeScript Interfaces
 interface TestimonialData {
@@ -52,53 +49,41 @@ interface ProblemData {
 // Optimized device detection with lazy initialization
 const useDeviceType = () => {
   const [isMobile, setIsMobile] = useState(() => {
-    // Only check on client-side to avoid hydration mismatch
     if (typeof window !== 'undefined') {
       return window.innerWidth < 768;
     }
     return false;
   });
-  
+
   useEffect(() => {
-    // Defer resize listener setup to avoid blocking initial render
-    const timeoutId = setTimeout(() => {
-      const checkDevice = () => {
-        setIsMobile(window.innerWidth < 768);
-      };
-      
-      window.addEventListener('resize', checkDevice, { passive: true });
-      return () => window.removeEventListener('resize', checkDevice);
-    }, 100);
-    
-    return () => clearTimeout(timeoutId);
+    const checkDevice = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', checkDevice, { passive: true });
+    return () => window.removeEventListener('resize', checkDevice);
   }, []);
-  
+
   return isMobile;
 };
 
 // Optimized reduced motion detection with lazy initialization
 const useReducedMotion = () => {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
-    // Initialize immediately to avoid animation flicker
     if (typeof window !== 'undefined') {
       return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     }
     return false;
   });
-  
+
   useEffect(() => {
-    // Defer media query listener to not block initial render
-    const timeoutId = setTimeout(() => {
-      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-      const handler = () => setPrefersReducedMotion(mediaQuery.matches);
-      
-      mediaQuery.addEventListener('change', handler, { passive: true });
-      return () => mediaQuery.removeEventListener('change', handler);
-    }, 50);
-    
-    return () => clearTimeout(timeoutId);
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const handler = () => setPrefersReducedMotion(mediaQuery.matches);
+
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
   }, []);
-  
+
   return prefersReducedMotion;
 };
 
@@ -125,20 +110,20 @@ const problems: ProblemData[] = [
 ];
 
 
+// Available screenshots mapping - single source of truth
+const availableScreenshots: Record<string, { desktop: boolean; mobile: boolean; hasMultiple: boolean; mobileCount?: number }> = {
+  'dashboard': { desktop: true, mobile: true, hasMultiple: false },
+  'egg tracking': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 },
+  'flock': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 },
+  'crm': { desktop: true, mobile: true, hasMultiple: false },
+  'feed': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 },
+  'savings': { desktop: true, mobile: true, hasMultiple: false },
+  'expenses': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 }
+};
+
 // Helper function to get responsive image source (moved outside component to avoid recreating)
 const getResponsiveImageSrc = (baseName: string, isMobile: boolean, _prefersReducedMotion: boolean, imageIndex?: number) => {
-  // Available screenshots mapping with multiple versions
-  const availableScreenshots = {
-    'dashboard': { desktop: true, mobile: true, hasMultiple: false },
-    'egg tracking': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 },
-    'flock': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 },
-    'crm': { desktop: true, mobile: true, hasMultiple: false },
-    'feed': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 },
-    'savings': { desktop: true, mobile: true, hasMultiple: false },
-    'expenses': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 }
-  };
-
-  const screenshots = availableScreenshots[baseName as keyof typeof availableScreenshots];
+  const screenshots = availableScreenshots[baseName];
   if (!screenshots) return `/screenshots/dashboard ${isMobile ? 'mobile' : 'desktop'}.webp`;
 
   // If requesting mobile and mobile exists, use mobile
@@ -165,17 +150,7 @@ const getResponsiveImageSrc = (baseName: string, isMobile: boolean, _prefersRedu
 
 // Helper function to get responsive image props with proper srcset and sizes
 const getResponsiveImageProps = (baseName: string, imageIndex?: number) => {
-  const availableScreenshots = {
-    'dashboard': { desktop: true, mobile: true, hasMultiple: false },
-    'egg tracking': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 },
-    'flock': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 },
-    'crm': { desktop: true, mobile: true, hasMultiple: false },
-    'feed': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 },
-    'savings': { desktop: true, mobile: true, hasMultiple: false },
-    'expenses': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 }
-  };
-
-  const screenshots = availableScreenshots[baseName as keyof typeof availableScreenshots];
+  const screenshots = availableScreenshots[baseName];
 
   // Generate srcset and default src
   let srcset = '';
@@ -218,16 +193,6 @@ const getResponsiveImageProps = (baseName: string, imageIndex?: number) => {
 
 // Helper function to get all images for a feature (moved outside component to avoid recreating)
 const getFeatureImages = (baseName: string, isMobile: boolean, prefersReducedMotion: boolean) => {
-  const availableScreenshots: Record<string, { desktop: boolean; mobile: boolean; hasMultiple: boolean; mobileCount?: number }> = {
-    'dashboard': { desktop: true, mobile: true, hasMultiple: false },
-    'egg tracking': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 },
-    'flock': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 },
-    'crm': { desktop: true, mobile: true, hasMultiple: false },
-    'feed': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 },
-    'savings': { desktop: true, mobile: true, hasMultiple: false },
-    'expenses': { desktop: true, mobile: true, hasMultiple: true, mobileCount: 2 }
-  };
-  
   const screenshots = availableScreenshots[baseName];
   if (!screenshots) return [getResponsiveImageSrc('dashboard', isMobile, prefersReducedMotion)];
   
@@ -390,6 +355,14 @@ export const LandingPage: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState<{[key: string]: number}>({});
   const [hoveredFeature, setHoveredFeature] = useState<string | null>(null);
 
+  useEffect(() => {
+    document.title = 'ChickenCare App - Manage Your Flock (Track Eggs & Expenses)';
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) {
+      meta.setAttribute('content', 'Track egg production, monitor feed costs, manage customers, and gain financial insights for your backyard flock. Free to start, built for chicken keepers of all sizes.');
+    }
+  }, []);
+
   // Handle keyboard events for modal (deferred to avoid blocking initial render)
   useEffect(() => {
     if (!fullscreenImage) return;
@@ -403,13 +376,13 @@ export const LandingPage: React.FC = () => {
     // Defer event listener attachment to not block initial render
     const timeoutId = setTimeout(() => {
       document.addEventListener('keydown', handleKeyDown, { passive: false });
-      document.body.classList.add('modal-open');
+      document.body.style.overflow = 'hidden';
     }, 0);
 
     return () => {
       clearTimeout(timeoutId);
       document.removeEventListener('keydown', handleKeyDown);
-      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
     };
   }, [fullscreenImage]);
 
@@ -441,6 +414,9 @@ export const LandingPage: React.FC = () => {
       [featureId]: index
     }));
   };
+
+  // Track swiping to prevent click-to-fullscreen after a swipe gesture
+  const isDraggingRef = React.useRef(false);
 
   // Animation variants
   const fadeInUpVariants = {
@@ -515,9 +491,9 @@ export const LandingPage: React.FC = () => {
         {/* Enhanced animated background elements */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           {/* Corner gradient 1 */}
-          <div className="hero-gradient-1" />
+          <div className="absolute -top-1/4 right-0 w-[35%] h-[30%] bg-[radial-gradient(circle,#4F39F6,#191656_70%)] blur-[60px] opacity-30" />
           {/* Corner gradient 2 */}
-          <div className="hero-gradient-2" />
+          <div className="absolute -bottom-1/5 -left-1/10 w-[30%] h-1/4 bg-[radial-gradient(circle,#8833D7,#2A2580_70%)] blur-[50px] opacity-20" />
           {!prefersReducedMotion && (
             <>
               <div className="absolute top-1/4 right-1/4 w-32 h-32 text-6xl opacity-10 animate-float">
@@ -564,20 +540,16 @@ export const LandingPage: React.FC = () => {
               whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
-              {(() => {
-                const imageProps = getResponsiveImageProps('dashboard');
-                return (
-                  <img
-                    srcSet={imageProps.srcset}
-                    src={imageProps.src}
-                    sizes={imageProps.sizes}
-                    alt="Chicken Manager dashboard showing egg production insights and cost analysis - Click to watch demo video"
-                    className="rounded-2xl shadow-2xl w-full mx-auto transition-all duration-300 group-hover:shadow-3xl"
-                    fetchPriority="high"
-                    decoding="async"
-                  />
-                );
-              })()}
+              <picture>
+                <source media="(max-width: 767px)" srcSet="/screenshots/dashboard%20mobile.webp" />
+                <source media="(min-width: 768px)" srcSet="/screenshots/dashboard%20desktop.webp" />
+                <img
+                  src="/screenshots/dashboard%20desktop.webp"
+                  alt="Chicken Manager dashboard showing egg production insights and cost analysis - Click to watch demo video"
+                  className="rounded-2xl shadow-2xl w-full mx-auto transition-all duration-300 group-hover:shadow-2xl"
+                  fetchPriority="high"
+                />
+              </picture>
               
               {/* Video Play Button Overlay */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -694,7 +666,7 @@ export const LandingPage: React.FC = () => {
         variants={staggerChildrenVariants}
         className="py-10 bg-white"
       >
-        <div className="container mx-auto px-6">
+        <div className="mx-[15%] px-6">
           <motion.div variants={fadeInUpVariants} className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
               Stop Flying Blind with Your Flock
@@ -733,7 +705,8 @@ export const LandingPage: React.FC = () => {
       <motion.section 
         className="py-10 bg-gradient-to-br from-purple-50 via-indigo-50 to-violet-50 relative overflow-hidden"
         initial="hidden"
-        animate="visible"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.1 }}
         variants={staggerChildrenVariants}
       >
         {/* Animated background elements */}
@@ -899,7 +872,7 @@ export const LandingPage: React.FC = () => {
         variants={staggerChildrenVariants}
         className="py-10 bg-gradient-to-br from-gray-50 to-white"
       >
-        <div className="container mx-auto px-4 md:px-8 lg:px-12">
+        <div className="mx-[10%] px-4">
           <motion.div variants={fadeInUpVariants} className="text-center mb-10">
             <h2 className="text-3xl md:text-4xl lg:text-6xl font-bold text-gray-900 mb-6 mx-6">
               Everything You Need to{' '}
@@ -966,24 +939,46 @@ export const LandingPage: React.FC = () => {
                         className="relative group cursor-pointer"
                         onMouseEnter={() => setHoveredFeature(feature.id)}
                         onMouseLeave={() => setHoveredFeature(null)}
-                        onClick={() => openFullscreen(
-                          images[currentIndex],
-                          `${feature.title} demonstration`,
-                          feature.title
-                        )}
+                        onClick={() => {
+                          if (isDraggingRef.current) return;
+                          openFullscreen(
+                            images[currentIndex],
+                            `${feature.title} demonstration`,
+                            feature.title
+                          );
+                        }}
                       >
                         {/* Background decorative elements */}
                         <div className="absolute -inset-4 bg-gradient-to-br from-purple-200/30 to-purple-400/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
                         
                         {/* Main image container */}
-                        <div className="relative bg-white/80 backdrop-blur-sm border border-white/40 rounded-3xl p-4 shadow-2xl group-hover:shadow-3xl transition-all duration-500 image-navigation-container">
+                        <div className="relative bg-white/80 backdrop-blur-sm border border-white/40 rounded-3xl p-4 shadow-2xl group-hover:shadow-2xl transition-all duration-500 image-navigation-container">
                           <div className="relative overflow-hidden rounded-2xl">
-                            <img 
+                            <motion.div
+                              drag={hasMultipleImages ? "x" : false}
+                              dragConstraints={{ left: 0, right: 0 }}
+                              dragElastic={0.2}
+                              onDragEnd={(_e, info) => {
+                                const swipeThreshold = 50;
+                                const velocityThreshold = 300;
+                                if (info.offset.x < -swipeThreshold || info.velocity.x < -velocityThreshold) {
+                                  nextImage(feature.id, images.length);
+                                } else if (info.offset.x > swipeThreshold || info.velocity.x > velocityThreshold) {
+                                  prevImage(feature.id, images.length);
+                                }
+                                setTimeout(() => { isDraggingRef.current = false; }, 100);
+                              }}
+                              onDragStart={() => { isDraggingRef.current = true; }}
+                              style={{ touchAction: hasMultipleImages ? 'pan-y' : 'auto' }}
+                            >
+                            <img
                               src={images[currentIndex]}
                               alt={`${feature.title} demonstration ${hasMultipleImages ? `(${currentIndex + 1}/${images.length})` : ''}`}
-                              className="w-full h-auto object-cover transition-all duration-700 group-hover:scale-105"
+                              className="w-full h-auto object-cover transition-all duration-700 group-hover:scale-105 select-none pointer-events-none"
                               loading="lazy"
+                              draggable={false}
                             />
+                            </motion.div>
                             
                             {/* Overlay effects */}
                             <div className="absolute inset-0 bg-gradient-to-t from-purple-900/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -1212,7 +1207,7 @@ export const LandingPage: React.FC = () => {
                         transition={{ delay: (index * 0.2) + (featureIndex * 0.1) }}
                       >
                         <span className="text-green-500 text-lg font-bold">✓</span>
-                        <span className="group-hover:text-gray-800 transition-colors duration-300">
+                        <span className="text-gray-700 group-hover:text-gray-800 transition-colors duration-300">
                           {feature}
                         </span>
                       </motion.li>

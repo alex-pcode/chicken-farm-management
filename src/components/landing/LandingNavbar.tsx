@@ -31,21 +31,29 @@ export const LandingNavbar = ({ className = '' }: LandingNavbarProps) => {
     },
   ];
 
-  // Scroll detection
+  // Scroll detection with RAF throttle
   useEffect(() => {
+    let rafId = 0;
     const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = Math.min(scrollY / scrollHeight, 1);
-      
-      setIsScrolled(scrollY > 50);
-      setScrollProgress(progress);
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        const scrollY = window.scrollY;
+        const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = Math.min(scrollY / scrollHeight, 1);
+
+        setIsScrolled(scrollY > 50);
+        setScrollProgress(progress);
+        rafId = 0;
+      });
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // Check initial state
 
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   const handleNavClick = (link: string) => {

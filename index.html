@@ -46,51 +46,12 @@
       }
     </script>
 
-    <!-- Load main CSS asynchronously to prevent render blocking -->
-    <script>
-      // Async CSS loading function for non-critical styles
-      function loadCSSAsync(href, media) {
-        var link = document.createElement('link');
-        link.rel = 'preload';
-        link.href = href;
-        link.as = 'style';
-        link.media = media || 'all';
-        link.onload = function() {
-          this.onload = null;
-          this.rel = 'stylesheet';
-        };
-        document.head.appendChild(link);
-        
-        // Fallback for browsers that don't support preload
-        var noscript = document.createElement('noscript');
-        var fallbackLink = document.createElement('link');
-        fallbackLink.rel = 'stylesheet';
-        fallbackLink.href = href;
-        fallbackLink.media = media || 'all';
-        noscript.appendChild(fallbackLink);
-        document.head.appendChild(noscript);
-      }
-      
-      // Load non-critical CSS after initial paint
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(function() {
-          // Animation CSS will be loaded through dynamic import in the app
-          // This ensures proper asset resolution in both dev and production
-        }, { timeout: 1000 });
-      } else {
-        // Fallback for browsers without requestIdleCallback  
-        setTimeout(function() {
-          // Animation CSS will be loaded through dynamic import in the app
-        }, 200);
-      }
-    </script>
-    
     <!-- LCP Image Preload - Only on landing page with JavaScript detection -->
     <script>
       // Only preload hero images if we're likely on the landing page
       if (window.location.pathname === '/' || window.location.pathname.includes('landing')) {
         const isMobile = window.matchMedia('(max-width: 767px)').matches;
-        const imageUrl = isMobile ? '/screenshots/dashboard mobile.webp' : '/screenshots/dashboard desktop.webp';
+        const imageUrl = isMobile ? '/screenshots/dashboard%20mobile.webp' : '/screenshots/dashboard%20desktop.webp';
         const link = document.createElement('link');
         link.rel = 'preload';
         link.href = imageUrl;

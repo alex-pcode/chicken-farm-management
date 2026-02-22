@@ -203,6 +203,14 @@ const startingCostOptions: StartingCostOption[] = [
 ];
 
 export const Costs = () => {
+  useEffect(() => {
+    document.title = 'Chicken Cost Calculator - Estimate Costs of Keeping Chickens';
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) {
+      meta.setAttribute('content', 'Calculate the real costs of backyard chicken keeping with our interactive calculator. Get accurate estimates for setup costs, monthly expenses, and potential savings.');
+    }
+  }, []);
+
   const [birdCount, setBirdCount] = useState(5);
   const [selectedFeedOption, setSelectedFeedOption] = useState<FeedOption>(feedOptions[1]); // Default to standard
   const [selectedProductionOption, setSelectedProductionOption] = useState<ProductionOption>(productionOptions[1]); // Default to realistic
@@ -329,7 +337,7 @@ export const Costs = () => {
           
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 dark:bg-blue-900/20 dark:border-blue-700">
             <p className="text-blue-800 dark:text-blue-300">
-              <span className="font-semibold">ðŸ’° Don't forget:</span> If you're purchasing birds, include their costs in your starting investment above. Baby chicks typically cost $3-5 each, while laying hens cost $15-25 each. Many people receive birds for free from friends or neighbors!
+              <span className="font-semibold">💰 Don't forget:</span> If you're purchasing birds, include their costs in your starting investment above. Baby chicks typically cost $3-5 each, while laying hens cost $15-25 each. Many people receive birds for free from friends or neighbors!
             </p>
           </div>
 
@@ -360,7 +368,7 @@ export const Costs = () => {
                 <ul className="space-y-2">
                   {option.details.map((detail, index) => (
                     <li key={index} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                      <span className="text-green-500 mt-0.5">âœ“</span>
+                      <span className="text-green-500 mt-0.5">✓</span>
                       {detail}
                     </li>
                   ))}
@@ -463,7 +471,7 @@ export const Costs = () => {
               >
                 <div className="text-center mb-4">
                   <div className="text-4xl mb-3">
-                    {option.id === 'baby_chicks' ? 'ðŸ£' : 'ðŸ”'}
+                    {option.id === 'baby_chicks' ? '🐣' : '🐔'}
                   </div>
                   <div className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                     {option.title}
@@ -480,7 +488,7 @@ export const Costs = () => {
                 <ul className="space-y-2">
                   {option.details.map((detail, index) => (
                     <li key={index} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                      <span className="text-green-500 mt-0.5">âœ“</span>
+                      <span className="text-green-500 mt-0.5">✓</span>
                       {detail}
                     </li>
                   ))}
@@ -529,7 +537,7 @@ export const Costs = () => {
                 <ul className="space-y-2">
                   {option.details.map((detail, index) => (
                     <li key={index} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                      <span className="text-green-500 mt-0.5">âœ“</span>
+                      <span className="text-green-500 mt-0.5">✓</span>
                       {detail}
                     </li>
                   ))}
@@ -578,7 +586,7 @@ export const Costs = () => {
                 <ul className="space-y-2">
                   {option.details.map((detail, index) => (
                     <li key={index} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                      <span className="text-green-500 mt-0.5">âœ“</span>
+                      <span className="text-green-500 mt-0.5">✓</span>
                       {detail}
                     </li>
                   ))}
@@ -657,13 +665,13 @@ export const Costs = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-white rounded-lg p-6 border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">ðŸ“ˆ Annual Summary</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">📈 Annual Summary</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-gray-600 dark:text-gray-400">First Year Feed Cost:</span>
                       <span className="font-semibold">
                         ${results.annualFeedCost.toFixed(2)}
-                        <span className="text-xs ml-1 text-gray-500 dark:text-gray-400">(${results.monthlyFeedCost.toFixed(2)} Ã— 12)</span>
+                        <span className="text-xs ml-1 text-gray-500 dark:text-gray-400">(${results.monthlyFeedCost.toFixed(2)} × 12)</span>
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -671,7 +679,7 @@ export const Costs = () => {
                       <span className="font-semibold">
                         ${results.annualEggValue.toFixed(2)}
                         <span className="text-xs ml-1 text-gray-500 dark:text-gray-400">
-                          (${results.monthlyEggValue.toFixed(2)} Ã— {12 - results.layingDelayMonths})
+                          (${results.monthlyEggValue.toFixed(2)} × {12 - results.layingDelayMonths})
                         </span>
                       </span>
                     </div>
@@ -697,7 +705,7 @@ export const Costs = () => {
                 </div>
 
                 <div className="bg-white rounded-lg p-6 border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">â±ï¸ Payback Analysis</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">⏱️ Payback Analysis</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-gray-600 dark:text-gray-400">Starting Investment:</span>
@@ -737,7 +745,7 @@ export const Costs = () => {
           transition={{ delay: 0.4 }}
           className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-700 rounded-xl shadow-lg p-6 lg:p-8"
         >
-          <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-6">ðŸ’¡ Cost Assessment</h2>
+          <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-6">💡 Cost Assessment</h2>
           
           <div className="space-y-6">
             <div className="bg-white rounded-lg p-6 dark:bg-gray-800">
