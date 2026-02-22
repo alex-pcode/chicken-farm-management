@@ -442,16 +442,8 @@ export const LandingPage: React.FC = () => {
     }
   };
 
-  const handleStartTrial = () => {
-    // Disabled for now
-  };
-
-  const handleGetStartedFree = () => {
-    // Disabled for now
-  };
-
-  const handleSeeHowItWorks = () => {
-    // Disabled for now
+  const handleSignUp = () => {
+    window.location.href = '/app';
   };
 
   // Load non-critical animations asynchronously after initial paint
@@ -536,7 +528,6 @@ export const LandingPage: React.FC = () => {
             <motion.div 
               className="mb-12 mx-[10%] relative group cursor-pointer"
               variants={fadeInUpVariants}
-              onClick={handleSeeHowItWorks}
               whileHover={{ scale: 1.02 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
@@ -640,18 +631,12 @@ export const LandingPage: React.FC = () => {
               className="flex justify-center"
               variants={fadeInUpVariants}
             >
-              <button 
-                className="bg-gray-400 overflow-hidden px-8 py-4 text-white rounded-xl font-semibold text-base cursor-not-allowed transition-all duration-300 focus:outline-none"
-                onClick={handleSeeHowItWorks}
-                disabled
-                aria-label="Demo video - Coming Soon"
+              <button
+                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 overflow-hidden px-8 py-4 text-white rounded-xl font-semibold text-base transition-all duration-300 shadow-lg hover:shadow-xl focus:outline-none"
+                onClick={handleSignUp}
+                aria-label="Get started for free"
               >
-                <span className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
-                  Watch 2-Minute Demo
-                </span>
+                Get Started Free
               </button>
             </motion.div>
           </div>
@@ -1214,15 +1199,14 @@ export const LandingPage: React.FC = () => {
                     ))}
                   </ul>
                   
-                  <button 
+                  <button
                     className={
-                      plan.buttonVariant === 'primary' 
-                        ? 'bg-gray-400 overflow-hidden w-full px-6 py-4 text-white rounded-xl font-semibold cursor-not-allowed transition-all duration-300 focus:outline-none'
-                        : 'w-full py-4 px-6 border-2 border-gray-400 text-gray-400 rounded-xl font-semibold cursor-not-allowed transition-all duration-300 focus:outline-none'
+                      plan.buttonVariant === 'primary'
+                        ? 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 overflow-hidden w-full px-6 py-4 text-white rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-xl focus:outline-none'
+                        : 'w-full py-4 px-6 border-2 border-purple-600 text-purple-600 hover:bg-purple-50 rounded-xl font-semibold transition-all duration-300 focus:outline-none'
                     }
-                    onClick={plan.buttonVariant === 'primary' ? handleStartTrial : handleGetStartedFree}
-                    disabled
-                    aria-label={`${plan.buttonText} for ${plan.name} plan - Coming Soon`}
+                    onClick={handleSignUp}
+                    aria-label={`${plan.buttonText} for ${plan.name} plan`}
                   >
                     {plan.buttonText}
                   </button>
@@ -1274,11 +1258,10 @@ export const LandingPage: React.FC = () => {
             Trust us, we're worth it." 🥚✨
           </motion.p>
 
-          <motion.button 
-            className="bg-gray-400 text-white px-10 py-5 rounded-xl font-bold text-lg cursor-not-allowed transition-all duration-300 shadow-2xl focus:outline-none"
-            onClick={handleGetStartedFree}
-            disabled
-            aria-label="Coming Soon - Chickens are still being onboarded"
+          <motion.button
+            className="bg-white text-purple-700 hover:bg-purple-50 px-10 py-5 rounded-xl font-bold text-lg transition-all duration-300 shadow-2xl hover:shadow-3xl focus:outline-none"
+            onClick={handleSignUp}
+            aria-label="Sign up for free"
             variants={fadeInUpVariants}
           >
             <span className="flex items-center gap-2">

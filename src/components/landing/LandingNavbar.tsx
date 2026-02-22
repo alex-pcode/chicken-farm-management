@@ -214,9 +214,8 @@ export const LandingNavbar = ({ className = '' }: LandingNavbarProps) => {
               Login
             </motion.button>
             <motion.button
-              onClick={() => {/* Disabled for now */}}
-              disabled
-              className={`bg-gray-400 text-white rounded-lg font-semibold cursor-not-allowed transition-all duration-200 shadow-md ${
+              onClick={() => window.location.href = '/app'}
+              className={`bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg ${
                 isScrolled ? 'px-4 py-1.5 text-sm' : 'px-6 py-2 text-sm'
               }`}
               initial={{ opacity: 0, x: 20 }}
@@ -316,9 +315,11 @@ export const LandingNavbar = ({ className = '' }: LandingNavbarProps) => {
                   Login
                 </button>
                 <button
-                  onClick={() => {/* Disabled for now */}}
-                  disabled
-                  className="w-full bg-gray-400 text-white px-3 py-2 rounded-lg text-base font-semibold cursor-not-allowed transition-all duration-200 shadow-md"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    window.location.href = '/app';
+                  }}
+                  className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-3 py-2 rounded-lg text-base font-semibold transition-all duration-200 shadow-md hover:shadow-lg"
                 >
                   Get Started
                 </button>
