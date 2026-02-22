@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { FormModal } from './FormModal';
 import { useFormState } from '../../../hooks/useFormState';
 import { useFormValidation } from '../../../hooks/useFormValidation';
-import { useEggData } from '../../../hooks/data/useEggData';
-import { useUserTier } from '../../../contexts/OptimizedDataProvider';
 import { motion } from 'framer-motion';
 import type { EggEntry } from '../../../types';
 
@@ -11,6 +9,8 @@ interface HistoricalEggTrackingModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  userTier: 'free' | 'premium';
+  addEntry: (entry: Omit<EggEntry, 'id'>) => Promise<void>;
 }
 
 interface HistoricalFormData {
@@ -24,14 +24,13 @@ interface HistoricalFormData {
 export const HistoricalEggTrackingModal: React.FC<HistoricalEggTrackingModalProps> = ({
   isOpen,
   onClose,
-  onSuccess
+  onSuccess,
+  userTier,
+  addEntry
 }) => {
   const [step, setStep] = useState<'intro' | 'form' | 'success'>('intro');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generatedEntries, setGeneratedEntries] = useState<number>(0);
-  
-  const { addEntry } = useEggData();
-  const { userTier } = useUserTier();
   
   const form = useFormState<HistoricalFormData>({
     initialValues: {

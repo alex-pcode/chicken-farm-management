@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth, supabase } from '../../../contexts/AuthContext';
 import { UserService } from '../../../services/api/UserService';
@@ -28,7 +29,8 @@ export const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const { userTier } = useUserTier();
   const { refreshData } = useOptimizedAppData();
-  const [activeTab, setActiveTab] = useState<string>('profile');
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<string>(searchParams.get('tab') || 'profile');
   const [formData, setFormData] = useState<ProfileFormData>({
     email: user?.email || '',
     displayName: user?.user_metadata?.display_name || user?.email?.split('@')[0] || '',
@@ -56,7 +58,7 @@ export const ProfilePage: React.FC = () => {
   const userService = UserService.getInstance();
   
   // Get real egg production data
-  const { totalEggs, thisMonthTotal, thisWeekTotal, entries: eggEntries } = useEggData();
+  const { totalEggs, thisMonthTotal, thisWeekTotal, entries: eggEntries, addEntry } = useEggData();
 
   // Confirmation dialog state
   const [confirmDialog, setConfirmDialog] = useState({
@@ -142,40 +144,7 @@ export const ProfilePage: React.FC = () => {
     return newErrors;
   };
 
-  // Handle tier change for testing
-  const handleTierChange = async (newTier: 'free' | 'premium') => {
-    setLoading(prev => ({ ...prev, profile: true }));
-    setErrors([]);
-    setSuccessMessage('');
 
-    try {
-      // Convert tier to subscription status (premium -> active for database)
-      const subscriptionStatus = newTier === 'premium' ? 'active' : 'free';
-      const response = await userService.updateUserProfile({
-        subscription_status: subscriptionStatus
-      });
-
-      if (response.success) {
-        setSuccessMessage(`Tier changed to ${newTier.toUpperCase()} successfully!`);
-        await refreshData(); // Refresh to update tier state
-      } else {
-        setErrors([{
-          field: 'tier',
-          message: response.error?.message || 'Failed to update tier',
-          type: 'invalid'
-        }]);
-      }
-    } catch (error) {
-      console.error('Tier update error:', error);
-      setErrors([{
-        field: 'tier',
-        message: 'Failed to update tier. Please try again.',
-        type: 'invalid'
-      }]);
-    } finally {
-      setLoading(prev => ({ ...prev, profile: false }));
-    }
-  };
 
   // Handle form submission for basic profile info
   const handleProfileSave = async () => {
@@ -458,41 +427,6 @@ export const ProfilePage: React.FC = () => {
               : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
             }
           />
-
-          {/* Admin Testing Controls */}
-          <div className="space-y-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-            <h4 className="font-semibold text-gray-900 flex items-center gap-2" style={{ fontFamily: 'Fraunces, serif' }}>
-              🔧 Testing Controls (Admin)
-            </h4>
-            <p className="text-sm text-gray-600">Switch between tiers to test feature access</p>
-            
-            {getFieldError('tier') && (
-              <div className="error-state p-3 rounded-lg">
-                <p className="text-red-700">{getFieldError('tier')}</p>
-              </div>
-            )}
-            
-            <div className="flex gap-2">
-              <FormButton
-                variant={userTier === 'free' ? 'primary' : 'secondary'}
-                size="sm"
-                onClick={() => handleTierChange('free')}
-                loading={loading.profile}
-                type="button"
-              >
-                🆓 Set Free Tier
-              </FormButton>
-              <FormButton
-                variant={userTier === 'premium' ? 'primary' : 'secondary'}
-                size="sm"
-                onClick={() => handleTierChange('premium')}
-                loading={loading.profile}
-                type="button"
-              >
-                ⭐ Set Premium Tier
-              </FormButton>
-            </div>
-          </div>
 
           <div className="space-y-3">
             <h4 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>
@@ -831,6 +765,8 @@ export const ProfilePage: React.FC = () => {
         onSuccess={() => {
           setShowHistoricalModal(false);
         }}
+        userTier={userTier}
+        addEntry={addEntry}
       />
     </PageContainer>
   );

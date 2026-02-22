@@ -6,6 +6,8 @@
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HistoricalEggTrackingModal } from '../ui/modals/HistoricalEggTrackingModal';
+import { apiService } from '../../services/api';
+import type { EggEntry } from '../../types';
 
 interface FreeUserOnboardingProps {
   onComplete: () => void;
@@ -59,6 +61,12 @@ export const FreeUserOnboarding: React.FC<FreeUserOnboardingProps> = ({
   const handleComplete = useCallback(() => {
     onComplete();
   }, [onComplete]);
+
+  // Direct API call for adding entries during onboarding (no data provider available)
+  const addEntry = useCallback(async (entry: Omit<EggEntry, 'id'>) => {
+    const tempId = `temp-${Date.now()}`;
+    await apiService.production.saveEggEntries([{ ...entry, id: tempId }]);
+  }, []);
 
   const canProceedFromImport = useCallback(() => {
     return hasImportedData || skipImportStep;
@@ -182,14 +190,18 @@ export const FreeUserOnboarding: React.FC<FreeUserOnboardingProps> = ({
       </motion.div>
 
       {/* Historical Data Import Modal */}
-      <HistoricalEggTrackingModal
-        isOpen={showHistoricalModal}
-        onClose={() => setShowHistoricalModal(false)}
-        onSuccess={() => {
-          setHasImportedData(true);
-          setShowHistoricalModal(false);
-        }}
-      />
+      {showHistoricalModal && (
+        <HistoricalEggTrackingModal
+          isOpen={showHistoricalModal}
+          onClose={() => setShowHistoricalModal(false)}
+          onSuccess={() => {
+            setHasImportedData(true);
+            setShowHistoricalModal(false);
+          }}
+          userTier="free"
+          addEntry={addEntry}
+        />
+      )}
     </div>
   );
 };

@@ -784,6 +784,7 @@ async function completeOnboarding(user: User, requestData: {
       user_id: user.id,
       onboarding_completed: true,
       onboarding_step: 'complete',
+      subscription_status: 'free',
       setup_progress: {
         hasFlockProfile: flockCreated,
         hasRecordedProduction: false,

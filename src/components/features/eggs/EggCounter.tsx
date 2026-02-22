@@ -1,5 +1,6 @@
 "use client";
 import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ApiServiceError, AuthenticationError, NetworkError, ServerError, getUserFriendlyErrorMessage } from '../../../types/api';
 import type { EggEntry } from '../../../types';
@@ -13,7 +14,7 @@ import { useFormState } from '../../../hooks/useFormState';
 import { useFormValidation } from '../../../hooks/useFormValidation';
 import { validateEggCount } from '../../../utils/validation';
 import { useEggData } from '../../../hooks/data/useEggData';
-import { useFlockBatchData } from '../../../contexts/OptimizedDataProvider';
+import { useFlockBatchData, useUserTier } from '../../../contexts/OptimizedDataProvider';
 import { useEggPagination } from '../../../hooks/pagination/useEggPagination';
 import { useTimeoutToggle } from '../../../hooks/utils';
 import { ConfirmDialog } from '../../ui/modals/ConfirmDialog';
@@ -22,6 +23,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 
 
 export const EggCounter = () => {
+  const navigate = useNavigate();
   // Get user data for yearly goal
   const { user } = useAuth();
   
@@ -30,6 +32,7 @@ export const EggCounter = () => {
   
   // Get flock batch data for accurate hen count
   const { data: { flockBatches: batches } } = useFlockBatchData();
+  const { userTier } = useUserTier();
   
   // Calculate trend indicators
   const calculateTrend = (current: number, previous: number) => {
@@ -617,7 +620,7 @@ export const EggCounter = () => {
                 Visit your profile page to set a yearly egg production goal and track your monthly progress.
               </p>
               <button
-                onClick={() => window.location.href = '/profile?tab=goals'}
+                onClick={() => navigate('/app/account?tab=goals')}
                 className="mt-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 font-medium text-sm"
               >
                 Set Goal Now
@@ -791,6 +794,8 @@ export const EggCounter = () => {
           setShowHistoricalModal(false);
           success.setTrue();
         }}
+        userTier={userTier}
+        addEntry={addEntry}
       />
     </motion.div>
   );

@@ -129,6 +129,47 @@ The React error #299 is from a **browser extension** (content.js), not the app �
 
 ---
 
+### Bug 5 — `HistoricalEggTrackingModal` crashes during onboarding (HIGH PRIORITY) — FIXED
+
+**Caused by:** Bug 4 fix (moving `OptimizedDataProvider` inside `ProtectedRoute`)
+
+**Files changed:**
+- `src/components/ui/modals/HistoricalEggTrackingModal.tsx`
+- `src/components/onboarding/FreeUserOnboarding.tsx`
+- `src/components/features/eggs/EggCounter.tsx`
+- `src/components/features/profile/ProfilePage.tsx`
+
+**What was wrong:**
+- `FreeUserOnboarding` renders `HistoricalEggTrackingModal` (always mounted, even when closed)
+- The modal calls `useEggData()` and `useUserTier()` at the top level — both require `OptimizedDataProvider`
+- After Bug 4's fix, `OptimizedDataProvider` only mounts after onboarding completes
+- Result: `useOptimizedAppData must be used within an OptimizedDataProvider` crash on any fresh account
+
+**Fix applied:**
+- Lifted `addEntry` and `userTier` out of the modal into required props (removed hook calls)
+- `EggCounter.tsx` and `ProfilePage.tsx`: pass `addEntry` from `useEggData()` and `userTier` from `useUserTier()`
+- `FreeUserOnboarding.tsx`: passes `userTier="free"` and a direct `apiService.production.saveEggEntries()` call (no data provider needed); also conditionally renders the modal only when open
+
+---
+
+### Bug 6 — New accounts default to premium tier (MEDIUM) — FIXED
+
+**Files changed:**
+- `netlify/functions/crud.ts`
+- Database schema (`ALTER COLUMN ... SET DEFAULT 'free'`)
+
+**What was wrong:**
+- The `subscription_status` column in `user_profiles` has `DEFAULT 'active'` (set in both `20250110_001_subscription_schema.sql` and `initial_schema.sql`)
+- `completeOnboarding()` in `crud.ts` created the profile row without specifying `subscription_status`
+- PostgreSQL used the column default `'active'`, which the app interprets as premium tier
+- Every new user got premium features immediately after onboarding
+
+**Fix applied:**
+- Added `subscription_status: 'free'` to `profileData` in `completeOnboarding()` (application-level fix)
+- Changed column default from `'active'` to `'free'` via SQL: `ALTER TABLE public.user_profiles ALTER COLUMN subscription_status SET DEFAULT 'free'` (database-level fix)
+
+---
+
 ## Files Changed
 
 | File | Change | Priority | Status |
@@ -139,6 +180,12 @@ The React error #299 is from a **browser extension** (content.js), not the app �
 | `netlify/functions/data.ts` | Added `case 'profile'` → `getProfileOnly()` | P1 | Done |
 | `src/services/api/UserService.ts` | Changed to `/data?type=profile` | P1 | Done |
 | `src/App.tsx` | Moved `OptimizedDataProvider` inside `ProtectedRoute` | P2 | Done |
+| `src/components/ui/modals/HistoricalEggTrackingModal.tsx` | Replaced hook calls with `userTier` and `addEntry` props | P0 | Done |
+| `src/components/onboarding/FreeUserOnboarding.tsx` | Pass props to modal, direct API call for `addEntry` | P0 | Done |
+| `src/components/features/eggs/EggCounter.tsx` | Pass `userTier` and `addEntry` props to modal | P0 | Done |
+| `src/components/features/profile/ProfilePage.tsx` | Pass `userTier` and `addEntry` props to modal | P0 | Done |
+| `netlify/functions/crud.ts` | Added explicit `subscription_status: 'free'` in `completeOnboarding` | P1 | Done |
+| Database (SQL) | Changed column default from `'active'` to `'free'` | P1 | Done |
 
 ---
 
@@ -147,8 +194,10 @@ The React error #299 is from a **browser extension** (content.js), not the app �
 1. Create a fresh account via Sign Up
 2. Complete free-user onboarding (click through to "Start Tracking")
 3. Verify: user lands on Egg Counter page, no errors in console
-4. Verify: `user_profiles` row exists in DB with `onboarding_completed = true`
-5. Simulate network failure: throttle network to "Offline" before clicking "Start Tracking"
-6. Verify: error banner appears at top of screen, onboarding form state preserved, no crash
-7. Dismiss error banner with × button
-8. Re-enable network, retry — verify success
+4. Verify: `user_profiles` row exists in DB with `onboarding_completed = true` and `subscription_status = 'free'`
+5. Verify: navigation shows free-tier items only (Eggs, Account) — not premium items
+6. Simulate network failure: throttle network to "Offline" before clicking "Start Tracking"
+7. Verify: error banner appears at top of screen, onboarding form state preserved, no crash
+8. Dismiss error banner with × button
+9. Re-enable network, retry — verify success
+10. During onboarding, choose "Yes, I have data" → click "Import Historical Data" → verify modal opens without crash
