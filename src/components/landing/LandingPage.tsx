@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { LandingNavbar } from './LandingNavbar';
 
 
@@ -353,6 +353,7 @@ export const LandingPage: React.FC = () => {
 
   // Lazy-initialized swiper state for features with multiple images
   const [currentImageIndex, setCurrentImageIndex] = useState<{[key: string]: number}>({});
+  const [slideDirection, setSlideDirection] = useState<{[key: string]: number}>({});
   const [hoveredFeature, setHoveredFeature] = useState<string | null>(null);
 
   useEffect(() => {
@@ -395,6 +396,7 @@ export const LandingPage: React.FC = () => {
   };
 
   const nextImage = (featureId: string, totalImages: number) => {
+    setSlideDirection(prev => ({ ...prev, [featureId]: 1 }));
     setCurrentImageIndex(prev => ({
       ...prev,
       [featureId]: ((prev[featureId] || 0) + 1) % totalImages
@@ -402,6 +404,7 @@ export const LandingPage: React.FC = () => {
   };
 
   const prevImage = (featureId: string, totalImages: number) => {
+    setSlideDirection(prev => ({ ...prev, [featureId]: -1 }));
     setCurrentImageIndex(prev => ({
       ...prev,
       [featureId]: ((prev[featureId] || 0) - 1 + totalImages) % totalImages
@@ -409,6 +412,8 @@ export const LandingPage: React.FC = () => {
   };
 
   const setImageIndex = (featureId: string, index: number) => {
+    const current = currentImageIndex[featureId] || 0;
+    setSlideDirection(prev => ({ ...prev, [featureId]: index > current ? 1 : -1 }));
     setCurrentImageIndex(prev => ({
       ...prev,
       [featureId]: index
@@ -956,29 +961,36 @@ export const LandingPage: React.FC = () => {
                               onDragStart={() => { isDraggingRef.current = true; }}
                               style={{ touchAction: hasMultipleImages ? 'pan-y' : 'auto' }}
                             >
-                            <img
-                              src={images[currentIndex]}
-                              alt={`${feature.title} demonstration ${hasMultipleImages ? `(${currentIndex + 1}/${images.length})` : ''}`}
-                              className="w-full h-auto object-cover transition-all duration-700 group-hover:scale-105 select-none pointer-events-none"
-                              loading="lazy"
-                              draggable={false}
-                            />
+                            <AnimatePresence mode="popLayout" initial={false}>
+                              <motion.img
+                                key={`${feature.id}-${currentIndex}`}
+                                src={images[currentIndex]}
+                                alt={`${feature.title} demonstration ${hasMultipleImages ? `(${currentIndex + 1}/${images.length})` : ''}`}
+                                className="w-full h-auto object-cover group-hover:scale-105 select-none pointer-events-none"
+                                loading="lazy"
+                                draggable={false}
+                                initial={{ x: (slideDirection[feature.id] || 1) * 300, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                exit={{ x: (slideDirection[feature.id] || 1) * -300, opacity: 0 }}
+                                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                              />
+                            </AnimatePresence>
                             </motion.div>
-                            
+
                             {/* Overlay effects */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-purple-900/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                            
+                            <div className="absolute inset-0 bg-gradient-to-t from-purple-900/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+
                             {/* Swiper navigation for multiple images */}
                             {hasMultipleImages && (
                               <>
-                                {/* Previous button */}
+                                {/* Previous button - always visible on mobile */}
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     prevImage(feature.id, images.length);
                                   }}
-                                  className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-full flex items-center justify-center transition-all duration-200 z-20 shadow-lg hover:shadow-xl hover:scale-110 ${
-                                    hoveredFeature === feature.id ? 'opacity-100' : 'opacity-20 hover:opacity-100'
+                                  className={`absolute left-2 md:left-3 top-1/2 transform -translate-y-1/2 w-9 h-9 md:w-10 md:h-10 bg-purple-600/90 hover:bg-purple-700 text-white rounded-full flex items-center justify-center transition-all duration-200 z-20 shadow-lg hover:shadow-xl hover:scale-110 ${
+                                    isMobile ? 'opacity-80' : hoveredFeature === feature.id ? 'opacity-100' : 'opacity-20 hover:opacity-100'
                                   }`}
                                   aria-label="Previous image"
                                 >
@@ -987,14 +999,14 @@ export const LandingPage: React.FC = () => {
                                   </svg>
                                 </button>
 
-                                {/* Next button */}
+                                {/* Next button - always visible on mobile */}
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     nextImage(feature.id, images.length);
                                   }}
-                                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-full flex items-center justify-center transition-all duration-200 z-20 shadow-lg hover:shadow-xl hover:scale-110 ${
-                                    hoveredFeature === feature.id ? 'opacity-100' : 'opacity-20 hover:opacity-100'
+                                  className={`absolute right-2 md:right-3 top-1/2 transform -translate-y-1/2 w-9 h-9 md:w-10 md:h-10 bg-purple-600/90 hover:bg-purple-700 text-white rounded-full flex items-center justify-center transition-all duration-200 z-20 shadow-lg hover:shadow-xl hover:scale-110 ${
+                                    isMobile ? 'opacity-80' : hoveredFeature === feature.id ? 'opacity-100' : 'opacity-20 hover:opacity-100'
                                   }`}
                                   aria-label="Next image"
                                 >
@@ -1004,19 +1016,25 @@ export const LandingPage: React.FC = () => {
                                 </button>
 
                                 {/* Image counter */}
-                                <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded-full text-xs font-medium">
+                                <div className="absolute top-2 left-2 bg-black/60 text-white px-2 py-1 rounded-full text-xs font-medium">
                                   {currentIndex + 1}/{images.length}
                                 </div>
 
-                                {/* Hover hint for navigation */}
-                                <div className={`absolute top-2 right-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded-full text-xs font-medium transition-opacity duration-200 ${
-                                  hoveredFeature === feature.id ? 'opacity-100' : 'opacity-40'
-                                }`}>
-                                  ← →
-                                </div>
+                                {/* Swipe hint on mobile, arrow hint on desktop */}
+                                {isMobile ? (
+                                  <div className="absolute top-2 right-2 bg-black/60 text-white px-2 py-1 rounded-full text-xs font-medium">
+                                    Swipe
+                                  </div>
+                                ) : (
+                                  <div className={`absolute top-2 right-2 bg-black/60 text-white px-2 py-1 rounded-full text-xs font-medium transition-opacity duration-200 ${
+                                    hoveredFeature === feature.id ? 'opacity-100' : 'opacity-40'
+                                  }`}>
+                                    ← →
+                                  </div>
+                                )}
 
-                                {/* Dots indicator */}
-                                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1 opacity-70 group-hover:opacity-100 transition-opacity duration-200">
+                                {/* Dots indicator - larger on mobile for touch targets */}
+                                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-2 md:gap-1.5">
                                   {images.map((_, dotIndex) => (
                                     <button
                                       key={dotIndex}
@@ -1024,11 +1042,12 @@ export const LandingPage: React.FC = () => {
                                         e.stopPropagation();
                                         setImageIndex(feature.id, dotIndex);
                                       }}
-                                      className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                                        dotIndex === currentIndex 
-                                          ? 'bg-white' 
-                                          : 'bg-white bg-opacity-50 hover:bg-opacity-75'
+                                      className={`rounded-full transition-all duration-200 ${
+                                        dotIndex === currentIndex
+                                          ? 'bg-white w-3.5 h-3.5 md:w-2.5 md:h-2.5 shadow-md'
+                                          : 'bg-white/50 w-2.5 h-2.5 md:w-2 md:h-2 hover:bg-white/75'
                                       }`}
+                                      style={{ minWidth: isMobile ? '14px' : undefined, minHeight: isMobile ? '14px' : undefined }}
                                       aria-label={`View image ${dotIndex + 1}`}
                                     />
                                   ))}
