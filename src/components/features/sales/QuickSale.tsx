@@ -24,7 +24,7 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [buttonSuccess, setButtonSuccess] = useState(false);
 
   // Price per egg for quick calculation
   const [pricePerEgg, setPricePerEgg] = useState(0.30);
@@ -44,7 +44,6 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
-    setSuccess(null);
 
     // Validation
     if (!formData.customer_id) {
@@ -78,13 +77,8 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
 
       await apiService.crm.saveSale(saleData);
 
-      const customerName = customers.find(c => c.id === formData.customer_id)?.name || 'Customer';
-      
-      if (formData.total_amount === 0) {
-        setSuccess(`Free eggs recorded for ${customerName}! 🥚`);
-      } else {
-        setSuccess(`Sale recorded for ${customerName}! $${formData.total_amount.toFixed(2)}`);
-      }
+      setButtonSuccess(true);
+      setTimeout(() => setButtonSuccess(false), 2500);
       
       // Reset form
       setFormData({
@@ -114,17 +108,6 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
       </div>
 
 
-      {/* Success Message */}
-      {success && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-4 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-md"
-        >
-          {success}
-        </motion.div>
-      )}
-
       {/* Error Message */}
       {error && (
         <motion.div
@@ -146,7 +129,7 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
           subtitle="Enter sale details and pricing below"
           onSubmit={handleSubmit}
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6">
             <NumberInput
               label="Price per Egg ($)"
               value={pricePerEgg}
@@ -222,13 +205,19 @@ export const QuickSale = ({ customers, onDataChange }: QuickSaleProps) => {
             <FormButton
               type="submit"
               variant="primary"
-              disabled={isSubmitting || !formData.customer_id || formData.eggs_count === 0}
+              disabled={isSubmitting || buttonSuccess || !formData.customer_id || formData.eggs_count === 0}
               loading={isSubmitting}
-              className="px-8 py-4 text-lg font-semibold dark:bg-blue-700 dark:hover:bg-blue-800 dark:focus:ring-blue-900"
+              className={`px-8 py-4 text-lg font-semibold transition-all duration-300 ${
+                buttonSuccess
+                  ? 'bg-green-600 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-600'
+                  : 'dark:bg-blue-700 dark:hover:bg-blue-800 dark:focus:ring-blue-900'
+              }`}
             >
-              {formData.total_amount === 0 
-                ? 'Record Free Eggs 🥚' 
-                : `Record Sale - $${formData.total_amount.toFixed(2)}`
+              {buttonSuccess
+                ? 'Recorded! ✓'
+                : formData.total_amount === 0
+                  ? 'Record Free Eggs 🥚'
+                  : `Record Sale - $${formData.total_amount.toFixed(2)}`
               }
             </FormButton>
           </div>

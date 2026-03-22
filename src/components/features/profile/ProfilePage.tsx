@@ -58,7 +58,7 @@ export const ProfilePage: React.FC = () => {
   const userService = UserService.getInstance();
   
   // Get real egg production data
-  const { totalEggs, thisMonthTotal, thisWeekTotal, entries: eggEntries, addEntry } = useEggData();
+  const { thisMonthTotal, thisWeekTotal, entries: eggEntries, addEntry } = useEggData();
 
   // Confirmation dialog state
   const [confirmDialog, setConfirmDialog] = useState({
@@ -246,10 +246,11 @@ export const ProfilePage: React.FC = () => {
   // Calculate current year progress using real egg production data
   const calculateYearProgress = () => {
     if (!formData.yearlyEggGoal || formData.yearlyEggGoal === 0) return 0;
-    
-    // For current year progress, we'll use total eggs collected so far
-    // In a more sophisticated version, we could filter by current year only
-    return totalEggs;
+
+    const currentYear = new Date().getFullYear();
+    return eggEntries
+      .filter(entry => entry?.date && new Date(entry.date).getFullYear() === currentYear)
+      .reduce((sum, entry) => sum + (entry?.count || 0), 0);
   };
 
   const yearProgress = calculateYearProgress();
@@ -361,23 +362,23 @@ export const ProfilePage: React.FC = () => {
       >
         <div className="space-y-4">
           {/* Security Score */}
-          <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+          <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 rounded-lg border border-green-200 dark:border-green-700">
             <span className="text-green-500 text-lg">🛡️</span>
             <div className="flex-1">
-              <h3 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>Security Status: Secure</h3>
-              <p className="text-gray-600 text-sm mt-1">Your account is protected with email verification and secure authentication</p>
-              <div className="mt-2 bg-gray-200 rounded-full h-2">
+              <h3 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Fraunces, serif' }}>Security Status: Secure</h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">Your account is protected with email verification and secure authentication</p>
+              <div className="mt-2 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                 <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-full h-2 transition-all duration-300" style={{ width: '100%' }} />
               </div>
-              <p className="text-xs text-gray-500 mt-1">Your account security is fully configured</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Your account security is fully configured</p>
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
             <span className="text-blue-500 text-lg">🔐</span>
             <div>
-              <h3 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>Password Reset</h3>
-              <p className="text-gray-600 text-sm mt-1">
+              <h3 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Fraunces, serif' }}>Password Reset</h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
                 Reset your password by receiving a secure link via email
               </p>
             </div>
@@ -385,7 +386,7 @@ export const ProfilePage: React.FC = () => {
 
           {getFieldError('password') && (
             <div className="error-state p-3 rounded-lg">
-              <p className="text-red-700">{getFieldError('password')}</p>
+              <p className="text-red-700 dark:text-red-400">{getFieldError('password')}</p>
             </div>
           )}
 
@@ -422,17 +423,17 @@ export const ProfilePage: React.FC = () => {
             total={userTier.charAt(0).toUpperCase() + userTier.slice(1)}
             label={userTier === 'premium' ? 'Full access to all features' : 'Basic features available'}
             icon={userTier === 'premium' ? '⭐' : '✨'}
-            className={userTier === 'premium' 
-              ? 'bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200'
-              : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
+            className={userTier === 'premium'
+              ? 'bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/30 dark:to-indigo-900/30 border-purple-200 dark:border-purple-700'
+              : 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border-green-200 dark:border-green-700'
             }
           />
 
           <div className="space-y-3">
-            <h4 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>
+            <h4 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Fraunces, serif' }}>
               {userTier === 'premium' ? 'Premium Features:' : 'Premium Features (Available after upgrade):'}
             </h4>
-            <ul className="text-gray-600 text-sm space-y-2">
+            <ul className="text-gray-600 dark:text-gray-400 text-sm space-y-2">
               <li className="flex items-center gap-2">📊 Dashboard analytics and insights</li>
               <li className="flex items-center gap-2">🐔 My Flock management</li>
               <li className="flex items-center gap-2">💼 Customer relationship management</li>
@@ -462,11 +463,11 @@ export const ProfilePage: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
-      className="space-y-8"
+      className="grid grid-cols-1 lg:grid-cols-2 gap-8"
     >
       {/* Chicken Goal Section */}
-      <FormCard 
-        title="Your Chicken Goals" 
+      <FormCard
+        title="Your Chicken Goals"
         subtitle="Help us customize your experience based on your primary goal"
         icon="🐔"
       >
@@ -489,26 +490,26 @@ export const ProfilePage: React.FC = () => {
           
           {/* Hobby/Family Context */}
           {formData.chickenGoal === 'hobby' && (
-            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+            <div className="p-4 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-700">
               <div className="flex items-start gap-3">
                 <span className="text-green-600 text-lg">🏠</span>
                 <div>
-                  <h4 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>
+                  <h4 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Fraunces, serif' }}>
                     Hobby/Family Focus
                   </h4>
-                  <p className="text-gray-600 text-sm mt-2 leading-relaxed">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mt-2 leading-relaxed">
                     Perfect for backyard chicken enthusiasts! You're raising chickens primarily to:
                   </p>
-                  <ul className="text-gray-600 text-sm mt-2 space-y-1 ml-4">
+                  <ul className="text-gray-600 dark:text-gray-400 text-sm mt-2 space-y-1 ml-4">
                     <li>• Feed your family fresh, healthy eggs</li>
                     <li>• Share extras with neighbors and friends</li>
                     <li>• Sell some eggs here and there for pocket money</li>
                     <li>• Enjoy the therapeutic hobby of chicken keeping</li>
                     <li>• Save money compared to buying expensive organic eggs</li>
                   </ul>
-                  <div className="mt-3 p-3 bg-white rounded-lg border border-green-100">
-                    <p className="text-sm font-medium text-gray-900">📊 Your Savings tab will show:</p>
-                    <p className="text-sm text-gray-600 mt-1">Money saved vs buying organic store eggs - perfect for tracking household cost benefits!</p>
+                  <div className="mt-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-green-100 dark:border-green-800">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">📊 Your Savings tab will show:</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Money saved vs buying organic store eggs - perfect for tracking household cost benefits!</p>
                   </div>
                 </div>
               </div>
@@ -517,50 +518,31 @@ export const ProfilePage: React.FC = () => {
 
           {/* Business/Profit Context */}
           {formData.chickenGoal === 'business' && (
-            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+            <div className="p-4 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-200 dark:border-purple-700">
               <div className="flex items-start gap-3">
                 <span className="text-purple-600 text-lg">💼</span>
                 <div>
-                  <h4 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>
+                  <h4 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Fraunces, serif' }}>
                     Business/Profit Focus
                   </h4>
-                  <p className="text-gray-600 text-sm mt-2 leading-relaxed">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mt-2 leading-relaxed">
                     Great for aspiring egg entrepreneurs! You're raising chickens primarily to:
                   </p>
-                  <ul className="text-gray-600 text-sm mt-2 space-y-1 ml-4">
+                  <ul className="text-gray-600 dark:text-gray-400 text-sm mt-2 space-y-1 ml-4">
                     <li>• Generate consistent income from egg sales</li>
                     <li>• Build customer relationships and a local brand</li>
                     <li>• Scale your operation for maximum profitability</li>
                     <li>• Track real business metrics and cash flow</li>
                   </ul>
-                  <div className="mt-3 p-3 bg-white rounded-lg border border-purple-100">
-                    <p className="text-sm font-medium text-gray-900">📈 Your Savings tab will show:</p>
-                    <p className="text-sm text-gray-600 mt-1">Actual revenue vs expenses - ideal for monitoring business profitability and growth!</p>
+                  <div className="mt-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-purple-100 dark:border-purple-800">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">📈 Your Savings tab will show:</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Actual revenue vs expenses - ideal for monitoring business profitability and growth!</p>
                   </div>
                 </div>
               </div>
             </div>
           )}
         </div>
-      </FormCard>
-
-      {/* Pricing Configuration Section */}
-      <FormCard 
-        title="Pricing Configuration" 
-        subtitle="Set your egg pricing preferences"
-        icon="💰"
-      >
-        <NumberInput
-          label="Price per Egg ($)"
-          value={formData.eggPrice}
-          onChange={(value) => setFormData(prev => ({ ...prev, eggPrice: value }))}
-          step={0.01}
-          min={0}
-          placeholder="0.30"
-          showSpinner={false}
-          selectAllOnFocus={true}
-          errors={errors}
-        />
       </FormCard>
 
       {/* Production Goals Section */}
@@ -583,21 +565,21 @@ export const ProfilePage: React.FC = () => {
                 ...prev, 
                 yearlyEggGoal: Math.max(0, parseInt(e.target.value) || 0)
               }))}
-              className="neu-input w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#524AE6] focus:border-transparent transition-all duration-200"
+              className="neu-input w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#524AE6] focus:border-transparent transition-all duration-200 text-gray-900 dark:text-white"
               placeholder="e.g. 1200"
             />
           </FormField>
 
           {formData.yearlyEggGoal > 0 && (
             <div className="space-y-4">
-              <div className="flex items-start gap-3 p-4 bg-[#524AE6]/10 rounded-lg border border-[#524AE6]/20">
+              <div className="flex items-start gap-3 p-4 bg-[#524AE6]/10 dark:bg-[#524AE6]/20 rounded-lg border border-[#524AE6]/20 dark:border-[#524AE6]/30">
                 <span className="text-[#524AE6] text-lg">📊</span>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>Annual Progress</h3>
-                  <p className="text-gray-600 text-sm mt-1">
+                  <h3 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Fraunces, serif' }}>Annual Progress</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
                     {yearProgress} eggs collected ({((yearProgress / formData.yearlyEggGoal) * 100).toFixed(1)}% of goal)
                   </p>
-                  <div className="mt-3 bg-gray-200 rounded-full h-3">
+                  <div className="mt-3 bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                     <div 
                       className="bg-gradient-to-r from-[#524AE6] to-[#4338CA] rounded-full h-3 transition-all duration-300"
                       style={{ width: `${Math.min(100, (yearProgress / formData.yearlyEggGoal) * 100)}%` }}
@@ -624,11 +606,11 @@ export const ProfilePage: React.FC = () => {
               </div>
               
               {yearProgress > 0 && formData.yearlyEggGoal > yearProgress && (
-                <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
                   <span className="text-blue-500 text-lg">🎯</span>
                   <div>
-                    <h3 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>Keep Going!</h3>
-                    <p className="text-gray-600 text-sm mt-1">
+                    <h3 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Fraunces, serif' }}>Keep Going!</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
                       You need {(formData.yearlyEggGoal - yearProgress).toLocaleString()} more eggs to reach your annual goal.
                     </p>
                   </div>
@@ -650,6 +632,25 @@ export const ProfilePage: React.FC = () => {
         </div>
       </FormCard>
 
+      {/* Pricing Configuration Section */}
+      <FormCard
+        title="Pricing Configuration"
+        subtitle="Set your egg pricing preferences"
+        icon="💰"
+      >
+        <NumberInput
+          label="Price per Egg ($)"
+          value={formData.eggPrice}
+          onChange={(value) => setFormData(prev => ({ ...prev, eggPrice: value }))}
+          step={0.01}
+          min={0}
+          placeholder="0.30"
+          showSpinner={false}
+          selectAllOnFocus={true}
+          errors={errors}
+        />
+      </FormCard>
+
       {/* Backfill History Section - Only show if user has egg entries */}
       {eggEntries.length > 0 && (
         <FormCard 
@@ -658,11 +659,11 @@ export const ProfilePage: React.FC = () => {
           icon="📊"
         >
           <div className="space-y-4">
-            <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
               <span className="text-blue-600 text-lg">💡</span>
               <div className="flex-1">
-                <h3 className="font-semibold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>Backfill Historical Data</h3>
-                <p className="text-gray-600 text-sm mt-1">
+                <h3 className="font-semibold text-gray-900 dark:text-white" style={{ fontFamily: 'Fraunces, serif' }}>Backfill Historical Data</h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
                   Add egg production data for dates before you started using ChickenCare. This helps create more accurate analytics and trends.
                 </p>
               </div>
@@ -702,7 +703,7 @@ export const ProfilePage: React.FC = () => {
   };
 
   return (
-    <PageContainer>
+    <PageContainer className="lg:mx-[10%]">
       {/* Breadcrumbs */}
       <Breadcrumbs 
         items={[
@@ -717,8 +718,8 @@ export const ProfilePage: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         className="space-y-2 mb-8"
       >
-        <h1 className="text-4xl font-bold text-gray-900" style={{ fontFamily: 'Fraunces, serif' }}>Account Settings</h1>
-        <p className="text-lg text-gray-600">Manage your personal information, security, and preferences</p>
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Fraunces, serif' }}>Account Settings</h1>
+        <p className="text-lg text-gray-600 dark:text-gray-400">Manage your personal information, security, and preferences</p>
       </motion.div>
 
       {/* Success Message */}
@@ -730,7 +731,7 @@ export const ProfilePage: React.FC = () => {
         >
           <div className="flex items-center gap-3">
             <span className="text-xl">✅</span>
-            <span className="text-green-700">{successMessage}</span>
+            <span className="text-green-700 dark:text-green-400">{successMessage}</span>
           </div>
         </motion.div>
       )}
@@ -743,7 +744,7 @@ export const ProfilePage: React.FC = () => {
       />
 
       {/* Tab Content */}
-      <div className="w-full max-w-2xl mx-auto px-0 sm:px-4">
+      <div className={`w-full mx-auto px-0 sm:px-4 ${activeTab === 'goals' ? 'max-w-5xl' : 'max-w-2xl'}`}>
         {renderActiveTabContent()}
       </div>
 

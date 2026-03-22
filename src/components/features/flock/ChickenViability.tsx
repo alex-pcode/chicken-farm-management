@@ -205,10 +205,10 @@ export const ChickenViability = () => {
   const [birdCount, setBirdCount] = useState(5);
   const [selectedFeedOption, setSelectedFeedOption] = useState<FeedOption>(feedOptions[1]); // Default to standard
   const [selectedProductionOption, setSelectedProductionOption] = useState<ProductionOption>(productionOptions[1]); // Default to realistic
-  const [selectedStartingCostOption, setSelectedStartingCostOption] = useState<StartingCostOption>(startingCostOptions[1]); // Default to basic
+  const [selectedStartingCostOption, setSelectedStartingCostOption] = useState<StartingCostOption>(startingCostOptions[0]); // Default to minimal
   const [selectedAcquisitionOption, setSelectedAcquisitionOption] = useState<AcquisitionOption>(acquisitionOptions[1]); // Default to laying hens
   const [eggPrice, setEggPrice] = useState(0.30);
-  const [startingCost, setStartingCost] = useState(200);
+  const [startingCost, setStartingCost] = useState(50);
   const [showResults, setShowResults] = useState(false);
 
   const calculateViability = () => {
@@ -268,7 +268,7 @@ export const ChickenViability = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="space-y-6 max-w-6xl mx-auto p-0"
+      className="space-y-6 max-w-6xl lg:max-w-none lg:mx-[10%] mx-auto p-0"
     >
       <AnimatedChickenViabilityPNG />
 
@@ -289,13 +289,14 @@ export const ChickenViability = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
+        {/* Desktop grid */}
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
           {startingCostOptions.map((option) => (
             <motion.div
               key={option.id}
               className={`neu-form cursor-pointer transition-all duration-200 ${
-                selectedStartingCostOption.id === option.id 
-                  ? 'ring-2 ring-purple-500 bg-purple-50 dark:bg-purple-900/30 border-2 border-purple-500' 
+                selectedStartingCostOption.id === option.id
+                  ? 'ring-2 ring-purple-500 bg-purple-50 dark:bg-purple-900/30 border-2 border-purple-500'
                   : 'hover:bg-gray-50 dark:hover:bg-gray-800 border-2 border-transparent'
               }`}
               onClick={() => setSelectedStartingCostOption(option)}
@@ -324,8 +325,8 @@ export const ChickenViability = () => {
             </motion.div>
           ))}
         </div>
-        
-        <div className="mt-6 p-4 glass-card">
+
+        <div className="mt-6 p-4 glass-card hidden md:block">
           <div className="flex items-center gap-3 mb-3">
             <h3 className="font-semibold text-gray-900 dark:text-white">Custom Amount</h3>
           </div>
@@ -353,44 +354,83 @@ export const ChickenViability = () => {
         </div>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="glass-card"
-      >
-        <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 lg:mb-6 text-gray-900 dark:text-white">Setup Parameters</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-          <div>
-            <label className="block text-sm mb-2 text-gray-500 dark:text-gray-400" htmlFor="birdCount">
-              Number of Chickens
-            </label>
-            <input
-              id="birdCount"
-              type="number"
-              min="1"
-              max="100"
-              value={birdCount}
-              onChange={(e) => setBirdCount(parseInt(e.target.value) || 0)}
-              className="neu-input focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
-            />
-          </div>
-          <div>
-            <label className="block text-sm mb-2 text-gray-500 dark:text-gray-400" htmlFor="eggPrice">
-              Price per Egg ($)
-            </label>
-            <input
-              id="eggPrice"
-              type="number"
-              min="0"
-              step="0.01"
-              value={eggPrice}
-              onChange={(e) => setEggPrice(parseFloat(e.target.value) || 0)}
-              className="neu-input focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
-            />
+      {/* Mobile swipable carousel - outside glass-card to allow full-width scroll */}
+      <div className="md:hidden" style={{ margin: '0 -17px', width: 'calc(100% + 34px)', maxWidth: 'none' }}>
+        <div className="overflow-x-auto scrollbar-hide px-4">
+          <div className="flex gap-4" style={{ width: 'max-content' }}>
+            {startingCostOptions.map((option) => (
+              <motion.div
+                key={option.id}
+                className={`neu-form cursor-pointer transition-all duration-200 flex-shrink-0 w-[68vw] ${
+                  selectedStartingCostOption.id === option.id
+                    ? 'ring-2 ring-purple-500 bg-purple-50 dark:bg-purple-900/30 border-2 border-purple-500'
+                    : 'border-2 border-transparent'
+                }`}
+                onClick={() => setSelectedStartingCostOption(option)}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div className="text-center mb-4">
+                  <div className="text-2xl font-bold text-purple-600 mb-2">
+                    ${option.cost}
+                  </div>
+                  <div className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">
+                    {option.title}
+                  </div>
+                  <div className="text-sm mb-4 text-gray-500 dark:text-gray-400">
+                    {option.description}
+                  </div>
+                </div>
+                <ul className="space-y-2">
+                  {option.details.map((detail, index) => (
+                    <li key={index} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                      <span className="text-green-500 mt-0.5">✓</span>
+                      {detail}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
           </div>
         </div>
-      </motion.div>
+        <div className="flex justify-center gap-2 mt-3">
+          {startingCostOptions.map((option) => (
+            <div
+              key={option.id}
+              className={`h-2 rounded-full transition-all duration-200 ${
+                selectedStartingCostOption.id === option.id
+                  ? 'w-6 bg-purple-500'
+                  : 'w-2 bg-gray-300 dark:bg-gray-600'
+              }`}
+            />
+          ))}
+        </div>
+        {/* Mobile custom amount */}
+        <div className="mt-4 p-4 glass-card mx-4">
+          <div className="flex items-center gap-3 mb-3">
+            <h3 className="font-semibold text-gray-900 dark:text-white">Custom Amount</h3>
+          </div>
+          <p className="text-sm mb-3 text-gray-500 dark:text-gray-400">
+            If your setup doesn't match these scenarios, you can enter a custom amount below:
+          </p>
+          <div className="flex items-center gap-3">
+            <input
+              type="number"
+              min="0"
+              value={startingCost}
+              onChange={(e) => {
+                const value = parseInt(e.target.value) || 0;
+                setStartingCost(value);
+                if (value !== selectedStartingCostOption.cost) {
+                  setSelectedStartingCostOption({ id: 'custom', cost: value, title: 'Custom Amount', details: [], description: 'Custom investment amount' } as StartingCostOption);
+                }
+              }}
+              className="neu-input flex-1"
+              placeholder="Enter custom amount"
+            />
+            <span className="text-sm text-gray-500 dark:text-gray-400">USD</span>
+          </div>
+        </div>
+      </div>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -443,6 +483,45 @@ export const ChickenViability = () => {
               </ul>
             </motion.div>
           ))}
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.13 }}
+        className="glass-card"
+      >
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold mb-4 lg:mb-6 text-gray-900 dark:text-white">Setup Parameters</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+          <div>
+            <label className="block text-sm mb-2 text-gray-500 dark:text-gray-400" htmlFor="birdCount">
+              Number of Chickens
+            </label>
+            <input
+              id="birdCount"
+              type="number"
+              min="1"
+              max="100"
+              value={birdCount}
+              onChange={(e) => setBirdCount(parseInt(e.target.value) || 0)}
+              className="neu-input focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
+            />
+          </div>
+          <div>
+            <label className="block text-sm mb-2 text-gray-500 dark:text-gray-400" htmlFor="eggPrice">
+              Price per Egg ($)
+            </label>
+            <input
+              id="eggPrice"
+              type="number"
+              min="0"
+              step="0.01"
+              value={eggPrice}
+              onChange={(e) => setEggPrice(parseFloat(e.target.value) || 0)}
+              className="neu-input focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
+            />
+          </div>
         </div>
       </motion.div>
 

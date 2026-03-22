@@ -341,36 +341,36 @@ const MainApp = () => {
       {showUserMenu && (
         <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setShowUserMenu(false)}>
           <div
-            className="fixed top-16 right-4 bg-white dark:bg-[#1a1a1a] rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg min-w-[250px] p-4"
+            className="fixed top-16 left-4 right-4 bg-white dark:bg-[#1a1a1a] rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg p-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="space-y-4">
-              <div className="border-b border-gray-100 dark:border-gray-700 pb-3">
+            <div className="space-y-3">
+              <div className="border-b border-gray-100 dark:border-gray-700 pb-2">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">👤 User Profile</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Manage your account</p>
               </div>
-              
+
               <UserProfile />
 
-              <div className="pt-3 border-t border-gray-100 dark:border-gray-700">
+              <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
                 <p className="text-xs uppercase font-medium text-gray-500 dark:text-gray-400 mb-2">Theme</p>
                 <ThemeToggle variant="compact" />
               </div>
 
-              <div className="space-y-2 pt-3 border-t border-gray-100 dark:border-gray-700">
+              <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
                 <button
                   onClick={() => {
                     signOut();
                     setShowUserMenu(false);
                   }}
-                  className="neu-button w-full bg-red-100 text-red-700 hover:bg-red-200 px-4 py-2 text-sm font-medium"
+                  className="neu-button flex-1 bg-red-100 text-red-700 hover:bg-red-200 px-4 py-2 text-sm font-medium"
                 >
-                  🚪 Logout ({user?.email?.split('@')[0]})
+                  🚪 Logout
                 </button>
 
                 <button
                   onClick={() => setShowUserMenu(false)}
-                  className="neu-button-secondary w-full px-4 py-2 text-sm font-medium"
+                  className="neu-button-secondary flex-1 px-4 py-2 text-sm font-medium"
                 >
                   Close
                 </button>

@@ -49,8 +49,8 @@ export class CRMService extends BaseApiService implements ICrmService {
   /**
    * Delete a customer (soft delete by setting is_active to false)
    */
-  public async deleteCustomer(customerId: string): Promise<ApiResponse<Customer>> {
-    return this.updateCustomer(customerId, { is_active: false });
+  public async deleteCustomer(customerId: string, name?: string): Promise<ApiResponse<Customer>> {
+    return this.updateCustomer(customerId, { is_active: false, ...(name ? { name } : {}) });
   }
 
   /**

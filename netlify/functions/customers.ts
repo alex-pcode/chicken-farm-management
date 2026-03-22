@@ -132,22 +132,33 @@ export const handler: Handler = async (event: HandlerEvent, context: HandlerCont
         };
       }
 
-      if (!name || name.trim() === '') {
+      // Build partial update — only include fields that were provided
+      const updateFields: Record<string, unknown> = {};
+      if (name !== undefined) {
+        if (!name || name.trim() === '') {
+          return {
+            statusCode: 400,
+            headers: jsonHeaders,
+            body: JSON.stringify({ error: 'Customer name is required' })
+          };
+        }
+        updateFields.name = name.trim();
+      }
+      if (phone !== undefined) updateFields.phone = phone?.trim() || null;
+      if (notes !== undefined) updateFields.notes = notes?.trim() || null;
+      if (is_active !== undefined) updateFields.is_active = is_active;
+
+      if (Object.keys(updateFields).length === 0) {
         return {
           statusCode: 400,
           headers: jsonHeaders,
-          body: JSON.stringify({ error: 'Customer name is required' })
+          body: JSON.stringify({ error: 'No fields to update' })
         };
       }
 
       const { data, error } = await supabase
         .from('customers')
-        .update({
-          name: name.trim(),
-          phone: phone?.trim() || null,
-          notes: notes?.trim() || null,
-          is_active: is_active !== undefined ? is_active : true
-        })
+        .update(updateFields)
         .eq('id', id)
         .eq('user_id', userId)
         .select()

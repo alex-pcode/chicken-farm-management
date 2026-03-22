@@ -305,6 +305,7 @@ async function getAllData(user: AuthUser) {
       .from('customers')
       .select('*')
       .eq('user_id', user.id)
+      .eq('is_active', true)
       .order('created_at', { ascending: true });
     if (customersError) throw customersError;
     customers = customersData || [];
@@ -639,6 +640,7 @@ async function getCRMData(user: AuthUser) {
     .from('customers')
     .select('*')
     .eq('user_id', user.id)
+    .eq('is_active', true)
     .order('created_at', { ascending: true });
 
   const { data: sales } = await supabase

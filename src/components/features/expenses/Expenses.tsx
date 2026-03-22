@@ -169,6 +169,7 @@ export const Expenses = () => {
         description="Track your farm expenses to maintain accurate financial records"
         icon="💰"
         asFormWrapper={false}
+        className="lg:mx-[20%]"
       >
         {/* Success/Error Messages */}
         {successState.value && (

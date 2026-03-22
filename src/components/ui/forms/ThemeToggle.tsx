@@ -38,7 +38,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
     // Selecting either option sets that theme directly (overriding system)
     return (
       <div
-        className={`inline-flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 ${className}`}
+        className={`flex rounded-lg bg-gray-100 dark:bg-gray-800 p-1 ${className}`}
         role="radiogroup"
         aria-label="Theme selection"
       >
@@ -51,7 +51,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
             aria-label={`${option.label} theme`}
             onClick={() => setTheme(option.value)}
             className={`
-              relative px-3 py-1.5 text-sm font-medium rounded-md
+              relative flex-1 px-3 py-1.5 text-sm font-medium rounded-md
               transition-colors duration-200
               focus:outline-none focus:ring-2 focus:ring-[#524AE6] focus:ring-offset-2
               dark:focus:ring-offset-gray-800

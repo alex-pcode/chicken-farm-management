@@ -1,11 +1,11 @@
 import { useMemo } from 'react'
-import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts'
+import { BarChart, Bar, Tooltip, ResponsiveContainer } from 'recharts'
 import { useOptimizedAppData } from '../../../contexts/OptimizedDataProvider'
 import { useOnboarding } from '../../../contexts/OnboardingProvider'
 import { useAuth } from '../../../contexts/AuthContext'
 import { useTheme } from '../../../contexts/ThemeContext'
 import { SetupProgress } from '../../onboarding'
-import { StatCard, PageContainer, SectionContainer, GridContainer, ChartCard } from '../../ui'
+import { StatCard, PageContainer, SectionContainer, GridContainer, ChartCard, RevenueTrendChart } from '../../ui'
 // import { UpcomingEvents } from './UpcomingEvents' // TODO: Re-enable when feature is developed
 
 export const Dashboard = () => {
@@ -40,8 +40,7 @@ export const Dashboard = () => {
         eggValue: 0,
         revenue: 0,
         freeEggs: 0,
-        last30DaysData: [] as { date: string; count: number }[],
-        weeklyRevenueData: [] as { week: string; revenue: number }[]
+        last30DaysData: [] as { date: string; count: number }[]
       };
     }
     
@@ -155,42 +154,6 @@ export const Dashboard = () => {
     const eggEntriesMap = new Map(eggEntries.map(entry => [entry.date, entry.count]));
     const last30DaysData = [];
     
-    // Weekly revenue data for last 12 weeks
-    const getWeekStart = (date: Date) => {
-      const d = new Date(date);
-      const day = d.getDay();
-      const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
-      d.setDate(diff);
-      d.setHours(0, 0, 0, 0);
-      return d;
-    };
-    
-    const weeklyRevenueMap = new Map();
-    for (const sale of sales) {
-      const saleDate = new Date(sale.sale_date);
-      const weekStart = getWeekStart(saleDate);
-      const weekKey = weekStart.toISOString().split('T')[0];
-      
-      if (!weeklyRevenueMap.has(weekKey)) {
-        weeklyRevenueMap.set(weekKey, 0);
-      }
-      weeklyRevenueMap.set(weekKey, weeklyRevenueMap.get(weekKey) + sale.total_amount);
-    }
-    
-    // Generate last 12 weeks of data
-    const weeklyRevenueData = [];
-    for (let i = 11; i >= 0; i--) {
-      const weekStart = getWeekStart(new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000));
-      const weekKey = weekStart.toISOString().split('T')[0];
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 6);
-      
-      weeklyRevenueData.push({
-        week: `${weekStart.getMonth() + 1}/${weekStart.getDate()}`,
-        revenue: weeklyRevenueMap.get(weekKey) || 0
-      });
-    }
-    
     for (let i = 29; i >= 0; i--) {
       const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
       const dateStr = date.toISOString().split('T')[0];
@@ -211,14 +174,9 @@ export const Dashboard = () => {
         eggValue: Math.round(eggValue * 100) / 100, // Round to 2 decimal places
         revenue: Math.round(revenue * 100) / 100, // Round to 2 decimal places
         freeEggs,
-        last30DaysData,
-        weeklyRevenueData
+        last30DaysData
       };
   }, [data, isLoading]);
-
-  // Create mobile-friendly revenue data (last 6 weeks)
-  const mobileWeeklyRevenueData = stats.weeklyRevenueData.slice(-6);
-
 
   // Calculate setup progress for new users
   const progressInfo = useMemo(() => {
@@ -441,101 +399,7 @@ export const Dashboard = () => {
         variant="default"
         spacing="md"
       >
-        <div>
-          {/* Revenue Chart */}
-          <div>
-            {/* Mobile Chart - 6 weeks */}
-            <div className="lg:hidden">
-              <ChartCard 
-                title="Revenue Trend"
-                subtitle="Weekly revenue over last 6 weeks"
-                height={280}
-              >
-                <ResponsiveContainer width="100%" height={265}>
-                  <AreaChart
-                    data={mobileWeeklyRevenueData}
-                    margin={{ top: 5, right: 5, left: 0, bottom: -5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke={chartStyles.gridStroke} />
-                    <XAxis
-                      dataKey="week"
-                      tick={{ fill: chartStyles.axisColor }}
-                      axisLine={{ stroke: chartStyles.gridStroke }}
-                      tickLine={{ stroke: chartStyles.gridStroke }}
-                    />
-                    <YAxis
-                      width={35}
-                      domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.2)]}
-                      tick={{ fill: chartStyles.axisColor }}
-                      axisLine={{ stroke: chartStyles.gridStroke }}
-                      tickLine={{ stroke: chartStyles.gridStroke }}
-                    />
-                    <Tooltip
-                      contentStyle={chartStyles.tooltip}
-                      formatter={(value) => [`$${value}`, 'Weekly Revenue']}
-                      labelFormatter={(label) => `Week of ${label}`}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="#544CE6"
-                      fill="#544CE6"
-                      fillOpacity={0.3}
-                      strokeWidth={2}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </ChartCard>
-            </div>
-
-            {/* Desktop Chart - 12 weeks */}
-            <div className="hidden lg:block">
-              <ChartCard
-                title="Revenue Trend"
-                subtitle="Weekly revenue over last 12 weeks"
-                height={400}
-              >
-                <ResponsiveContainer width="100%" height={385}>
-                  <AreaChart
-                    data={stats.weeklyRevenueData}
-                    margin={{ top: 5, right: 5, left: 0, bottom: -5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke={chartStyles.gridStroke} />
-                    <XAxis
-                      dataKey="week"
-                      tick={{ fill: chartStyles.axisColor }}
-                      axisLine={{ stroke: chartStyles.gridStroke }}
-                      tickLine={{ stroke: chartStyles.gridStroke }}
-                    />
-                    <YAxis
-                      width={35}
-                      domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.2)]}
-                      tick={{ fill: chartStyles.axisColor }}
-                      axisLine={{ stroke: chartStyles.gridStroke }}
-                      tickLine={{ stroke: chartStyles.gridStroke }}
-                    />
-                    <Tooltip
-                      contentStyle={chartStyles.tooltip}
-                      formatter={(value) => [`$${value}`, 'Weekly Revenue']}
-                      labelFormatter={(label) => `Week of ${label}`}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="revenue" 
-                      stroke="#544CE6" 
-                      fill="#544CE6"
-                      fillOpacity={0.3}
-                      strokeWidth={2}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </ChartCard>
-            </div>
-          </div>
-
-          {/* TODO: Re-enable Upcoming Events when feature is developed */}
-          {/* <UpcomingEvents data={data} isLoading={isLoading} /> */}
-        </div>
+        <RevenueTrendChart sales={data.sales || []} />
       </SectionContainer>
 
     </PageContainer>

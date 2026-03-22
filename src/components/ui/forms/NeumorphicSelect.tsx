@@ -79,7 +79,7 @@ export const NeumorphicSelect: React.FC<NeumorphicSelectProps> = ({
         {required && <span className="text-red-500 dark:text-red-400 ml-1">*</span>}
       </label>
       
-      <div className="relative">
+      <div className="relative my-2">
         <button
           type="button"
           onClick={() => !disabled && setIsOpen(!isOpen)}

@@ -66,17 +66,17 @@ export const CustomerList = ({ customers, onDataChange }: CustomerListProps) => 
     setIsAddingCustomer(true);
   };
 
-  const handleDeactivate = async (customer: Customer) => {
-    if (!confirm(`Are you sure you want to deactivate ${customer.name}?`)) {
+  const handleDelete = async (customer: Customer) => {
+    if (!confirm(`Are you sure you want to delete ${customer.name}?`)) {
       return;
     }
 
     try {
-      await apiService.crm.deleteCustomer(customer.id);
+      await apiService.crm.deleteCustomer(customer.id, customer.name);
       onDataChange();
     } catch (err) {
-      console.error('Error deactivating customer:', err);
-      setError(err instanceof Error ? err.message : 'Failed to deactivate customer');
+      console.error('Error deleting customer:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete customer');
     }
   };
 
@@ -129,18 +129,24 @@ export const CustomerList = ({ customers, onDataChange }: CustomerListProps) => 
       label: 'Actions',
       sortable: false,
       render: (_value, customer) => (
-        <div className="flex space-x-2">
+        <div className="flex space-x-3">
           <button
             onClick={() => handleEdit(customer)}
-            className="text-blue-600 dark:text-blue-400 hover:underline"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+            title="Edit"
           >
-            Edit
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+            </svg>
           </button>
           <button
-            onClick={() => handleDeactivate(customer)}
-            className="text-red-600 dark:text-red-400 hover:underline"
+            onClick={() => handleDelete(customer)}
+            className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
+            title="Delete"
           >
-            Deactivate
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
+            </svg>
           </button>
         </div>
       )
@@ -151,7 +157,7 @@ export const CustomerList = ({ customers, onDataChange }: CustomerListProps) => 
     <div className="space-y-6">
       {/* Header with Add Button */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Customers</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Customers</h2>
         <FormButton
           onClick={() => setIsAddingCustomer(true)}
           variant="primary"
@@ -164,8 +170,8 @@ export const CustomerList = ({ customers, onDataChange }: CustomerListProps) => 
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-600">{error}</p>
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg p-4">
+          <p className="text-red-600 dark:text-red-400">{error}</p>
           <FormButton
             onClick={() => setError(null)}
             variant="secondary"

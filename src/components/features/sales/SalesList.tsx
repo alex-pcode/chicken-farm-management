@@ -204,7 +204,7 @@ export const SalesList = ({ sales, customers, onDataChange }: SalesListProps) =>
       label: 'Customer',
       sortable: true,
       render: (_value, sale) => (
-        <span className="font-medium text-gray-900">{sale.customer_name}</span>
+        <span className="font-medium text-gray-900 dark:text-gray-200">{sale.customer_name}</span>
       )
     },
     {
@@ -212,7 +212,7 @@ export const SalesList = ({ sales, customers, onDataChange }: SalesListProps) =>
       label: 'Date',
       sortable: true,
       render: (_value, sale) => (
-        <span className="text-gray-600">
+        <span className="text-gray-600 dark:text-gray-400">
           {new Date(sale.sale_date).toLocaleDateString()}
         </span>
       )
@@ -222,9 +222,9 @@ export const SalesList = ({ sales, customers, onDataChange }: SalesListProps) =>
       label: 'Eggs',
       sortable: true,
       render: (_, sale) => (
-        <div className="text-gray-600">
+        <div className="text-gray-600 dark:text-gray-400">
           <span className="font-medium">{totalEggs(sale)}</span>
-          <span className="text-gray-400 text-xs ml-1">
+          <span className="text-gray-400 dark:text-gray-500 text-xs ml-1">
             ({sale.dozen_count}d + {sale.individual_count})
           </span>
         </div>
@@ -235,7 +235,7 @@ export const SalesList = ({ sales, customers, onDataChange }: SalesListProps) =>
       label: 'Amount',
       sortable: true,
       render: (_value, sale) => (
-        <span className={sale.total_amount === 0 ? 'text-green-600 font-semibold' : 'text-gray-900 font-medium'}>
+        <span className={sale.total_amount === 0 ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-gray-900 dark:text-gray-200 font-medium'}>
           {sale.total_amount === 0 ? 'FREE' : `$${sale.total_amount.toFixed(2)}`}
         </span>
       )
@@ -246,7 +246,7 @@ export const SalesList = ({ sales, customers, onDataChange }: SalesListProps) =>
       sortable: false,
       render: (_value, sale) => (
         <div className="max-w-xs">
-          <span className="text-gray-600 text-sm truncate block">
+          <span className="text-gray-600 dark:text-gray-400 text-sm truncate block">
             {sale.notes || '-'}
           </span>
         </div>
@@ -259,7 +259,7 @@ export const SalesList = ({ sales, customers, onDataChange }: SalesListProps) =>
       render: (_, sale) => (
         <button
           onClick={() => handleDelete(sale)}
-          className="inline-flex items-center p-2 rounded-full text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+          className="inline-flex items-center p-2 rounded-full text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
           title="Delete sale"
         >
           🗑️
@@ -272,7 +272,7 @@ export const SalesList = ({ sales, customers, onDataChange }: SalesListProps) =>
     <div className="space-y-6">
       {/* Header with Record Sale Button */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Sales History</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Sales History</h2>
         <FormButton
           onClick={() => setIsAddingSale(true)}
           variant="primary"
@@ -288,12 +288,12 @@ export const SalesList = ({ sales, customers, onDataChange }: SalesListProps) =>
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-green-50 border border-green-200 rounded-lg p-4"
+          className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg p-4"
         >
           <div className="flex items-start">
             <span className="text-green-600 text-xl mr-3">✅</span>
             <div className="flex-1">
-              <p className="text-green-700 font-medium">{success}</p>
+              <p className="text-green-700 dark:text-green-300 font-medium">{success}</p>
               <FormButton
                 onClick={() => setSuccess(null)}
                 variant="secondary"
@@ -309,11 +309,11 @@ export const SalesList = ({ sales, customers, onDataChange }: SalesListProps) =>
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg p-4">
           <div className="flex items-start">
             <span className="text-red-600 text-xl mr-3">❌</span>
             <div className="flex-1">
-              <p className="text-red-700 font-medium">{error}</p>
+              <p className="text-red-700 dark:text-red-300 font-medium">{error}</p>
               <FormButton
                 onClick={() => setError(null)}
                 variant="secondary"
@@ -411,7 +411,7 @@ export const SalesList = ({ sales, customers, onDataChange }: SalesListProps) =>
             </div>
 
             {formData.eggs_count >= 12 && (
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 <p>
                   {Math.floor(formData.eggs_count / 12)} dozen + {formData.eggs_count % 12} individual
                 </p>

@@ -33,6 +33,7 @@ export { CardContainer } from './layout/CardContainer';
 
 // Chart Components
 export { ChartCard } from './charts/ChartCard';
+export { RevenueTrendChart } from './charts/RevenueTrendChart';
 
 // Form Components
 export { FormCard } from './forms/FormCard';

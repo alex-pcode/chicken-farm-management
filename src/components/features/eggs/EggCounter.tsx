@@ -215,6 +215,9 @@ export const EggCounter = () => {
     }
   }, [deleteSuccess.value]);
   
+  // Submission loading state
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
   // Historical tracking modal state
   const [showHistoricalModal, setShowHistoricalModal] = React.useState(false);
   
@@ -244,6 +247,7 @@ export const EggCounter = () => {
   };
 
   const submitEntry = async () => {
+    setIsSubmitting(true);
     try {
       // Use the hook's addEntry method
       const entryData: Omit<EggEntry, 'id'> = {
@@ -255,7 +259,7 @@ export const EggCounter = () => {
       };
 
       await addEntry(entryData);
-      
+
       // Reset form and show success
       eggForm.resetValues();
       success.setTrue();
@@ -276,6 +280,8 @@ export const EggCounter = () => {
       
       // Use validation hook for error setting
       validate({ count: eggForm.values.count, submit: errorMessage });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -402,7 +408,7 @@ export const EggCounter = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="neu-form p-6 shadow-lg transition-all duration-200 !mb-0"
+        className="neu-form p-6 shadow-lg transition-all duration-200 !mb-0 lg:mx-[20%]"
       >
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -555,14 +561,14 @@ export const EggCounter = () => {
             <div className="flex justify-center">
               <button
                 type="submit"
-                disabled={isLoading || success.value}
+                disabled={isSubmitting || success.value}
                 className={`neu-button transition-all duration-200 font-medium rounded-lg px-6 py-2 min-w-[200px] ${
-                  success.value 
-                    ? 'bg-green-600 hover:bg-green-700 text-white' 
+                  success.value
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
                     : 'shiny-cta bg-blue-600 hover:bg-blue-700 text-white'
                 }`}
               >
-                {isLoading ? (
+                {isSubmitting ? (
                   <div className="flex items-center justify-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent"></div>
                     <span>Saving...</span>

@@ -2161,6 +2161,10 @@ input, select, textarea, button {
   transition: all 0.3s ease;
 }
 
+.relative > .neu-input {
+  margin: 0;
+}
+
 .neu-input:focus {
   box-shadow:
     inset 4px 4px 4px var(--neu-2),
@@ -2283,6 +2287,15 @@ select.neu-input:focus {
   box-shadow:
     4px 4px 8px rgba(0, 0, 0, 0.4),
     -4px -4px 8px rgba(50, 50, 50, 0.3);
+}
+
+.dark .neu-button.bg-red-100 {
+  background-color: rgba(127, 29, 29, 0.3);
+  color: #f87171;
+}
+
+.dark .neu-button.bg-red-100:hover {
+  background-color: rgba(127, 29, 29, 0.5);
 }
 
 .dark .neu-button:hover {
@@ -2673,6 +2686,14 @@ select.neu-input:focus {
 .magic-border-content:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 @layer base {

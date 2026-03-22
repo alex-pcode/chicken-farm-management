@@ -1,10 +1,14 @@
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '../../../utils/supabase';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 export const AuthComponent = () => {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" style={{ backgroundColor: '#F9FAFB' }}>
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-[#121212]">
       <div className="glass-card w-full max-w-sm lg:mx-[15%]">
         {/* Brand Header */}
         <div className="flex flex-col items-center gap-4 mb-8">
@@ -14,7 +18,7 @@ export const AuthComponent = () => {
             </div>
             <span className="sr-only">ChickenCare</span>
           </a>
-          <h1 className="text-2xl font-bold font-serif" style={{ color: '#111827' }}>
+          <h1 className="text-2xl font-bold font-serif text-gray-900 dark:text-white">
             Welcome to ChickenCare
           </h1>
         </div>
@@ -31,22 +35,22 @@ export const AuthComponent = () => {
                     brand: '#4F39F6',
                     brandAccent: '#2A2580',
                     brandButtonText: '#FFFFFF',
-                    defaultButtonBackground: '#FFFFFF',
-                    defaultButtonBackgroundHover: '#F9FAFB',
-                    defaultButtonBorder: '#E5E7EB',
-                    defaultButtonText: '#111827',
-                    dividerBackground: '#E5E7EB',
-                    inputBackground: '#FFFFFF',
-                    inputBorder: '#E5E7EB',
+                    defaultButtonBackground: isDark ? '#2a2a2a' : '#FFFFFF',
+                    defaultButtonBackgroundHover: isDark ? '#333333' : '#F9FAFB',
+                    defaultButtonBorder: isDark ? '#404040' : '#E5E7EB',
+                    defaultButtonText: isDark ? '#e5e5e5' : '#111827',
+                    dividerBackground: isDark ? '#404040' : '#E5E7EB',
+                    inputBackground: isDark ? '#1e1e1e' : '#FFFFFF',
+                    inputBorder: isDark ? '#404040' : '#E5E7EB',
                     inputBorderHover: '#6B5CE6',
                     inputBorderFocus: '#4F39F6',
-                    inputText: '#111827',
-                    inputLabelText: '#111827',
-                    inputPlaceholder: '#6B7280',
+                    inputText: isDark ? '#e5e5e5' : '#111827',
+                    inputLabelText: isDark ? '#e5e5e5' : '#111827',
+                    inputPlaceholder: isDark ? '#737373' : '#6B7280',
                     messageText: '#EF4444',
                     messageTextDanger: '#EF4444',
-                    anchorTextColor: '#4F39F6',
-                    anchorTextHoverColor: '#2A2580',
+                    anchorTextColor: isDark ? '#7C6FF6' : '#4F39F6',
+                    anchorTextHoverColor: isDark ? '#9B8FFF' : '#2A2580',
                   },
                   space: {
                     spaceSmall: '8px',
@@ -97,7 +101,7 @@ export const AuthComponent = () => {
             redirectTo={`${window.location.origin}/`}
             showLinks={true}
             magicLink={true}
-            theme="light"
+            theme={isDark ? 'dark' : 'light'}
             view="sign_in"
             localization={{
               variables: {
@@ -125,12 +129,12 @@ export const AuthComponent = () => {
           />
 
           {/* Divider */}
-          <div className="relative text-center text-sm font-serif" style={{ color: '#6B7280' }}>
+          <div className="relative text-center text-sm font-serif text-gray-500 dark:text-gray-400">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" style={{ borderColor: '#E5E7EB' }}></span>
+              <span className="w-full border-t border-gray-200 dark:border-gray-600"></span>
             </div>
             <div className="relative flex justify-center text-xs uppercase font-medium">
-              <span className="px-4" style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}>Or continue with</span>
+              <span className="px-4 bg-white/95 dark:bg-[#202020]/95">Or continue with</span>
             </div>
           </div>
 
@@ -145,10 +149,10 @@ export const AuthComponent = () => {
                     brand: '#4F39F6',
                     brandAccent: '#2A2580',
                     brandButtonText: '#FFFFFF',
-                    defaultButtonBackground: '#FFFFFF',
-                    defaultButtonBackgroundHover: '#F9FAFB',
-                    defaultButtonBorder: '#E5E7EB',
-                    defaultButtonText: '#111827',
+                    defaultButtonBackground: isDark ? '#2a2a2a' : '#FFFFFF',
+                    defaultButtonBackgroundHover: isDark ? '#333333' : '#F9FAFB',
+                    defaultButtonBorder: isDark ? '#404040' : '#E5E7EB',
+                    defaultButtonText: isDark ? '#e5e5e5' : '#111827',
                   },
                   space: {
                     buttonPadding: '12px 16px',
@@ -170,14 +174,14 @@ export const AuthComponent = () => {
                 },
               },
               className: {
-                button: 'neu-button-secondary w-full h-12 font-medium transition-all rounded-lg hover:scale-[1.02] border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-100 hover:text-purple-700 !flex !items-center !justify-center !gap-2',
+                button: 'neu-button-secondary w-full h-12 font-medium transition-all rounded-lg hover:scale-[1.02] border-2 border-gray-200 dark:border-gray-600 hover:border-purple-500 hover:bg-purple-100 dark:hover:bg-purple-900/30 hover:text-purple-700 dark:hover:text-purple-300 !flex !items-center !justify-center !gap-2',
                 container: 'flex flex-col gap-6',
               },
             }}
             providers={['google']}
             onlyThirdPartyProviders={true}
             redirectTo={`${window.location.origin}/`}
-            theme="light"
+            theme={isDark ? 'dark' : 'light'}
             view="sign_in"
             localization={{
               variables: {

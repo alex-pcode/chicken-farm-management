@@ -287,6 +287,7 @@ export const FeedTracker = () => {
         title="Add New Feed"
         onSubmit={handleSubmit}
         loading={isSubmitting}
+        className="lg:mx-[20%]"
       >
         {errorMsg && (
           <div className="mb-6 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-md">

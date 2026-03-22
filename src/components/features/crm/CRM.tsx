@@ -1,24 +1,21 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CustomerList } from './CustomerList';
-import { SalesList } from '../sales/SalesList';
 import { QuickSale } from '../sales/QuickSale';
+import { CRMReports } from './CRMReports';
 import AnimatedCRMPNG from '../../landing/animations/AnimatedCRMPNG';
 import { useCRMData } from '../../../contexts/OptimizedDataProvider';
 
-// Basic utilities
-import { StatCard } from '../../ui/cards/StatCard';
 
-type CRMTab = 'customers' | 'sales' | 'quick-sale' | 'reports';
+type CRMTab = 'customers' | 'quick-sale' | 'reports';
 
 export const CRM = () => {
-  const [activeTab, setActiveTab] = useState<CRMTab>('customers');
+  const [activeTab, setActiveTab] = useState<CRMTab>('quick-sale');
   const { data, isLoading, error, refreshData, silentRefresh } = useCRMData();
 
   const tabs = [
-    { id: 'customers' as CRMTab, label: 'Customers', emoji: '👥' },
-    { id: 'sales' as CRMTab, label: 'Sales', emoji: '🧾' },
     { id: 'quick-sale' as CRMTab, label: 'Quick Sale', emoji: '⚡' },
+    { id: 'customers' as CRMTab, label: 'Customers', emoji: '👥' },
     { id: 'reports' as CRMTab, label: 'Reports', emoji: '📊' }
   ];
 
@@ -67,61 +64,6 @@ export const CRM = () => {
         <AnimatedCRMPNG />
       </motion.div>
 
-      {/* Enhanced Summary Stats with Modern Cards */}
-      {data.summary && (
-        <div className="mt-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard
-              title="Customers"
-              total={data.summary.customer_count.toString()}
-              label="active customers"
-              icon="👥"
-              variant="corner-gradient"
-              className="dark:bg-gray-800 dark:text-gray-200"
-            />
-            <StatCard
-              title="Sales"
-              total={data.summary.total_sales.toString()}
-              label="transactions"
-              icon="🧾"
-              variant="corner-gradient"
-              className="dark:bg-gray-800 dark:text-gray-200"
-            />
-            <StatCard
-              title="Revenue"
-              total={`$${data.summary.total_revenue.toFixed(2)}`}
-              label="total earnings"
-              icon="💰"
-              variant="corner-gradient"
-              className="dark:bg-gray-800 dark:text-gray-200"
-            />
-            <StatCard
-              title="Eggs Sold"
-              total={data.summary.total_eggs_sold.toString()}
-              label="units sold"
-              icon="🥚"
-              variant="corner-gradient"
-              className="dark:bg-gray-800 dark:text-gray-200"
-            />
-            <StatCard
-              title="Free Eggs"
-              total={(data.summary.free_eggs_given || 0).toString()}
-              label="given away"
-              icon="🎁"
-              variant="corner-gradient"
-              className="dark:bg-gray-800 dark:text-gray-200"
-            />
-            <StatCard
-              title="Top Customer"
-              total={data.summary.top_customer || 'None'}
-              label="highest purchaser"
-              icon="⭐"
-              variant="corner-gradient"
-              className="dark:bg-gray-800 dark:text-gray-200"
-            />
-          </div>
-        </div>
-      )}
 
       {/* Tab Navigation */}
       <div className="flex justify-center mb-8 mt-8">
@@ -158,14 +100,6 @@ export const CRM = () => {
             />
           )}
           
-          {activeTab === 'sales' && (
-            <SalesList 
-              sales={data.sales || []} 
-              customers={data.customers || []}
-              onDataChange={handleDataChange}
-            />
-          )}
-          
           {activeTab === 'quick-sale' && (
             <QuickSale 
               customers={data.customers || []} 
@@ -174,15 +108,11 @@ export const CRM = () => {
           )}
           
           {activeTab === 'reports' && (
-            <div className="p-8 text-center">
-              <div className="flex flex-col items-center gap-4">
-                <span className="text-6xl">📊</span>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Reports Coming Soon</h3>
-                <p className="text-gray-600 dark:text-gray-400 max-w-md">
-                  Advanced sales analytics, customer insights, and performance reports will be available here.
-                </p>
-              </div>
-            </div>
+            <CRMReports
+              sales={data.sales || []}
+              customers={data.customers || []}
+              onDataChange={handleDataChange}
+            />
           )}
         </motion.div>
       </div>
