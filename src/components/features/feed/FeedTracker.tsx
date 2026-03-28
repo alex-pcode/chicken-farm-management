@@ -278,7 +278,7 @@ export const FeedTracker = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="w-full mt-10 lg:mt-0 mb-0"
+        className="w-full mb-0"
       >
         <AnimatedFeedPNG />
       </motion.div>

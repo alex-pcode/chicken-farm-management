@@ -176,7 +176,7 @@ export const handler: Handler = async (event: HandlerEvent, _context: HandlerCon
       headers: jsonHeaders,
       body: JSON.stringify({
         message: 'Error fetching data from database',
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : JSON.stringify(error)
       })
     };
   }

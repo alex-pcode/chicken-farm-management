@@ -151,7 +151,7 @@ export const Expenses = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="space-y-8 max-w-7xl mx-auto mt-[80px] md:mt-0"
+      className="space-y-8 max-w-7xl mx-auto"
       style={{ opacity: 1 }}
     >
       {/* Animated Piggy Bank Section - Testing (will be for new users) */}

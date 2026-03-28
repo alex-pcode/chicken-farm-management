@@ -340,27 +340,20 @@ async function saveFeedInventory(user: User, feedData: FeedEntry | FeedEntry[]):
 
 // Save flock events
 async function saveFlockEvents(user: User, eventData: FlockEvent | FlockEvent[]): Promise<HandlerResponse> {
-  const eventWithUser = Array.isArray(eventData) 
-    ? eventData.map(event => ({
-        user_id: user.id,
-        flock_profile_id: null,
-        date: event.date,
-        type: event.type,
-        description: event.description,
-        affected_birds: event.affectedBirds,
-        notes: event.notes,
-        ...(event.id && isValidUUID(event.id) && { id: event.id })
-      }))
-    : {
-        user_id: user.id,
-        flock_profile_id: null,
-        date: eventData.date,
-        type: eventData.type,
-        description: eventData.description,
-        affected_birds: eventData.affectedBirds,
-        notes: eventData.notes,
-        ...(eventData.id && isValidUUID(eventData.id) && { id: eventData.id })
-      };
+  const mapEvent = (event: FlockEvent & { flock_profile_id?: string }) => ({
+    user_id: user.id,
+    flock_profile_id: event.flock_profile_id || null,
+    date: event.date,
+    type: event.type,
+    description: event.description,
+    affected_birds: event.affectedBirds,
+    notes: event.notes,
+    ...(event.id && isValidUUID(event.id) && { id: event.id })
+  });
+
+  const eventWithUser = Array.isArray(eventData)
+    ? eventData.map(mapEvent)
+    : mapEvent(eventData as FlockEvent & { flock_profile_id?: string });
 
   const { data, error } = await supabase
     .from('flock_events')
@@ -376,7 +369,7 @@ async function saveFlockEvents(user: User, eventData: FlockEvent | FlockEvent[])
     headers: basicCorsHeaders,
     body: JSON.stringify({
       message: 'Flock events saved successfully',
-      data: { flockEvents: data },
+      data: { flockEvents: data, event: Array.isArray(data) ? data[0] : data },
       timestamp: new Date().toISOString()
     })
   };

@@ -39,10 +39,9 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   testId,
   style,
 }) => {
-  const baseClasses = 'mx-auto px-4 sm:px-6 lg:px-8';
   const widthClass = maxWidthClasses[maxWidth];
   const paddingClass = paddingClasses[padding];
-  const combinedClassName = `${baseClasses} ${widthClass} ${paddingClass} ${className}`;
+  const combinedClassName = `${widthClass} ${paddingClass} ${className}`;
 
   if (animated) {
     return (

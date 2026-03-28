@@ -63,7 +63,7 @@ export const FlockOverview: React.FC<FlockOverviewProps> = ({
           </div>
 
           {/* Batch-Specific Flock Overview Stats */}
-          <div className={`grid grid-cols-2 md:grid-cols-${batches.some(b => (b.broodingCount || 0) > 0) ? '5' : '4'} gap-4`}>
+          <div className={`grid grid-cols-2 ${batches.some(b => (b.broodingCount || 0) > 0) ? 'md:grid-cols-5' : 'md:grid-cols-4'} gap-4`}>
             <StatCard
               title="Laying"
               total={batches

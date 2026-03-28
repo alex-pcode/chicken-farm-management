@@ -381,7 +381,7 @@ const MainApp = () => {
       )}
 
       {/* Main Content */}
-      <main className="main-content" style={{ paddingTop: 0, paddingLeft: '17px', paddingRight: '17px' }}>
+      <main className="main-content">
         <Suspense fallback={<ComponentLoader />}>
           <Routes>
             {/* Default redirect from /app based on user tier */}

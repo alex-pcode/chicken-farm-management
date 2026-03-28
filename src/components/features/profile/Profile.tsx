@@ -336,7 +336,6 @@ export const Profile = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="space-y-8 max-w-7xl mx-auto"
-      style={{ margin: '0px auto', opacity: 1 }}
     >
       {/* Animated Farm Welcome Component */}
       <motion.div

@@ -544,6 +544,21 @@ async function handlePut(event: HandlerEvent, userId: string) {
     if (updateData.chicksCount !== undefined) dbUpdateData.chicks_count = updateData.chicksCount;
     if (updateData.broodingCount !== undefined) dbUpdateData.brooding_count = updateData.broodingCount;
 
+    // When setting a laying start date on a chicks-only batch, promote type to 'hens'
+    // since the chicks have matured into laying hens
+    if (dbUpdateData.actual_laying_start_date) {
+      const { data: existingBatch } = await supabase
+        .from('flock_batches')
+        .select('type')
+        .eq('id', batchId)
+        .eq('user_id', userId)
+        .single();
+
+      if (existingBatch?.type === 'chicks') {
+        dbUpdateData.type = 'hens';
+      }
+    }
+
     dbUpdateData.updated_at = new Date().toISOString();
 
     const { data: batch, error } = await supabase

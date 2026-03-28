@@ -222,11 +222,10 @@ export const Dashboard = () => {
   };
 
   return (
-    <PageContainer 
+    <PageContainer
       maxWidth="xl"
       padding="none"
       className="space-y-6"
-      style={{ marginTop: '45px', paddingLeft: '15px', paddingRight: '15px' }}
     >
       <div className="header mb-0 mt-4" style={{ marginBottom: 'unset' }}>
         <h1 className="text-2xl lg:text-4xl font-bold gradient-text">

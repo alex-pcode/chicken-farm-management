@@ -59,7 +59,7 @@ export const CRM = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="w-full mb-8 mt-[80px] md:mt-[10px]"
+        className="w-full mb-8"
       >
         <AnimatedCRMPNG />
       </motion.div>

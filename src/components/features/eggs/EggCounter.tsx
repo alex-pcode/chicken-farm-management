@@ -392,7 +392,7 @@ export const EggCounter = () => {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="space-y-8 max-w-3xl mx-auto py-8"
+      className="space-y-8 max-w-3xl mx-auto"
     >
       {/* Animated Hen Section - Testing (will be for new users) */}
       <motion.div

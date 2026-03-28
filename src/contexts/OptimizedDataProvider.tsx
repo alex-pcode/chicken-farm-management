@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { apiService } from '../services/api';
 import { browserCache, CACHE_KEYS } from '../utils/browserCache';
 import { useAuth } from './AuthContext';
@@ -41,7 +41,8 @@ const CACHE_DURATION = 10 * 60 * 1000;
 
 export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ children }) => {
   const { user, loading: authLoading } = useAuth();
-  
+  const fetchInFlightRef = useRef<Promise<void> | null>(null);
+
   // Initialize with empty data - we'll load cached data after auth is confirmed
   const [data, setData] = useState<AppData>({
     eggEntries: [],
@@ -62,6 +63,54 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
   const [lastFetched, setLastFetched] = useState<Date | null>(null);
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(true);
 
+  // Core fetch logic shared by refreshData and silentRefresh.
+  // Deduplicates concurrent calls — if a fetch is already in flight, callers share the same promise.
+  const fetchAndCache = useCallback(async () => {
+    if (!user?.id) return;
+
+    // Deduplicate: reuse in-flight request
+    if (fetchInFlightRef.current) {
+      return fetchInFlightRef.current;
+    }
+
+    const promise = (async () => {
+      try {
+        const response = await apiService.data.fetchAllData();
+        const dbData = response.data || {} as Partial<AppData>;
+
+        const newData: AppData = {
+          eggEntries: dbData?.eggEntries || [],
+          expenses: dbData?.expenses || [],
+          feedInventory: dbData?.feedInventory || [],
+          flockProfile: dbData?.flockProfile || null,
+          flockEvents: dbData?.flockEvents || [],
+          customers: dbData?.customers || [],
+          sales: dbData?.sales || [],
+          summary: dbData?.summary || undefined,
+          flockBatches: dbData?.flockBatches || [],
+          deathRecords: dbData?.deathRecords || [],
+          userProfile: dbData?.userProfile || null
+        };
+
+        setData({ ...newData });
+        browserCache.set(CACHE_KEYS.APP_DATA, newData, 10, user.id);
+
+        if (newData.userProfile?.subscription_status) {
+          browserCache.set(CACHE_KEYS.SUBSCRIPTION_STATUS, newData.userProfile.subscription_status, 60, user.id);
+        }
+
+        setLastFetched(new Date());
+        setIsSubscriptionLoading(false);
+        setError(null);
+      } finally {
+        fetchInFlightRef.current = null;
+      }
+    })();
+
+    fetchInFlightRef.current = promise;
+    return promise;
+  }, [user?.id]);
+
   const refreshData = useCallback(async () => {
     if (!user?.id) {
       setIsLoading(false);
@@ -70,48 +119,9 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
 
     setIsLoading(true);
     setError(null);
-    
-    try {
-      const response = await apiService.data.fetchAllData();
-      const dbData = response.data || {
-        eggEntries: [],
-        expenses: [],
-        feedInventory: [],
-        flockProfile: null,
-        flockEvents: [],
-        customers: [],
-        sales: [],
-        summary: undefined,
-        userProfile: null
-      };
-      
 
-      const newData = {
-        eggEntries: dbData?.eggEntries || [],
-        expenses: dbData?.expenses || [],
-        feedInventory: dbData?.feedInventory || [],
-        flockProfile: dbData?.flockProfile || null,
-        flockEvents: dbData?.flockEvents || [],
-        customers: dbData?.customers || [],
-        sales: dbData?.sales || [],
-        summary: dbData?.summary || undefined,
-        flockBatches: dbData?.flockBatches || [],
-        deathRecords: dbData?.deathRecords || [],
-        userProfile: dbData?.userProfile || null
-      };
-      
-      setData(newData);
-      
-      // Cache the data in browser storage with user-specific key
-      browserCache.set(CACHE_KEYS.APP_DATA, newData, 10, user.id);
-      
-      // Cache subscription status separately for faster tier detection
-      if (newData.userProfile?.subscription_status) {
-        browserCache.set(CACHE_KEYS.SUBSCRIPTION_STATUS, newData.userProfile.subscription_status, 60, user.id);
-      }
-      
-      setLastFetched(new Date());
-      setIsSubscriptionLoading(false);
+    try {
+      await fetchAndCache();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch data';
       setError(errorMessage);
@@ -119,65 +129,27 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, fetchAndCache]);
 
   // Silent refresh that doesn't show loading state - for after mutations
   const silentRefresh = useCallback(async () => {
-    if (!user?.id) {
-      return;
-    }
+    if (!user?.id) return;
 
     try {
-      const response = await apiService.data.fetchAllData();
-
-      const dbData = response.data || {
-        eggEntries: [],
-        expenses: [],
-        feedInventory: [],
-        flockProfile: null,
-        flockEvents: [],
-        customers: [],
-        sales: [],
-        summary: undefined,
-        userProfile: null
-      };
-
-      const newData = {
-        eggEntries: dbData?.eggEntries || [],
-        expenses: dbData?.expenses || [],
-        feedInventory: dbData?.feedInventory || [],
-        flockProfile: dbData?.flockProfile || null,
-        flockEvents: dbData?.flockEvents || [],
-        customers: dbData?.customers || [],
-        sales: dbData?.sales || [],
-        summary: dbData?.summary || undefined,
-        flockBatches: dbData?.flockBatches || [],
-        deathRecords: dbData?.deathRecords || [],
-        userProfile: dbData?.userProfile || null
-      };
-
-      // Force new object reference to trigger React re-renders
-      setData({ ...newData });
-      browserCache.set(CACHE_KEYS.APP_DATA, newData, 10, user.id);
-
-      // Cache subscription status separately for faster tier detection
-      if (newData.userProfile?.subscription_status) {
-        browserCache.set(CACHE_KEYS.SUBSCRIPTION_STATUS, newData.userProfile.subscription_status, 60, user.id);
-      }
-
-      setLastFetched(new Date());
-      setIsSubscriptionLoading(false);
+      await fetchAndCache();
     } catch (err) {
-      console.error('❌ silentRefresh failed:', err);
-      // Don't set error state for silent refresh failures
+      console.error('silentRefresh failed:', err);
     }
-  }, [user?.id]);
+  }, [user?.id, fetchAndCache]);
 
-  // Check if cache is stale
+  // Use a ref for lastFetched so the interval can read it without being a dependency
+  const lastFetchedRef = useRef<Date | null>(null);
+  useEffect(() => { lastFetchedRef.current = lastFetched; }, [lastFetched]);
+
   const isCacheStale = useCallback(() => {
-    if (!lastFetched) return true;
-    return Date.now() - lastFetched.getTime() > CACHE_DURATION;
-  }, [lastFetched]);
+    if (!lastFetchedRef.current) return true;
+    return Date.now() - lastFetchedRef.current.getTime() > CACHE_DURATION;
+  }, []);
 
   // Load cached data when user is authenticated, then refresh
   useEffect(() => {
@@ -204,13 +176,12 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
           console.log('Loading cached data for user:', user.id);
         }
         setData(cachedData);
-        setLastFetched(new Date()); // Set a recent timestamp to avoid immediate refresh
         // If we have userProfile from cached data, subscription is no longer loading
         if (cachedData.userProfile) {
           setIsSubscriptionLoading(false);
         }
       }
-      
+
       // Always refresh to get latest data
       refreshData();
     } else {
@@ -233,17 +204,22 @@ export const OptimizedDataProvider: React.FC<OptimizedDataProviderProps> = ({ ch
     }
   }, [user?.id, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Background refresh when cache becomes stale
+  // Background refresh when cache becomes stale.
+  // Stable deps — interval is set up once per user and won't thrash on every fetch.
   useEffect(() => {
+    if (!user?.id) return;
+
     const interval = setInterval(() => {
-      if (isCacheStale() && !isLoading && document.hasFocus()) {
-        console.log('Cache is stale, refreshing data silently...');
+      if (isCacheStale() && !fetchInFlightRef.current && document.hasFocus()) {
+        if (import.meta.env.DEV) {
+          console.log('Cache is stale, refreshing data silently...');
+        }
         silentRefresh();
       }
-    }, 10 * 60 * 1000);
+    }, CACHE_DURATION);
 
     return () => clearInterval(interval);
-  }, [isCacheStale, isLoading, silentRefresh]);
+  }, [user?.id, isCacheStale, silentRefresh]);
 
 
   const contextValue: OptimizedDataContextType = {

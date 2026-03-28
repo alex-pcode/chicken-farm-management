@@ -316,27 +316,26 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
       key: 'status',
       label: 'Status',
       sortable: false,
-      render: (_, batch) => (
-        <div>
-          {(batch.type === 'hens' || batch.type === 'mixed') && (
+      render: (_, batch) => {
+        const isLayingType = batch.type === 'hens' || batch.type === 'mixed';
+        const hasLayingDate = !!batch.actualLayingStartDate;
+        if (!isLayingType && !hasLayingDate) return <div />;
+        return (
+          <div>
             <span className={`text-xs px-2 py-1 rounded-full font-medium inline-flex items-center gap-1 w-fit ${
-              batch.actualLayingStartDate 
-                ? 'bg-green-100 text-green-700 border border-green-200' 
+              hasLayingDate
+                ? 'bg-green-100 text-green-700 border border-green-200'
                 : 'bg-amber-100 text-amber-700 border border-amber-200'
             }`}>
-              {batch.actualLayingStartDate ? (
-                <>
-                  🥚 <span>Laying</span>
-                </>
+              {hasLayingDate ? (
+                <>🥚 <span>Laying</span></>
               ) : (
-                <>
-                  ⏳ <span>Not Laying</span>
-                </>
+                <>⏳ <span>Not Laying</span></>
               )}
             </span>
-          )}
-        </div>
-      )
+          </div>
+        );
+      }
     },
     {
       key: 'initialCount',
@@ -367,14 +366,12 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
       render: (value, batch) => (
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-700 dark:text-gray-300">
-            {(batch.type === 'hens' || batch.type === 'mixed') ? (
-              value 
-                ? new Date(value as string).toLocaleDateString()
-                : 'Not set'
-            ) : (
-              // For roosters/chicks, show age but still allow editing
-              batch.ageAtAcquisition.charAt(0).toUpperCase() + batch.ageAtAcquisition.slice(1)
-            )}
+            {value
+              ? new Date(value as string).toLocaleDateString()
+              : (batch.type === 'hens' || batch.type === 'mixed')
+                ? 'Not set'
+                : batch.ageAtAcquisition.charAt(0).toUpperCase() + batch.ageAtAcquisition.slice(1)
+            }
           </span>
           <button
             onClick={() => openLayingDateModal(batch)}
@@ -453,8 +450,8 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
   return (
     <PageContainer maxWidth="xl" className={`space-y-6 ${className || ''}`}>
       {/* Header */}
-      <header className="header">
-        <h1 
+      <header className="mb-6">
+        <h1
           className="text-2xl lg:text-4xl font-bold gradient-text"
           role="heading"
           aria-level={1}
@@ -544,8 +541,8 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
       </AnimatePresence>
 
       {/* Tab Navigation */}
-      <nav 
-        className="glass-card p-2 flex gap-2 overflow-x-auto whitespace-nowrap max-w-full"
+      <nav
+        className="glass-card p-2 flex gap-2 overflow-x-auto"
         role="tablist"
         aria-label="Flock batch management sections"
       >
@@ -553,7 +550,7 @@ export const FlockBatchManager = ({ className }: FlockBatchManagerProps) => {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as 'batches' | 'deaths' | 'add-batch')}
-            className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex-shrink-0 flex items-center gap-2 ${
+            className={`px-4 sm:px-6 py-3 rounded-lg font-medium transition-all duration-200 flex-shrink-0 flex items-center gap-2 whitespace-nowrap ${
               activeTab === tab.id
                 ? 'bg-indigo-600 text-white shadow-lg'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-white/50 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700/50'
