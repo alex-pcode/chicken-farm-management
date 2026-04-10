@@ -424,8 +424,9 @@ input, select, textarea, button {
 .main-content {
   flex: 1;
   padding: 1.5rem;
-  margin-left: 18rem;
-  max-width: 1400px;
+  padding-left: calc(18rem + 1.5rem);
+  max-width: calc(1400px + 18rem);
+  margin: 0 auto;
   background-color: #F9FAFB;
 }
 
@@ -435,8 +436,8 @@ input, select, textarea, button {
 
 @media (max-width: 1023px) {
   .main-content {
-    margin-left: 0;
     padding: 4.5rem 1rem 5.5rem; /* top: fixed header ~69px, bottom: dock ~72px */
+    max-width: none;
   }
 }
 

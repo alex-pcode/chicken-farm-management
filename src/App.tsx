@@ -189,7 +189,7 @@ const MainApp = () => {
 
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-[#0f0f0f]">
       {/* Desktop Sidebar */}
       <aside className="sidebar hidden lg:block">
         <div className="brand">
